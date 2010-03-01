@@ -32,7 +32,7 @@ void __fastcall TMainForm::NodeComboBoxChange(TObject *Sender)
 			try {
 				this->IdSMTP1->Disconnect(true);
 
-				this->IdSMTP1->QuickSend(NULL,"mail1.comhem.se","darwinet","n2.darwinet@koh-innovation.se","n1.darwinet@koh-innovation.se","Hello from n1");
+				this->IdSMTP1->QuickSend("mail1.comhem.se","darwinet","n2.darwinet@koh-innovation.se","n1.darwinet@koh-innovation.se","Hello from n1");
 
 			} catch (Exception& e) {
 				AnsiString sMessage = "SMTP Exception = ";
@@ -70,7 +70,7 @@ void __fastcall TMainForm::NodeComboBoxChange(TObject *Sender)
 			try {
 				this->IdSMTP1->Disconnect(true);
 
-				this->IdSMTP1->QuickSend(NULL,"mail1.comhem.se","darwinet","n1.darwinet@koh-innovation.se","n2.darwinet@koh-innovation.se","Hello from n2");
+				this->IdSMTP1->QuickSend("mail1.comhem.se","darwinet","n1.darwinet@koh-innovation.se","n2.darwinet@koh-innovation.se","Hello from n2");
 
 			} catch (Exception& e) {
 				AnsiString sMessage = "SMTP Exception = ";
