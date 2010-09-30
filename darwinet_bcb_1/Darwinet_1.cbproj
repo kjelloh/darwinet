@@ -29,9 +29,9 @@
 			<ProjectType>CppVCLApplication</ProjectType>
 			<PackageImports>vclx.bpi;vcl.bpi;dbrtl.bpi;Rave75VCL.bpi;bdertl.bpi;rtl.bpi;bcbie.bpi;vclactnband.bpi;xmlrtl.bpi;bcbsmp.bpi;vcldb.bpi;vcldbx.bpi;dsnap.bpi;dsnapcon.bpi;teeUI.bpi;teedb.bpi;tee.bpi;adortl.bpi;vclib.bpi;ibxpress.bpi;dbxcds.bpi;dbexpress.bpi;DbxCommonDriver.bpi;IndyCore.bpi;IndySystem.bpi;IndyProtocols.bpi;inet.bpi;IntrawebDB_90_100.bpi;Intraweb_90_100.bpi;VclSmp.bpi;vclie.bpi;websnap.bpi;webdsnap.bpi;inetdbbde.bpi;inetdbxpress.bpi;soaprtl.bpi</PackageImports>
 			<BCC_wpar>false</BCC_wpar>
-			<IncludePath>$(BDS)\include;$(BDS)\include\dinkumware;$(BDS)\include\vcl;C:\subversion\darwinet\trunk\darwinet_bcb_1</IncludePath>
+			<IncludePath>darwinetEngine;$(BDS)\include;$(BDS)\include\dinkumware;$(BDS)\include\vcl;C:\subversion\darwinet\trunk\darwinet_bcb_1</IncludePath>
 			<AllPackageLibs>rtl.lib;vcl.lib;IndyCore.lib;IndySystem.lib;IndyProtocols.lib</AllPackageLibs>
-			<ILINK_LibraryPath>$(BDS)\lib;$(BDS)\lib\obj;$(BDS)\lib\psdk;C:\subversion\darwinet\trunk\darwinet_bcb_1</ILINK_LibraryPath>
+			<ILINK_LibraryPath>darwinetEngine;$(BDS)\lib;$(BDS)\lib\obj;$(BDS)\lib\psdk;C:\subversion\darwinet\trunk\darwinet_bcb_1</ILINK_LibraryPath>
 			<Multithreaded>true</Multithreaded>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_1)'!=''">
@@ -60,17 +60,6 @@
 			<TASM_Debugging>None</TASM_Debugging>
 		</PropertyGroup>
 		<ItemGroup>
-			<ResFiles Include="Darwinet_1.res">
-				<BuildOrder>0</BuildOrder>
-			</ResFiles>
-			<CppCompile Include="Darwinet_1.cpp">
-				<BuildOrder>2</BuildOrder>
-			</CppCompile>
-			<CppCompile Include="MainFormUnit.cpp">
-				<Form>MainForm</Form>
-				<DependentOn>MainFormUnit.h</DependentOn>
-				<BuildOrder>1</BuildOrder>
-			</CppCompile>
 			<CppCompile Include="DarwinetProtocolFrameWork.cpp">
 				<DependentOn>DarwinetProtocolFrameWork.h</DependentOn>
 				<BuildOrder>3</BuildOrder>
@@ -82,6 +71,21 @@
 			<CppCompile Include="DarwinetNodeEngine.cpp">
 				<DependentOn>DarwinetNodeEngine.h</DependentOn>
 				<BuildOrder>5</BuildOrder>
+			</CppCompile>
+			<ResFiles Include="Darwinet_1.res">
+				<BuildOrder>0</BuildOrder>
+			</ResFiles>
+			<CppCompile Include="Darwinet_1.cpp">
+				<BuildOrder>2</BuildOrder>
+			</CppCompile>
+			<CppCompile Include="MainFormUnit.cpp">
+				<Form>MainForm</Form>
+				<DependentOn>MainFormUnit.h</DependentOn>
+				<BuildOrder>1</BuildOrder>
+			</CppCompile>
+			<CppCompile Include="darwinetEngine\DarwinetEngine.cpp">
+				<DependentOn>darwinetEngine\DarwinetEngine.h</DependentOn>
+				<BuildOrder>6</BuildOrder>
 			</CppCompile>
 			<FormResources Include="MainFormUnit.dfm"/>
 			<BuildConfiguration Include="Base">
