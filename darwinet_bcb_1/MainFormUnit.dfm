@@ -3,7 +3,7 @@ object MainForm: TMainForm
   Top = 0
   Caption = 'Darwinet 1'
   ClientHeight = 458
-  ClientWidth = 293
+  ClientWidth = 337
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -108,7 +108,6 @@ object MainForm: TMainForm
     Font.Height = -32
     Font.Name = 'Tahoma'
     Font.Style = []
-    ItemHeight = 39
     ParentFont = False
     TabOrder = 4
     Text = 'NodeComboBox'
@@ -124,7 +123,6 @@ object MainForm: TMainForm
     Font.Height = -32
     Font.Name = 'Tahoma'
     Font.Style = []
-    ItemHeight = 39
     ParentFont = False
     TabOrder = 5
     Text = 'ComboBox1'
@@ -146,16 +144,13 @@ object MainForm: TMainForm
     end
   end
   object IdSMTP1: TIdSMTP
-    OnStatus = IdSMTP1Status
     OnDisconnected = IdSMTP1Disconnected
-    OnFailedRecipient = IdSMTP1FailedRecipient
     Host = 'mail1.comhem.se'
     SASLMechanisms = <>
     Left = 248
     Top = 104
   end
   object IdPOP31: TIdPOP3
-    OnStatus = IdPOP31Status
     OnDisconnected = IdPOP31Disconnected
     AutoLogin = True
     SASLMechanisms = <>

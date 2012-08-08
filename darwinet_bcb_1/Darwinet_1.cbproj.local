@@ -1,17 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <BorlandProject>
 	<Transactions>
-    <Transaction>2009-05-23 18:50:15.890.cpp,C:\Documents and Settings\KOH\Mina dokument\RAD Studio\Projects\Unit1.cpp=C:\subversion\darwinet\trunk\darwinet_bcb_1\MainFormUnit.cpp</Transaction>
-    <Transaction>2009-05-23 18:50:15.890.h,C:\Documents and Settings\KOH\Mina dokument\RAD Studio\Projects\Unit1.h=C:\subversion\darwinet\trunk\darwinet_bcb_1\MainFormUnit.h</Transaction>
-    <Transaction>2009-05-23 18:50:15.890.dfm,C:\Documents and Settings\KOH\Mina dokument\RAD Studio\Projects\Unit1.dfm=C:\subversion\darwinet\trunk\darwinet_bcb_1\MainFormUnit.dfm</Transaction>
-    <Transaction>2009-05-23 18:50:48.781.cbproj,C:\Documents and Settings\KOH\Mina dokument\RAD Studio\Projects\Project2.cbproj=C:\subversion\darwinet\trunk\darwinet_bcb_1\Darwinet_1.cbproj</Transaction>
-    <Transaction>2010-03-01 13:26:04.203.cpp,C:\subversion\darwinet\trunk\darwinet_bcb_1\Unit1.cpp=C:\subversion\darwinet\trunk\darwinet_bcb_1\DarwinetProtocolFrameWork.cpp</Transaction>
-    <Transaction>2010-03-01 13:26:04.203.h,C:\subversion\darwinet\trunk\darwinet_bcb_1\Unit1.h=C:\subversion\darwinet\trunk\darwinet_bcb_1\DarwinetProtocolFrameWork.h</Transaction>
-    <Transaction>2010-03-01 13:27:16.343.cpp,C:\subversion\darwinet\trunk\darwinet_bcb_1\Unit1.cpp=C:\subversion\darwinet\trunk\darwinet_bcb_1\DarwinetAPIFramework.cpp</Transaction>
-    <Transaction>2010-03-01 13:27:16.343.h,C:\subversion\darwinet\trunk\darwinet_bcb_1\Unit1.h=C:\subversion\darwinet\trunk\darwinet_bcb_1\DarwinetAPIFramework.h</Transaction>
-    <Transaction>2010-03-01 13:27:43.500.cpp,C:\subversion\darwinet\trunk\darwinet_bcb_1\Unit1.cpp=C:\subversion\darwinet\trunk\darwinet_bcb_1\DarwinetNodeEngine.cpp</Transaction>
-    <Transaction>2010-03-01 13:27:43.500.h,C:\subversion\darwinet\trunk\darwinet_bcb_1\Unit1.h=C:\subversion\darwinet\trunk\darwinet_bcb_1\DarwinetNodeEngine.h</Transaction>
-    <Transaction>2010-09-30 11:16:14.218.cpp,C:\subversion\darwinet\trunk\darwinet_bcb_1\Unit1.cpp=C:\subversion\darwinet\trunk\darwinet_bcb_1\darwinetEngine\DarwinetEngine.cpp</Transaction>
-    <Transaction>2010-09-30 11:16:14.218.h,C:\subversion\darwinet\trunk\darwinet_bcb_1\Unit1.h=C:\subversion\darwinet\trunk\darwinet_bcb_1\darwinetEngine\DarwinetEngine.h</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.h,C:\subversion\darwinet\trunk\darwinet_bcb_1\DarwinetProtocolFrameWork.h=C:\subversion\darwinet\trunk\darwinet_bcb_1\Unit1.h</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.h,C:\subversion\darwinet\trunk\darwinet_bcb_1\DarwinetNodeEngine.h=C:\subversion\darwinet\trunk\darwinet_bcb_1\Unit1.h</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.h,C:\subversion\darwinet\trunk\darwinet_bcb_1\MainFormUnit.h=C:\Documents and Settings\KOH\Mina dokument\RAD Studio\Projects\Unit1.h</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.cpp,C:\subversion\darwinet\trunk\darwinet_bcb_1\DarwinetAPIFramework.cpp=C:\subversion\darwinet\trunk\darwinet_bcb_1\Unit1.cpp</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.h,C:\subversion\darwinet\trunk\darwinet_bcb_1\DarwinetAPIFramework.h=C:\subversion\darwinet\trunk\darwinet_bcb_1\Unit1.h</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.155,C:\subversion\Darwinet\trunk\darwinet_bcb_1\Unit1.cpp=C:\subversion\Darwinet\trunk\darwinet_bcb_1\DarwinetMainPortFormUnit.cpp</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.398,=C:\subversion\Darwinet\trunk\darwinet_bcb_1\Unit1.cpp</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.dfm,C:\subversion\darwinet\trunk\darwinet_bcb_1\MainFormUnit.dfm=C:\Documents and Settings\KOH\Mina dokument\RAD Studio\Projects\Unit1.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.783,=C:\subversion\Darwinet\trunk\darwinet_bcb_1\Unit2.cpp</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.h,C:\subversion\darwinet\trunk\darwinet_bcb_1\darwinetEngine\DarwinetEngine.h=C:\subversion\darwinet\trunk\darwinet_bcb_1\Unit1.h</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.155,C:\subversion\Darwinet\trunk\darwinet_bcb_1\Unit1.dfm=C:\subversion\Darwinet\trunk\darwinet_bcb_1\DarwinetMainPortFormUnit.dfm</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.155,C:\subversion\Darwinet\trunk\darwinet_bcb_1\Unit1.h=C:\subversion\Darwinet\trunk\darwinet_bcb_1\DarwinetMainPortFormUnit.h</Transaction>
+    <Transaction>1899-12-30 00:00:00.000.cbproj,C:\subversion\darwinet\trunk\darwinet_bcb_1\Darwinet_1.cbproj=C:\Documents and Settings\KOH\Mina dokument\RAD Studio\Projects\Project2.cbproj</Transaction>
+    <Transaction>2012-08-08 16:06:17.173,=C:\subversion\Darwinet\trunk\darwinet_bcb_1\New1.txt</Transaction>
+    <Transaction>2012-08-08 16:07:24.892,C:\subversion\Darwinet\trunk\darwinet_bcb_1\HistoryOfChanges.txt=C:\subversion\Darwinet\trunk\darwinet_bcb_1\New1.txt</Transaction>
   </Transactions>
 </BorlandProject>
