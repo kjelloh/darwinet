@@ -53,7 +53,7 @@
 			<PackageImports>vclx.bpi;vcl.bpi;dbrtl.bpi;Rave75VCL.bpi;bdertl.bpi;rtl.bpi;bcbie.bpi;vclactnband.bpi;xmlrtl.bpi;bcbsmp.bpi;vcldb.bpi;vcldbx.bpi;dsnap.bpi;dsnapcon.bpi;teeUI.bpi;teedb.bpi;tee.bpi;adortl.bpi;vclib.bpi;ibxpress.bpi;dbxcds.bpi;dbexpress.bpi;DbxCommonDriver.bpi;IndyCore.bpi;IndySystem.bpi;IndyProtocols.bpi;inet.bpi;IntrawebDB_90_100.bpi;Intraweb_90_100.bpi;VclSmp.bpi;vclie.bpi;websnap.bpi;webdsnap.bpi;inetdbbde.bpi;inetdbxpress.bpi;soaprtl.bpi;$(PackageImports)</PackageImports>
 			<BCC_wpar>false</BCC_wpar>
 			<IncludePath>darwinetEngine\;$(BDS)\include;$(BDS)\include\dinkumware;C:\subversion\darwinet\trunk\darwinet_bcb_1;$(IncludePath)</IncludePath>
-			<AllPackageLibs>rtl.lib;vcl.lib;IndyCore.lib;IndySystem.lib;IndyProtocols.lib;vclactnband.lib;vclx.lib</AllPackageLibs>
+			<AllPackageLibs>rtl.lib;vcl.lib;IndyCore.lib;IndySystem.lib;IndyProtocols.lib;vclactnband.lib;vclx.lib;VclSmp.lib</AllPackageLibs>
 			<ILINK_LibraryPath>darwinetEngine\;darwinetEngine;$(BDS)\lib;$(BDS)\lib\obj;$(BDS)\lib\psdk;C:\subversion\darwinet\trunk\darwinet_bcb_1;$(ILINK_LibraryPath)</ILINK_LibraryPath>
 			<Multithreaded>true</Multithreaded>
 		</PropertyGroup>
@@ -84,8 +84,10 @@
 			<BCC_SourceDebuggingOn>true</BCC_SourceDebuggingOn>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
+			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
+			<Icon_MainIcon>$(BDS)\bin\cbuilder_PROJECTICON.ico</Icon_MainIcon>
 			<VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-			<LinkPackageImports>rtl.bpi;vcl.bpi;IndyCore.bpi;IndySystem.bpi;IndyProtocols.bpi;vclactnband.bpi;vclx.bpi</LinkPackageImports>
+			<LinkPackageImports>rtl.bpi;vcl.bpi;IndyCore.bpi;IndySystem.bpi;IndyProtocols.bpi;vclactnband.bpi;vclx.bpi;VclSmp.bpi</LinkPackageImports>
 			<VerInfo_Locale>1033</VerInfo_Locale>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_2)'!=''">
@@ -95,44 +97,19 @@
 			<TASM_Debugging>None</TASM_Debugging>
 		</PropertyGroup>
 		<ItemGroup>
-			<CppCompile Include="DarwinetAPIFramework.cpp">
-				<DependentOn>DarwinetAPIFramework.h</DependentOn>
-				<BuildOrder>4</BuildOrder>
-			</CppCompile>
-			<CppCompile Include="darwinetEngine\DarwinetEngine.cpp">
-				<DependentOn>darwinetEngine\DarwinetEngine.h</DependentOn>
-				<BuildOrder>6</BuildOrder>
-			</CppCompile>
-			<CppCompile Include="DarwinetMainPortFormUnit.cpp">
-				<Form>Form1</Form>
-				<FormType>dfm</FormType>
-				<DependentOn>DarwinetMainPortFormUnit.h</DependentOn>
-				<BuildOrder>7</BuildOrder>
-			</CppCompile>
-			<CppCompile Include="DarwinetNodeEngine.cpp">
-				<DependentOn>DarwinetNodeEngine.h</DependentOn>
-				<BuildOrder>5</BuildOrder>
-			</CppCompile>
-			<CppCompile Include="DarwinetProtocolFrameWork.cpp">
-				<DependentOn>DarwinetProtocolFrameWork.h</DependentOn>
-				<BuildOrder>3</BuildOrder>
-			</CppCompile>
 			<CppCompile Include="Darwinet_1.cpp">
 				<BuildOrder>2</BuildOrder>
 			</CppCompile>
 			<ResFiles Include="Darwinet_1.res">
 				<BuildOrder>0</BuildOrder>
 			</ResFiles>
-			<None Include="HistoryOfChanges.txt">
-				<ModuleName>New1</ModuleName>
-			</None>
+			<None Include="HistoryOfChanges.txt"/>
 			<CppCompile Include="MainFormUnit.cpp">
 				<Form>MainForm</Form>
 				<DependentOn>MainFormUnit.h</DependentOn>
 				<BuildOrder>1</BuildOrder>
 			</CppCompile>
 			<FormResources Include="MainFormUnit.dfm"/>
-			<FormResources Include="DarwinetMainPortFormUnit.dfm"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

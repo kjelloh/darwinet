@@ -1,0 +1,11 @@
+History of changes (Latest change on top)
+Date   Id  Ver 	       Change
+-----------------------------------------
+120808 KoH 1.0w      + Removed old unused source code.
+                     + Simplified GUI to only one integer value.
+                       To test exchange of change to one integer.
+
+120808 KoH 1.0w      Adapted to Embarcadero RAD Studio XE2.
+
+120808 KoH 1.0w      Created this History of Changes file.
+
