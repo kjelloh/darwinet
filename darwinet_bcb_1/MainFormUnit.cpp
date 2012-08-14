@@ -21,6 +21,7 @@ __fastcall TMainForm::TMainForm(TComponent* Owner)
 void __fastcall TMainForm::SpinEdit1Change(TObject *Sender)
 {
 	// TODO 120808, Update the MIV here
+
 }
 //---------------------------------------------------------------------------
 

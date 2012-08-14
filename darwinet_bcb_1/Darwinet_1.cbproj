@@ -109,6 +109,10 @@
 				<DependentOn>MainFormUnit.h</DependentOn>
 				<BuildOrder>1</BuildOrder>
 			</CppCompile>
+			<CppCompile Include="MainFramework.cpp">
+				<DependentOn>MainFramework.h</DependentOn>
+				<BuildOrder>4</BuildOrder>
+			</CppCompile>
 			<FormResources Include="MainFormUnit.dfm"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
