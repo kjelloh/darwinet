@@ -3,19 +3,16 @@
 #include <vcl.h>
 #pragma hdrstop
 
-#include "MainFormUnit.h"
+#include "MessagingFormUnit.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
-#pragma link "IdExplicitTLSClientServerBase"
-#pragma link "IdSMTPBase"
 #pragma resource "*.dfm"
-TMainForm *MainForm;
-
+TMessagingForm *MessagingForm;
 //---------------------------------------------------------------------------
 /**
   * Updates the GUI to reflect the currect state
   */
-void TMainForm::updateGUIToReflectCurrentState() {
+void TMessagingForm::updateGUIToReflectCurrentState() {
 	if (GStack != NULL) {
 		// Try to use it to get our local IP adress
 		static int failureCounter = 0;
@@ -34,40 +31,27 @@ void TMainForm::updateGUIToReflectCurrentState() {
 		}
 	}
 }
+//---------------------------------------------------------------------------
+/**
+  * Returns the singleton instance of this form.
+  * Creating it if it does not yet exist.
+  */
+TMessagingForm* TMessagingForm::instance() {
+	if (MessagingForm == NULL) {
+		MessagingForm = new TMessagingForm(Application);
+	}
+	return MessagingForm;
+}
 
 //---------------------------------------------------------------------------
-__fastcall TMainForm::TMainForm(TComponent* Owner)
+__fastcall TMessagingForm::TMessagingForm(TComponent* Owner)
 	: TForm(Owner)
 {
 }
 //---------------------------------------------------------------------------
-
-
-void __fastcall TMainForm::SpinEdit1Change(TObject *Sender)
+void __fastcall TMessagingForm::FormCreate(TObject *Sender)
 {
-	// TODO 120808, Update the MIV here
-
-	int delta_value = this->SpinEdit1->Value - this->m_MirroredSpinValue;
-	if (delta_value > 0) {
-		// Add value
-		String sDelta = "delta_v add HelloWorld ";
-		sDelta += delta_value;
-		this->ToOtherPeerTCPClient->SendCmd(sDelta);
-	}
-	else {
-		// subtract value
-		String sDelta = "delta_v subtract HelloWorld ";
-		sDelta += delta_value;
-		this->ToOtherPeerTCPClient->SendCmd(sDelta);
-	}
-}
-//---------------------------------------------------------------------------
-
-void __fastcall TMainForm::FormCreate(TObject *Sender)
-{
-
 	this->FromOtherPeerTCPServer->DefaultPort = 4711;
 	this->updateGUIToReflectCurrentState();
 }
 //---------------------------------------------------------------------------
-

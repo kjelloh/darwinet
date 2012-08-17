@@ -22,6 +22,9 @@
 #include <IdContext.hpp>
 #include <IdCustomTCPServer.hpp>
 #include <IdTCPServer.hpp>
+#include <Vcl.ActnList.hpp>
+#include <Vcl.ActnMan.hpp>
+#include <Vcl.PlatformDefaultStyleActnCtrls.hpp>
 //---------------------------------------------------------------------------
 class TMainForm : public TForm
 {
@@ -30,26 +33,18 @@ __published:	// IDE-managed Components
 	TMenuItem *File1;
 	TMenuItem *Edit1;
 	TMenuItem *Help1;
-	TSpinEdit *SpinEdit1;
-	TIdTCPClient *ToOtherPeerTCPClient;
-	TIdTCPServer *FromOtherPeerTCPServer;
-	TEdit *OurIPAndPortEdit;
-	TLabel *Label1;
-	TLabel *Label2;
-	TEdit *OtherIPAndPortEdit;
-	void __fastcall SpinEdit1Change(TObject *Sender);
-	void __fastcall FormCreate(TObject *Sender);
+	TActionManager *ActionManager1;
+	TAction *ViewApplicationAction;
+	TAction *ViewMIVAction;
+	TAction *ViewMessagingAction;
+	TMenuItem *View1;
+	TMenuItem *ViewApplication1;
+	TMenuItem *ViewMIV1;
+	TMenuItem *ViewMessaging1;
+	void __fastcall ViewApplicationActionExecute(TObject *Sender);
+	void __fastcall ViewMIVActionExecute(TObject *Sender);
+	void __fastcall ViewMessagingActionExecute(TObject *Sender);
 private:	// User declarations
-
-	/**
-	  * Private storage of Current mirrored Spin Value
-	  */
-	int m_MirroredSpinValue;
-
-	/**
-	  * Updates the GUI to reflect the currect state
-	  */
-	void updateGUIToReflectCurrentState();
 
 public:		// User declarations
 	__fastcall TMainForm(TComponent* Owner);

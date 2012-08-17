@@ -1,6 +1,12 @@
 History of changes (Latest change on top)
 Date   Id  Ver 	       Change
 -----------------------------------------
+120817 KoH 1.0w      Introduced skeletton framework for first
+                     really simpel Delta MIV exchange.
+                     + Added Domain, View, MIV and MIV history
+                       framework implementtion and interfaces.
+                     + Added separate forms to view Application,
+                       MIV and Messaging.
 120808 KoH 1.0w      + Removed old unused source code.
                      + Simplified GUI to only one integer value.
                        To test exchange of change to one integer.
