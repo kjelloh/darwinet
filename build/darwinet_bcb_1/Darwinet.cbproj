@@ -52,9 +52,9 @@
 			<ProjectType>CppVCLApplication</ProjectType>
 			<PackageImports>vclx.bpi;vcl.bpi;dbrtl.bpi;Rave75VCL.bpi;bdertl.bpi;rtl.bpi;bcbie.bpi;vclactnband.bpi;xmlrtl.bpi;bcbsmp.bpi;vcldb.bpi;vcldbx.bpi;dsnap.bpi;dsnapcon.bpi;teeUI.bpi;teedb.bpi;tee.bpi;adortl.bpi;vclib.bpi;ibxpress.bpi;dbxcds.bpi;dbexpress.bpi;DbxCommonDriver.bpi;IndyCore.bpi;IndySystem.bpi;IndyProtocols.bpi;inet.bpi;IntrawebDB_90_100.bpi;Intraweb_90_100.bpi;VclSmp.bpi;vclie.bpi;websnap.bpi;webdsnap.bpi;inetdbbde.bpi;inetdbxpress.bpi;soaprtl.bpi;$(PackageImports)</PackageImports>
 			<BCC_wpar>false</BCC_wpar>
-			<IncludePath>Forms\;$(BDS)\include;$(BDS)\include\dinkumware;$(IncludePath)</IncludePath>
+			<IncludePath>darwinet\;Forms\;$(BDS)\include;$(BDS)\include\dinkumware;$(IncludePath)</IncludePath>
 			<AllPackageLibs>rtl.lib;vcl.lib;IndyCore.lib;IndySystem.lib;IndyProtocols.lib;vclactnband.lib;vclx.lib;VclSmp.lib</AllPackageLibs>
-			<ILINK_LibraryPath>Forms\;$(BDS)\lib;$(ILINK_LibraryPath)</ILINK_LibraryPath>
+			<ILINK_LibraryPath>darwinet\;Forms\;$(BDS)\lib;$(ILINK_LibraryPath)</ILINK_LibraryPath>
 			<Multithreaded>true</Multithreaded>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base_Win32)'!=''">
@@ -102,6 +102,10 @@
 			<ResFiles Include="Darwinet.res">
 				<BuildOrder>0</BuildOrder>
 			</ResFiles>
+			<CppCompile Include="darwinet\MainFramework.cpp">
+				<DependentOn>darwinet\MainFramework.h</DependentOn>
+				<BuildOrder>4</BuildOrder>
+			</CppCompile>
 			<CppCompile Include="Forms\ApplicationFormUnit.cpp">
 				<Form>ApplicationForm</Form>
 				<FormType>dfm</FormType>
@@ -126,10 +130,6 @@
 				<BuildOrder>6</BuildOrder>
 			</CppCompile>
 			<None Include="HistoryOfChanges.txt"/>
-			<CppCompile Include="MainFramework.cpp">
-				<DependentOn>MainFramework.h</DependentOn>
-				<BuildOrder>4</BuildOrder>
-			</CppCompile>
 			<FormResources Include="Forms\MIVFormUnit.dfm"/>
 			<FormResources Include="Forms\MessagingFormUnit.dfm"/>
 			<FormResources Include="Forms\MainFormUnit.dfm"/>

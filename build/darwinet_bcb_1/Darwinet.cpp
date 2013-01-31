@@ -28,10 +28,11 @@
 
 
 
-USEFORM("Forms\MainFormUnit.cpp", MainForm);
-USEFORM("Forms\ApplicationFormUnit.cpp", ApplicationForm);
+
 USEFORM("Forms\MIVFormUnit.cpp", MIVForm);
 USEFORM("Forms\MessagingFormUnit.cpp", MessagingForm);
+USEFORM("Forms\MainFormUnit.cpp", MainForm);
+USEFORM("Forms\ApplicationFormUnit.cpp", ApplicationForm);
 //---------------------------------------------------------------------------
 WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
