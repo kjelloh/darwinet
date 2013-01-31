@@ -1,6 +1,8 @@
 History of changes (Latest change on top)
 Date   Id  Ver 	       Change
 -----------------------------------------
+130131 KoH 1.0w      + Moved project to Software/darwinet_bcb_1/build folder
+                     + Renamed project to darwinet_bcb_1 (same as folder)
 120817 KoH 1.0w      Introduced skeletton framework for first
                      really simpel Delta MIV exchange.
                      + Added Domain, View, MIV and MIV history

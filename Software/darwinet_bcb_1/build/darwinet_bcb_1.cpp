@@ -2,6 +2,7 @@
 
 #include <vcl.h>
 #pragma hdrstop
+#include <tchar.h>
 //---------------------------------------------------------------------------
 
 
@@ -16,14 +17,17 @@
 
 
 
-USEFORM("MainFormUnit.cpp", MainForm);
+USEFORM("Forms\ApplicationFormUnit.cpp", ApplicationForm);
+USEFORM("Forms\MainFormUnit.cpp", MainForm);
+USEFORM("Forms\MessagingFormUnit.cpp", MessagingForm);
+USEFORM("Forms\MIVFormUnit.cpp", MIVForm);
 //---------------------------------------------------------------------------
-WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
+WINAPI _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int)
 {
 	try
 	{
 		Application->Initialize();
-		SetApplicationMainFormOnTaskBar(Application, true);
+		Application->MainFormOnTaskBar = true;
 		Application->CreateForm(__classid(TMainForm), &MainForm);
 		Application->Run();
 	}
