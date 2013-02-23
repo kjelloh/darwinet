@@ -37,14 +37,14 @@
 		<PropertyGroup Condition="'$(Base)'!=''">
 			<_TCHARMapping>wchar_t</_TCHARMapping>
 			<ProjectType>CppVCLApplication</ProjectType>
-			<ILINK_LibraryPath>darwinet\;Forms\;C:\subversion\Darwinet\trunk\Software\darwinet_bcb_1\build\;$(ILINK_LibraryPath)</ILINK_LibraryPath>
+			<ILINK_LibraryPath>..\..\..\common\cpp\DarwinetRADLib\utf8\source\utf8\;..\..\..\common\cpp\DarwinetRADLib\utf8\source\;..\..\..\common\cpp\DarwinetRADLib\VersionInfo\;..\..\..\common\cpp\DarwinetRADLib\;darwinet\;Forms\;C:\subversion\Darwinet\trunk\Software\darwinet_bcb_1\build\;$(ILINK_LibraryPath)</ILINK_LibraryPath>
 			<PackageImports>IPIndyImpl;bindcompfmx;fmx;rtl;dbrtl;IndySystem;DbxClientDriver;bindcomp;inetdb;DBXInterBaseDriver;DataSnapCommon;DataSnapClient;DataSnapServer;DataSnapProviderClient;xmlrtl;DbxCommonDriver;IndyProtocols;DBXMySQLDriver;dbxcds;soaprtl;bindengine;DBXOracleDriver;CustomIPTransport;dsnap;DBXInformixDriver;IndyCore;fmxase;DBXFirebirdDriver;inet;fmxobj;inetdbxpress;DBXSybaseASADriver;fmxdae;dbexpress;DataSnapIndy10ServerTransport;$(PackageImports)</PackageImports>
 			<Multithreaded>true</Multithreaded>
 			<DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
 			<AllPackageLibs>rtl.lib;vcl.lib;vclactnband.lib;vclx.lib;VclSmp.lib;IndyCore.lib;IndySystem.lib;IndyProtocols.lib</AllPackageLibs>
 			<Icon_MainIcon>$(BDS)\bin\cbuilder_PROJECTICON.ico</Icon_MainIcon>
 			<UsingDelphiRTL>true</UsingDelphiRTL>
-			<IncludePath>darwinet\;Forms\;C:\subversion\Darwinet\trunk\Software\darwinet_bcb_1\build\;$(IncludePath)</IncludePath>
+			<IncludePath>..\..\..\common\cpp\DarwinetRADLib\utf8\source\utf8\;..\..\..\common\cpp\DarwinetRADLib\utf8\source\;..\..\..\common\cpp\DarwinetRADLib\VersionInfo\;..\..\..\common\cpp\DarwinetRADLib\;darwinet\;Forms\;C:\subversion\Darwinet\trunk\Software\darwinet_bcb_1\build\;$(IncludePath)</IncludePath>
 			<DCC_CBuilderOutput>JPHNE</DCC_CBuilderOutput>
 			<DynamicRTL>true</DynamicRTL>
 			<UsePackages>true</UsePackages>
@@ -92,6 +92,79 @@
 			<TASM_Debugging>None</TASM_Debugging>
 		</PropertyGroup>
 		<ItemGroup>
+			<CppCompile Include="..\..\..\common\cpp\DarwinetRADLib\ABOUT.cpp">
+				<Form>AboutBox</Form>
+				<DependentOn>..\..\..\common\cpp\DarwinetRADLib\ABOUT.h</DependentOn>
+				<BuildOrder>7</BuildOrder>
+			</CppCompile>
+			<CppCompile Include="..\..\..\common\cpp\DarwinetRADLib\ApplicationEnvironment.cpp">
+				<DependentOn>..\..\..\common\cpp\DarwinetRADLib\ApplicationEnvironment.h</DependentOn>
+				<BuildOrder>8</BuildOrder>
+			</CppCompile>
+			<CppCompile Include="..\..\..\common\cpp\DarwinetRADLib\ApplicationProperties.cpp">
+				<DependentOn>..\..\..\common\cpp\DarwinetRADLib\ApplicationProperties.h</DependentOn>
+				<BuildOrder>9</BuildOrder>
+			</CppCompile>
+			<CppCompile Include="..\..\..\common\cpp\DarwinetRADLib\BusinessLogFormUnit.cpp">
+				<Form>BusinessLogForm</Form>
+				<DependentOn>..\..\..\common\cpp\DarwinetRADLib\BusinessLogFormUnit.h</DependentOn>
+				<BuildOrder>10</BuildOrder>
+			</CppCompile>
+			<CppCompile Include="..\..\..\common\cpp\DarwinetRADLib\BusinessLogUnit.cpp">
+				<DependentOn>..\..\..\common\cpp\DarwinetRADLib\BusinessLogUnit.h</DependentOn>
+				<BuildOrder>11</BuildOrder>
+			</CppCompile>
+			<CppCompile Include="..\..\..\common\cpp\DarwinetRADLib\DataRepresentationFrameWork.cpp">
+				<DependentOn>..\..\..\common\cpp\DarwinetRADLib\DataRepresentationFrameWork.h</DependentOn>
+				<BuildOrder>12</BuildOrder>
+			</CppCompile>
+			<CppCompile Include="..\..\..\common\cpp\DarwinetRADLib\DateAndTimeFramework.cpp">
+				<DependentOn>..\..\..\common\cpp\DarwinetRADLib\DateAndTimeFramework.h</DependentOn>
+				<BuildOrder>13</BuildOrder>
+			</CppCompile>
+			<CppCompile Include="..\..\..\common\cpp\DarwinetRADLib\EditPropertiesFormUnit.cpp">
+				<Form>EditPropertiesForm</Form>
+				<DependentOn>..\..\..\common\cpp\DarwinetRADLib\EditPropertiesFormUnit.h</DependentOn>
+				<BuildOrder>14</BuildOrder>
+			</CppCompile>
+			<CppCompile Include="..\..\..\common\cpp\DarwinetRADLib\EditPropertiesFrameUnit.cpp">
+				<Form>EditApplicationPropertiesFrame</Form>
+				<DesignClass>TFrame</DesignClass>
+				<DependentOn>..\..\..\common\cpp\DarwinetRADLib\EditPropertiesFrameUnit.h</DependentOn>
+				<BuildOrder>15</BuildOrder>
+			</CppCompile>
+			<CppCompile Include="..\..\..\common\cpp\DarwinetRADLib\FilePathFramework.cpp">
+				<DependentOn>..\..\..\common\cpp\DarwinetRADLib\FilePathFramework.h</DependentOn>
+				<BuildOrder>16</BuildOrder>
+			</CppCompile>
+			<CppCompile Include="..\..\..\common\cpp\DarwinetRADLib\IDEInterfacedSource.cpp">
+				<DependentOn>..\..\..\common\cpp\DarwinetRADLib\IDEInterfacedSource.h</DependentOn>
+				<BuildOrder>17</BuildOrder>
+			</CppCompile>
+			<CppCompile Include="..\..\..\common\cpp\DarwinetRADLib\PathsFramework.cpp">
+				<DependentOn>..\..\..\common\cpp\DarwinetRADLib\PathsFramework.h</DependentOn>
+				<BuildOrder>18</BuildOrder>
+			</CppCompile>
+			<CppCompile Include="..\..\..\common\cpp\DarwinetRADLib\ThreadHiveFrameWork.cpp">
+				<DependentOn>..\..\..\common\cpp\DarwinetRADLib\ThreadHiveFrameWork.h</DependentOn>
+				<BuildOrder>19</BuildOrder>
+			</CppCompile>
+			<None Include="..\..\..\common\cpp\DarwinetRADLib\utf8\source\utf8.h">
+				<BuildOrder>21</BuildOrder>
+			</None>
+			<None Include="..\..\..\common\cpp\DarwinetRADLib\utf8\source\utf8\checked.h">
+				<BuildOrder>22</BuildOrder>
+			</None>
+			<None Include="..\..\..\common\cpp\DarwinetRADLib\utf8\source\utf8\core.h">
+				<BuildOrder>23</BuildOrder>
+			</None>
+			<None Include="..\..\..\common\cpp\DarwinetRADLib\utf8\source\utf8\unchecked.h">
+				<BuildOrder>24</BuildOrder>
+			</None>
+			<CppCompile Include="..\..\..\common\cpp\DarwinetRADLib\VersionInfo\VERSINFO.CPP">
+				<DependentOn>..\..\..\common\cpp\DarwinetRADLib\VersionInfo\VERSINFO.h</DependentOn>
+				<BuildOrder>20</BuildOrder>
+			</CppCompile>
 			<CppCompile Include="darwinet\MainFramework.cpp">
 				<DependentOn>darwinet\MainFramework.h</DependentOn>
 				<BuildOrder>6</BuildOrder>
@@ -120,10 +193,14 @@
 				<BuildOrder>4</BuildOrder>
 			</CppCompile>
 			<None Include="HistoryOfChanges.txt"/>
-			<FormResources Include="Forms\ApplicationFormUnit.dfm"/>
-			<FormResources Include="Forms\MainFormUnit.dfm"/>
 			<FormResources Include="Forms\MessagingFormUnit.dfm"/>
 			<FormResources Include="Forms\MIVFormUnit.dfm"/>
+			<FormResources Include="Forms\MainFormUnit.dfm"/>
+			<FormResources Include="Forms\ApplicationFormUnit.dfm"/>
+			<FormResources Include="..\..\..\common\cpp\DarwinetRADLib\ABOUT.dfm"/>
+			<FormResources Include="..\..\..\common\cpp\DarwinetRADLib\BusinessLogFormUnit.dfm"/>
+			<FormResources Include="..\..\..\common\cpp\DarwinetRADLib\EditPropertiesFormUnit.dfm"/>
+			<FormResources Include="..\..\..\common\cpp\DarwinetRADLib\EditPropertiesFrameUnit.dfm"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>
