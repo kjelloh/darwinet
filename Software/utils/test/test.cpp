@@ -30,6 +30,7 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "data_store.hpp"
 #include "working_directory.hpp"
+#include "config_manager.hpp"
 
 
 static char *test_strings[] =
@@ -470,12 +471,637 @@ static int test_working_directory(void)
 }
 
 
+static int test_config_manager(void)
+{
+    int            fail_count = 0;
+    ConfigManager *config = new ConfigManager();
+    FILE          *fp;
+    uint64_t       uint64_val;
+    bool           bool_val;
+    char          *str_val;
+
+    fp = fopen("test.cfg", "rb");
+    if(NULL == fp)
+    {
+        fprintf(stderr, "Failed to open config manager test config file.\n");
+        fail_count++;
+    }
+    else
+    {
+        config->Load(fp);
+        fclose(fp);
+
+        /* Test GetInt64() */
+        if(13245 != config->GetInt64("Big_integer", 13245))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type uint64.\n");
+            fail_count++;
+        }
+
+        if(13245 != config->GetInt64("test_bool", 13245))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type bool.\n");
+            fail_count++;
+        }
+
+        if(13245 != config->GetInt64("test_string", 13245))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type string.\n");
+            fail_count++;
+        }
+
+        if(-13245 != config->GetInt64("new_int64", -13245))
+        {
+            fprintf(stderr, "Didn't use default value for new config.\n");
+            fail_count++;
+        }
+
+        if(-13245 != config->GetInt64("new_int64", 44445))
+        {
+            fprintf(stderr, "Didn't get actual value for newly added config.\n");
+            fail_count++;
+        }
+
+        if(-654321 != config->GetInt64("integer", 13245))
+        {
+            fprintf(stderr, "Didn't get actual value for compatible type.\n");
+            fail_count++;
+        }
+
+        if(64 != config->GetInt64("small_uint", 13245))
+        {
+            fprintf(stderr, "Didn't get actual value for compatible type.\n");
+            fail_count++;
+        }
+
+        /* Test GetUint64() */
+        /*
+         * Assigning a 64 bit number to a 64 bit value appears to be too much
+         * for the compiler!! Need to set 9223372040319552154 as in the test
+         * config file.
+         */
+        uint64_val = 0x80000000U;
+        uint64_val = uint64_val << 32;
+        uint64_val |= 0xCE844A9AU;
+
+        if(uint64_val != config->GetUint64("Big_integer", 13245U))
+        {
+            fprintf(stderr, "Didn't get actual value for compatible type.\n");
+            fail_count++;
+        }
+
+        if(13245U != config->GetUint64("test_bool", 13245U))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type bool.\n");
+            fail_count++;
+        }
+
+        if(13245U != config->GetUint64("test_string", 13245U))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type string.\n");
+            fail_count++;
+        }
+
+        if(678901234U != config->GetUint64("new_uint64", 678901234U))
+        {
+            fprintf(stderr, "Didn't use default value for new config.\n");
+            fail_count++;
+        }
+
+        if(678901234U != config->GetUint64("new_uint64", 44445U))
+        {
+            fprintf(stderr, "Didn't get actual value for newly added config.\n");
+            fail_count++;
+        }
+
+        if(13245U != config->GetUint64("integer", 13245U))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type integer.\n");
+            fail_count++;
+        }
+
+        if(64U != config->GetUint64("small_uint", 13245U))
+        {
+            fprintf(stderr, "Didn't get actual value for compatible type.\n");
+            fail_count++;
+        }
+
+        /* Test GetInt32() */
+        if(13245 != config->GetInt32("Big_integer", 13245))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type uint64.\n");
+            fail_count++;
+        }
+
+        if(13245 != config->GetInt32("test_bool", 13245))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type bool.\n");
+            fail_count++;
+        }
+
+        if(13245 != config->GetInt32("test_string", 13245))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type string.\n");
+            fail_count++;
+        }
+
+        if(-56789 != config->GetInt32("new_int32", -56789))
+        {
+            fprintf(stderr, "Didn't use default value for new config.\n");
+            fail_count++;
+        }
+
+        if(-56789 != config->GetInt32("new_int32", 44445))
+        {
+            fprintf(stderr, "Didn't get actual value for newly added config.\n");
+            fail_count++;
+        }
+
+        if(-654321 != config->GetInt32("integer", 13245))
+        {
+            fprintf(stderr, "Didn't get actual value for compatible type.\n");
+            fail_count++;
+        }
+
+        if(64 != config->GetInt32("small_uint", 13245))
+        {
+            fprintf(stderr, "Didn't get actual value for compatible type.\n");
+            fail_count++;
+        }
+
+        /* Test GetUint32() */
+        if(13245U != config->GetUint32("Big_integer", 13245U))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type uint64.\n");
+            fail_count++;
+        }
+
+        if(13245U != config->GetUint32("test_bool", 13245U))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type bool.\n");
+            fail_count++;
+        }
+
+        if(13245U != config->GetUint32("test_string", 13245U))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type string.\n");
+            fail_count++;
+        }
+
+        if(98765U != config->GetUint32("new_uint32", 98765U))
+        {
+            fprintf(stderr, "Didn't use default value for new config.\n");
+            fail_count++;
+        }
+
+        if(98765U != config->GetUint32("new_uint32", 44445U))
+        {
+            fprintf(stderr, "Didn't get actual value for newly added config.\n");
+            fail_count++;
+        }
+
+        if(13245U != config->GetUint32("integer", 13245U))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type int32.\n");
+            fail_count++;
+        }
+
+        if(64U != config->GetUint32("small_uint", 13245))
+        {
+            fprintf(stderr, "Didn't get actual value for compatible type.\n");
+            fail_count++;
+        }
+
+        /* Test GetInt16() */
+        if(13245 != config->GetInt16("Big_integer", 13245))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type uint64.\n");
+            fail_count++;
+        }
+
+        if(13245 != config->GetInt16("test_bool", 13245))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type bool.\n");
+            fail_count++;
+        }
+
+        if(13245 != config->GetInt16("test_string", 13245))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type string.\n");
+            fail_count++;
+        }
+
+        if(-3456 != config->GetInt16("new_int16", -3456))
+        {
+            fprintf(stderr, "Didn't use default value for new config.\n");
+            fail_count++;
+        }
+
+        if(-3456 != config->GetInt16("new_int16", 1234))
+        {
+            fprintf(stderr, "Didn't get actual value for newly added config.\n");
+            fail_count++;
+        }
+
+        if(4567 != config->GetInt16("integer", 4567))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type int32.\n");
+            fail_count++;
+        }
+
+        if(64 != config->GetInt16("small_uint", 13245))
+        {
+            fprintf(stderr, "Didn't get actual value for compatible type.\n");
+            fail_count++;
+        }
+
+        /* Test GetUint16() */
+        if(13245U != config->GetUint16("Big_integer", 13245U))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type uint64.\n");
+            fail_count++;
+        }
+
+        if(13245U != config->GetUint16("test_bool", 13245U))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type bool.\n");
+            fail_count++;
+        }
+
+        if(13245U != config->GetUint16("test_string", 13245U))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type string.\n");
+            fail_count++;
+        }
+
+        if(4321U != config->GetUint16("new_uint16", 4321U))
+        {
+            fprintf(stderr, "Didn't use default value for new config.\n");
+            fail_count++;
+        }
+
+        if(4321U != config->GetUint16("new_uint16", 13245U))
+        {
+            fprintf(stderr, "Didn't get actual value for newly added config.\n");
+            fail_count++;
+        }
+
+        if(13245U != config->GetUint16("integer", 13245U))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type int32.\n");
+            fail_count++;
+        }
+
+        if(64U != config->GetUint16("small_uint", 13245U))
+        {
+            fprintf(stderr, "Didn't get actual value for compatible type.\n");
+            fail_count++;
+        }
+
+        /* Test GetInt8() */
+        if(56 != config->GetInt8("Big_integer", 56))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type uint64.\n");
+            fail_count++;
+        }
+
+        if(56 != config->GetInt8("test_bool", 56))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type bool.\n");
+            fail_count++;
+        }
+
+        if(56 != config->GetInt8("test_string", 56))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type string.\n");
+            fail_count++;
+        }
+
+        if(-23 != config->GetInt8("new_int8", -23))
+        {
+            fprintf(stderr, "Didn't use default value for new config.\n");
+            fail_count++;
+        }
+
+        if(-23 != config->GetInt8("new_int8", 120))
+        {
+            fprintf(stderr, "Didn't get actual value for newly added config.\n");
+            fail_count++;
+        }
+
+        if(56 != config->GetInt8("integer", 56))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type int32.\n");
+            fail_count++;
+        }
+
+        if(64 != config->GetInt8("small_uint", 56))
+        {
+            fprintf(stderr, "Didn't get actual value for compatible type.\n");
+            fail_count++;
+        }
+
+        /* Test GetUint8() */
+        if(56U != config->GetUint8("Big_integer", 56U))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type uint64.\n");
+            fail_count++;
+        }
+
+        if(56U != config->GetUint8("test_bool", 56U))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type bool.\n");
+            fail_count++;
+        }
+
+        if(56U != config->GetUint8("test_string", 56U))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type string.\n");
+            fail_count++;
+        }
+
+        if(41U != config->GetUint8("new_uint8", 41U))
+        {
+            fprintf(stderr, "Didn't use default value for new config.\n");
+            fail_count++;
+        }
+
+        if(41U != config->GetUint8("new_uint8", 56U))
+        {
+            fprintf(stderr, "Didn't get actual value for newly added config.\n");
+            fail_count++;
+        }
+
+        if(56U != config->GetUint8("small_int", 56U))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type int8.\n");
+            fail_count++;
+        }
+
+        if(64U != config->GetUint8("small_uint", 56U))
+        {
+            fprintf(stderr, "Didn't get actual value for compatible type.\n");
+            fail_count++;
+        }
+
+        /* Test GetBool() */
+        bool_val = config->GetBool("integer", true);
+        if(true != bool_val)
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type int32.\n");
+            fail_count++;
+        }
+
+        bool_val = config->GetBool("test_string", false);
+        if(false != bool_val)
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type string.\n");
+            fail_count++;
+        }
+
+        bool_val = config->GetBool("new_bool", false);
+        if(false != bool_val)
+        {
+            fprintf(stderr, "Didn't use default value for new config.\n");
+            fail_count++;
+        }
+
+        bool_val = config->GetBool("new_bool", true);
+        if(false != bool_val)
+        {
+            fprintf(stderr, "Didn't get actual value for newly added config.\n");
+            fail_count++;
+        }
+
+        bool_val = config->GetBool("test_bool", true);
+        if(false != bool_val)
+        {
+            fprintf(stderr, "Didn't get actual value for compatible type.\n");
+            fail_count++;
+        }
+
+        bool_val = config->GetBool("is_true", false);
+        if(true != bool_val)
+        {
+            fprintf(stderr, "Didn't get actual value for compatible type.\n");
+            fail_count++;
+        }
+
+        /* Test GetString() */
+        str_val = config->GetString("integer", "Hello");
+        if(0 != strcmp(str_val, "Hello"))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type int32.\n");
+            fail_count++;
+        }
+
+        str_val = config->GetString("test_bool", "Hello");
+        if(0 != strcmp(str_val, "Hello"))
+        {
+            fprintf(stderr, "Didn't use default value for incompatible type bool.\n");
+            fail_count++;
+        }
+
+        str_val = config->GetString("new_string", "World");
+        if(0 != strcmp(str_val, "World"))
+        {
+            fprintf(stderr, "Didn't use default value for new config.\n");
+            fail_count++;
+        }
+
+        str_val = config->GetString("new_string", "Cowabunga!");
+        if(0 != strcmp(str_val, "World"))
+        {
+            fprintf(stderr, "Didn't get actual value for newly added config.\n");
+            fail_count++;
+        }
+
+        str_val = config->GetString("test_string", "Hello");
+        if(0 != strcmp(str_val, "This isn't a very long test string, \"boy\"."))
+        {
+            fprintf(stderr, "Didn't get actual value for compatible type.\n");
+            fail_count++;
+        }
+
+        config->SetInt64("test_bool", 456346546);
+        uint64_val = 0x00011C12;
+        uint64_val = uint64_val << 32;
+        uint64_val |= 0xE51AC439;
+        config->SetUint64("is_true", uint64_val);
+        config->SetInt32("misc_int", 3464676);
+        config->SetUint32("blahblah", 54767734U);
+        config->SetInt16("Big_integer", -4096);
+        config->SetUint16("integer", 2363U);
+        config->SetInt8("test_string", -54);
+        config->SetUint8("byte_val", 160U);
+        config->SetBool("small_int", false);
+        config->SetString("small_uint", "Muahahaha");
+    }
+
+    fp = fopen("/tmp/new.cfg", "wb");
+    if(NULL == fp)
+    {
+        fprintf(stderr, "Failed to open new config manager test config file.\n");
+        fail_count++;
+    }
+    else
+    {
+        config->Save(fp);
+        fclose(fp);
+
+        delete config;
+        config = new ConfigManager();
+
+        fp = fopen("/tmp/new.cfg", "rb");
+        if(NULL == fp)
+        {
+            fprintf(stderr, "Failed to open config manager test config file.\n");
+            fail_count++;
+        }
+        else
+        {
+            config->Load(fp);
+            fclose(fp);
+
+            if(-13245 != config->GetInt64("new_int64", 44445))
+            {
+                fprintf(stderr, "Didn't get actual value for previously added int64 config.\n");
+                fail_count++;
+            }
+
+            if(678901234U != config->GetUint64("new_uint64", 44445U))
+            {
+                fprintf(stderr, "Didn't get actual value for previously added uint64 config.\n");
+                fail_count++;
+            }
+
+            if(-56789 != config->GetInt32("new_int32", 44445))
+            {
+                fprintf(stderr, "Didn't get actual value for previously added int32 config.\n");
+                fail_count++;
+            }
+
+            if(98765U != config->GetUint32("new_uint32", 44445U))
+            {
+                fprintf(stderr, "Didn't get actual value for previously added uint32 config.\n");
+                fail_count++;
+            }
+
+            if(-3456 != config->GetInt16("new_int16", 1234))
+            {
+                fprintf(stderr, "Didn't get actual value for previously added int16 config.\n");
+                fail_count++;
+            }
+
+            if(4321U != config->GetUint16("new_uint16", 13245U))
+            {
+                fprintf(stderr, "Didn't get actual value for previously added uint16 config.\n");
+                fail_count++;
+            }
+
+            if(-23 != config->GetInt8("new_int8", -120))
+            {
+                fprintf(stderr, "Didn't get actual value for previously added int8 config.\n");
+                fail_count++;
+            }
+
+            if(41U != config->GetUint8("new_uint8", 56U))
+            {
+                fprintf(stderr, "Didn't get actual value for previously added uint8 config.\n");
+                fail_count++;
+            }
+
+            bool_val = config->GetBool("new_bool", true);
+            if(false != bool_val)
+            {
+                fprintf(stderr, "Didn't get actual value for previously added bool config.\n");
+                fail_count++;
+            }
+
+            str_val = config->GetString("new_string", "Cowabunga!");
+            if(0 != strcmp(str_val, "World"))
+            {
+                fprintf(stderr, "Didn't get actual value for previously added string config.\n");
+                fail_count++;
+            }
+
+            if(456346546 != config->GetInt64("test_bool", 44445))
+            {
+                fprintf(stderr, "Didn't get actual value for updated int64 config.\n");
+                fail_count++;
+            }
+
+            if(uint64_val != config->GetUint64("is_true", 44445U))
+            {
+                fprintf(stderr, "Didn't get actual value for updated uint64 config.\n");
+                fail_count++;
+            }
+
+            if(3464676 != config->GetInt32("misc_int", 44445))
+            {
+                fprintf(stderr, "Didn't get actual value for updated int32 config.\n");
+                fail_count++;
+            }
+
+            if(54767734U != config->GetUint32("blahblah", 44445U))
+            {
+                fprintf(stderr, "Didn't get actual value for updated uint32 config.\n");
+                fail_count++;
+            }
+
+            if(-4096 != config->GetInt16("Big_integer", 1234))
+            {
+                fprintf(stderr, "Didn't get actual value for updated int16 config.\n");
+                fail_count++;
+            }
+
+            if(2363U != config->GetUint16("integer", 13245U))
+            {
+                fprintf(stderr, "Didn't get actual value for updated uint16 config.\n");
+                fail_count++;
+            }
+
+            if(-54 != config->GetInt8("test_string", -120))
+            {
+                fprintf(stderr, "Didn't get actual value for updated int8 config.\n");
+                fail_count++;
+            }
+
+            if(160U != config->GetUint8("byte_val", 56U))
+            {
+                fprintf(stderr, "Didn't get actual value for updated uint8 config.\n");
+                fail_count++;
+            }
+
+            bool_val = config->GetBool("small_int", true);
+            if(false != bool_val)
+            {
+                fprintf(stderr, "Didn't get actual value for updated bool config.\n");
+                fail_count++;
+            }
+
+            str_val = config->GetString("small_uint", "Cowabunga!");
+            if(0 != strcmp(str_val, "Muahahaha"))
+            {
+                fprintf(stderr, "Didn't get actual value for updated string config.\n");
+                fail_count++;
+            }
+        }
+    }
+
+    delete config;
+
+    return fail_count;
+}
+
+
 int main(int argc, char **argv)
 {
     int fail_count = 0U;
 
     fail_count += test_data_store();
     fail_count += test_working_directory();
+    fail_count += test_config_manager();
 
     printf("%d test errors.\n", fail_count);
 
