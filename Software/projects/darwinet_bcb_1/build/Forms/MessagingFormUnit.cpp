@@ -10,6 +10,7 @@
 #pragma hdrstop
 
 #include "MessagingFormUnit.h"
+#include "BerTlv.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma resource "*.dfm"
@@ -59,5 +60,13 @@ void __fastcall TMessagingForm::FormCreate(TObject *Sender)
 {
 	this->FromOtherPeerTCPServer->DefaultPort = 4711;
 	this->updateGUIToReflectCurrentState();
+
+	// Test BERTLV
+	std::vector<const bertlv::BerTlv<int>*> items;
+	const bertlv::BerTlv<int>* pDelta = bertlv::BerTlv<int>::createCompositeBerTlv(0,items);
+
+//	#### TODO 130321, define Darwinet Message with BERTLV contents to send/receive deltas using PeerNet
+
+	// End test BERTLV
 }
 //---------------------------------------------------------------------------

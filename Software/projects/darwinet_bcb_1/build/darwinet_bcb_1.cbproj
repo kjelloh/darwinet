@@ -37,14 +37,14 @@
 		<PropertyGroup Condition="'$(Base)'!=''">
 			<_TCHARMapping>wchar_t</_TCHARMapping>
 			<ProjectType>CppVCLApplication</ProjectType>
-			<ILINK_LibraryPath>..\..\..\common\cpp\DarwinetRADLib\utf8\source\utf8\;..\..\..\common\cpp\DarwinetRADLib\utf8\source\;..\..\..\common\cpp\DarwinetRADLib\VersionInfo\;..\..\..\common\cpp\DarwinetRADLib\;darwinet\;Forms\;C:\subversion\Darwinet\trunk\Software\darwinet_bcb_1\build\;$(ILINK_LibraryPath)</ILINK_LibraryPath>
+			<ILINK_LibraryPath>..\..\..\common\cpp\Message\;..\..\..\common\cpp\DarwinetRADLib\utf8\source\utf8\;..\..\..\common\cpp\DarwinetRADLib\utf8\source\;..\..\..\common\cpp\DarwinetRADLib\VersionInfo\;..\..\..\common\cpp\DarwinetRADLib\;darwinet\;Forms\;C:\subversion\Darwinet\trunk\Software\darwinet_bcb_1\build\;$(ILINK_LibraryPath)</ILINK_LibraryPath>
 			<PackageImports>IPIndyImpl;bindcompfmx;fmx;rtl;dbrtl;IndySystem;DbxClientDriver;bindcomp;inetdb;DBXInterBaseDriver;DataSnapCommon;DataSnapClient;DataSnapServer;DataSnapProviderClient;xmlrtl;DbxCommonDriver;IndyProtocols;DBXMySQLDriver;dbxcds;soaprtl;bindengine;DBXOracleDriver;CustomIPTransport;dsnap;DBXInformixDriver;IndyCore;fmxase;DBXFirebirdDriver;inet;fmxobj;inetdbxpress;DBXSybaseASADriver;fmxdae;dbexpress;DataSnapIndy10ServerTransport;$(PackageImports)</PackageImports>
 			<Multithreaded>true</Multithreaded>
 			<DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
 			<AllPackageLibs>rtl.lib;vcl.lib;vclactnband.lib;vclx.lib;VclSmp.lib;IndyCore.lib;IndySystem.lib;IndyProtocols.lib</AllPackageLibs>
 			<Icon_MainIcon>$(BDS)\bin\cbuilder_PROJECTICON.ico</Icon_MainIcon>
 			<UsingDelphiRTL>true</UsingDelphiRTL>
-			<IncludePath>..\..\..\common\cpp\DarwinetRADLib\utf8\source\utf8\;..\..\..\common\cpp\DarwinetRADLib\utf8\source\;..\..\..\common\cpp\DarwinetRADLib\VersionInfo\;..\..\..\common\cpp\DarwinetRADLib\;darwinet\;Forms\;C:\subversion\Darwinet\trunk\Software\darwinet_bcb_1\build\;$(IncludePath)</IncludePath>
+			<IncludePath>..\..\..\common\cpp\Message\;..\..\..\common\cpp\DarwinetRADLib\utf8\source\utf8\;..\..\..\common\cpp\DarwinetRADLib\utf8\source\;..\..\..\common\cpp\DarwinetRADLib\VersionInfo\;..\..\..\common\cpp\DarwinetRADLib\;darwinet\;Forms\;C:\subversion\Darwinet\trunk\Software\darwinet_bcb_1\build\;$(IncludePath)</IncludePath>
 			<DCC_CBuilderOutput>JPHNE</DCC_CBuilderOutput>
 			<DynamicRTL>true</DynamicRTL>
 			<UsePackages>true</UsePackages>
@@ -165,6 +165,10 @@
 				<DependentOn>..\..\..\common\cpp\DarwinetRADLib\VersionInfo\VERSINFO.h</DependentOn>
 				<BuildOrder>20</BuildOrder>
 			</CppCompile>
+			<CppCompile Include="..\..\..\common\cpp\Message\BerTlv.cpp">
+				<DependentOn>..\..\..\common\cpp\Message\BerTlv.h</DependentOn>
+				<BuildOrder>25</BuildOrder>
+			</CppCompile>
 			<CppCompile Include="darwinet\MainFramework.cpp">
 				<DependentOn>darwinet\MainFramework.h</DependentOn>
 				<BuildOrder>6</BuildOrder>
@@ -195,10 +199,10 @@
 			<None Include="HistoryOfChanges.txt"/>
 			<FormResources Include="Forms\MessagingFormUnit.dfm"/>
 			<FormResources Include="Forms\MIVFormUnit.dfm"/>
-			<FormResources Include="Forms\MainFormUnit.dfm"/>
 			<FormResources Include="Forms\ApplicationFormUnit.dfm"/>
-			<FormResources Include="..\..\..\common\cpp\DarwinetRADLib\ABOUT.dfm"/>
+			<FormResources Include="Forms\MainFormUnit.dfm"/>
 			<FormResources Include="..\..\..\common\cpp\DarwinetRADLib\BusinessLogFormUnit.dfm"/>
+			<FormResources Include="..\..\..\common\cpp\DarwinetRADLib\ABOUT.dfm"/>
 			<FormResources Include="..\..\..\common\cpp\DarwinetRADLib\EditPropertiesFormUnit.dfm"/>
 			<FormResources Include="..\..\..\common\cpp\DarwinetRADLib\EditPropertiesFrameUnit.dfm"/>
 			<BuildConfiguration Include="Release">
