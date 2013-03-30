@@ -19,12 +19,16 @@ ifeq ($(SYSTEM),Cygwin)
 endif
 
 
-.PHONY: all clean 
+.PHONY: all clean test
 
 all: $(LIBS_DIR)/$(TARGET)
 
 clean:
 	$(RM) $(OBJ_DIR) $(DEPS_DIR) $(LIBS_DIR)
+	make -C test clean
+
+test: $(LIBS_DIR)/$(TARGET)
+	make -C test
 
 $(LIBS_DIR)/$(TARGET): $(OBJ_FILES)
 	@if [ ! -d $(LIBS_DIR) ]; then $(RM) $(LIBS_DIR); echo "Creating directory: $(LIBS_DIR)"; mkdir $(LIBS_DIR); fi

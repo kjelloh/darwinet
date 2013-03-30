@@ -37,6 +37,7 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 class WorkingDirectory;
 class ConfigManager;
+class DataStore;
 
 
 class DarwinetServer
@@ -60,7 +61,7 @@ public:
      */
     static bool Spawn(const char *home_directory);
 
-private:
+protected:
     DarwinetServer(WorkingDirectory *dir);
     ~DarwinetServer();
 
@@ -93,10 +94,23 @@ private:
      */
     void Stop() { _running = false; }
 
+private:
     /**
      * @brief Internal signal handler.
+     *
+     * @param[in]    sig               Signal to handle.
      */
     static void sig_handler(int sig);
+
+    /**
+     * @brief Accept an incoming connection from an application.
+     */
+    void accept_app_connection(void);
+
+    /**
+     * @brief Allow all application connections to process any data.
+     */
+    void process_app_connections(void);
 
     static DarwinetServer *_server;
 
@@ -104,7 +118,7 @@ private:
     ConfigManager         *_config;
     bool                   _running;
     int                    _app_listen_socket;
-    uint32_t               _max_app_connections;
+    DataStore             *_apps;
 
 };
 
