@@ -9,6 +9,7 @@
 #define COMMANDLINEPROCESSOR_H_
 
 #include <string>
+#include "DarwinetEngineProxy.h"
 
 class CommandLineProcessor {
 public:
@@ -27,6 +28,20 @@ public:
 	 * Returns false if the command was an Exit command
 	 */
 	bool execute(const std::string& sCommandLine);
+
+private:
+
+	/**
+	 * Private storage of our Darwinet Engine Proxy instance
+	 */
+	DarwinetEngineProxy::shared_ptr m_pDarwinetEngineProxy;
+
+	/**
+	 * Returns access to our Darwinet Engine Proxy,
+	 * creating it if it does not yet exist.
+	 */
+	DarwinetEngineProxy::shared_ptr getDarwinetEngineProxy();
+
 };
 
 #endif /* COMMANDLINEPROCESSOR_H_ */

@@ -11,10 +11,9 @@ int main() {
 	CommandLineProcessor commandLineProcessor;
 	std::string sCommandLine;
 	while (loop_again) {
-		std::cout << ">";
+		std::cout  << std::endl << ">";
 		std::cin >> sCommandLine;
 		loop_again = commandLineProcessor.execute(sCommandLine);
-
 	}
 	return result;
 }
