@@ -28,28 +28,28 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "message.hpp"
 #include "app_messages.hpp"
 
-#include "app_connection.hpp"
+#include "engine_test_connection.hpp"
 
 
 static ParserMap f_parser_map;
 
 
-AppConnection::AppConnection(int socket_fd)
+EngineTestConnection::EngineTestConnection(int socket_fd)
               :SocketConnection(socket_fd)
 {
     if(f_parser_map.empty())
     {
-        ADD_PARSER(f_parser_map, APP_MESSAGE_TYPE_QVER, QueryVersionMessage);
+        ADD_PARSER(f_parser_map, APP_MESSAGE_TYPE_DVER, DarwinetVersionMessage);
     }
 }
 
 
-AppConnection::~AppConnection()
+EngineTestConnection::~EngineTestConnection()
 {
 }
 
 
-ParserMap *AppConnection::GetParsers()
+ParserMap *EngineTestConnection::GetParsers()
 {
     return &f_parser_map;
 }

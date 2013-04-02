@@ -39,7 +39,7 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "working_directory.hpp"
 #include "darwinet_server.hpp"
-#include "app_connection.hpp"
+#include "engine_test_connection.hpp"
 #include "app_messages.hpp"
 
 
@@ -132,19 +132,19 @@ int read_port(WorkingDirectory *wd, char *desc, uint16_t *port)
 
 static int test_engine_connect(void)
 {
-    int                 fail_count = 0;
-    WorkingDirectory   *wd1;
-    WorkingDirectory   *wd2;
-    pid_t               engine_pid = 0;
-    pid_t               test_pid   = 0;
-    bool                exists;
-    uint16_t            port;
-    struct sockaddr_in  addr;
-    int                 sock_fd;
-    AppConnection      *connection;
-    Message            *msg        = NULL;
-    struct pollfd       poll_fd;
-    int                 retval;
+    int                   fail_count = 0;
+    WorkingDirectory     *wd1;
+    WorkingDirectory     *wd2;
+    pid_t                 engine_pid = 0;
+    pid_t                 test_pid   = 0;
+    bool                  exists;
+    uint16_t              port;
+    struct sockaddr_in    addr;
+    int                   sock_fd;
+    EngineTestConnection *connection;
+    Message              *msg        = NULL;
+    struct pollfd         poll_fd;
+    int                   retval;
 
     wd1 = WorkingDirectory::OpenWorkingDirectory("/tmp", "test");
     if(NULL == wd1)
@@ -222,7 +222,7 @@ static int test_engine_connect(void)
                         }
                         else
                         {
-                            connection = new AppConnection(sock_fd);
+                            connection = new EngineTestConnection(sock_fd);
                             if((sizeof(uint32_t) * 2) != connection->Send(new QueryVersionMessage()))
                             {
                                 fprintf(stderr, "Incorrect number of bytes written for Query Version message.\n");

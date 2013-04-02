@@ -21,37 +21,33 @@ JONTOM XIRE HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT,
 UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 */
 
-
-#include <stdint.h>
-#include <string.h>
-
-#include "message.hpp"
-#include "app_messages.hpp"
-
-#include "app_connection.hpp"
+/*
+ * This class implements a connection between the test code and the Darwinet
+ * engine.
+ */
 
 
-static ParserMap f_parser_map;
+#ifndef _ENGINE_TEST_CONNECTION_HPP_
+#define _ENGINE_TEST_CONNECTION_HPP_
 
 
-AppConnection::AppConnection(int socket_fd)
-              :SocketConnection(socket_fd)
+
+#include "socket_connection.hpp"
+
+
+class EngineTestConnection : public SocketConnection
 {
-    if(f_parser_map.empty())
-    {
-        ADD_PARSER(f_parser_map, APP_MESSAGE_TYPE_QVER, QueryVersionMessage);
-    }
-}
+public:
+    EngineTestConnection(int socket_fd);
+    virtual ~EngineTestConnection();
+
+protected:
+    virtual ParserMap *GetParsers();
+
+private:
+
+};
 
 
-AppConnection::~AppConnection()
-{
-}
-
-
-ParserMap *AppConnection::GetParsers()
-{
-    return &f_parser_map;
-}
-
+#endif /* !_ENGINE_TEST_CONNECTION_HPP_ */
 
