@@ -1,10 +1,13 @@
-# Makefile for Darwinet utility class library.
+# Makefile for Darwinet engine library.
 
 SYSTEM    := $(shell uname -o)
+MAJOR_VER := 0
+MINOR_VER := $(shell svn info | grep "Revision: " | sed 's/.*: *//')
 CPPC      := g++
 AR        := ar -crus
 RM        := rm -rf
-CPP_FLAGS := -Wall -g -Iinc
+CPP_FLAGS := -DMAJOR_VER=$(MAJOR_VER) -DMINOR_VER=$(MINOR_VER) \
+             -Wall -g -Iinc -I../utils/cpp/inc
 LN_FLAGS  := 
 OBJ_DIR   := build
 DEPS_DIR  := deps
@@ -12,19 +15,23 @@ LIBS_DIR  := libs
 CPP_FILES := $(shell ls src/*.cpp 2> /dev/null)
 OBJ_FILES := $(patsubst src/%.cpp,$(OBJ_DIR)/%.opp,$(CPP_FILES))
 DEP_FILES := $(patsubst src/%.cpp,$(DEPS_DIR)/%.dpp,$(CPP_FILES))
-TARGET    := libdarwinet_utils.a
+TARGET    := libdarwinet_engine.a
 
 ifeq ($(SYSTEM),Cygwin)
     CPP_FLAGS += -DCYGWIN
 endif
 
 
-.PHONY: all clean 
+.PHONY: all clean test
 
 all: $(LIBS_DIR)/$(TARGET)
 
 clean:
 	$(RM) $(OBJ_DIR) $(DEPS_DIR) $(LIBS_DIR)
+	$(MAKE) -C test clean
+
+test: $(LIBS_DIR)/$(TARGET)
+	$(MAKE) -C test
 
 $(LIBS_DIR)/$(TARGET): $(OBJ_FILES)
 	@if [ ! -d $(LIBS_DIR) ]; then $(RM) $(LIBS_DIR); echo "Creating directory: $(LIBS_DIR)"; mkdir $(LIBS_DIR); fi

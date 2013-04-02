@@ -30,12 +30,12 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include <errno.h>
 #include <sys/socket.h>
 
+#include "message.hpp"
+
 #include "socket_connection.hpp"
 
 
 #define INIT_BUF_SIZE   1024U
-#define BUF_GROW_CHUNK  512U
-#define MAX_BUF_SIZE    8192U
 #define MIN_BUF_READ    64U
 
 
@@ -48,6 +48,9 @@ SocketConnection::SocketConnection(int socket_fd)
     _write_buf_size = INIT_BUF_SIZE;
     _write_byte_count = 0U;
     _write_buf = new uint8_t [_write_buf_size];
+
+    _buf_grow_size = 512U;
+    _max_buf_size = 8192U;
 }
 
 
@@ -64,6 +67,42 @@ SocketConnection::~SocketConnection()
 }
 
 
+uint32_t SocketConnection::GetNextMessageType()
+{
+    uint32_t  result      = 0U;
+    uint32_t  msg_hdr_len = Message::GetHeaderLength();
+    uint8_t  *ptr;
+    uint32_t  type;
+    uint32_t  length;
+
+    if(msg_hdr_len <= _read_byte_count)
+    {
+        ptr = _read_buf;
+        Message::ParseHeader(&ptr, &type, &length);
+
+        if((length + msg_hdr_len) <= _read_byte_count)
+        {
+            result = type;
+        }
+    }
+
+    return result;
+}
+
+
+bool SocketConnection::IsFinished()
+{
+    bool result = true;
+
+    if((0U != GetNextMessageType()) || (-1 != _socket_fd))
+    {
+        result = false;
+    }
+
+    return result;
+}
+
+
 void SocketConnection::InitialisePoll(struct pollfd *poll_fd)
 {
     uint8_t *tmp_buf;
@@ -72,12 +111,15 @@ void SocketConnection::InitialisePoll(struct pollfd *poll_fd)
     poll_fd->events = 0;
     poll_fd->revents = 0;
 
-    if((_read_buf_size < MAX_BUF_SIZE) &&
+    if((_read_buf_size < _max_buf_size) &&
        (MIN_BUF_READ > (_read_buf_size - _read_byte_count)))
     {
-        _read_buf_size += BUF_GROW_CHUNK;
+        _read_buf_size += _buf_grow_size;
         tmp_buf = new uint8_t [_read_buf_size];
-        memcpy(tmp_buf, _read_buf, _read_byte_count);
+        if(0U < _read_byte_count)
+        {
+            memcpy(tmp_buf, _read_buf, _read_byte_count);
+        }
         delete [] _read_buf;
         _read_buf = tmp_buf;
     }
@@ -161,6 +203,84 @@ void SocketConnection::ProcessPoll(struct pollfd *poll_fd)
             }
         }
     }
+}
+
+
+int SocketConnection::Send(Message *msg)
+{
+    int       result        = 0;
+    uint32_t  length;
+    uint32_t  req_buf_size;
+    uint8_t  *tmp_buf;
+    uint8_t  *ptr;
+
+    if(0 > _socket_fd)
+    {
+        result = -1;
+    }
+    else
+    {
+        length = msg->GetHeaderLength() + msg->GetBodyLength();
+        req_buf_size = _write_buf_size;
+
+        while(length > (req_buf_size - _write_byte_count))
+        {
+            req_buf_size += _buf_grow_size;
+        }
+
+        if((req_buf_size <= _max_buf_size) && (req_buf_size > _write_buf_size))
+        {
+            _write_buf_size = req_buf_size;
+            tmp_buf = new uint8_t [_write_buf_size];
+            if(0U < _write_byte_count)
+            {
+                memcpy(tmp_buf, _write_buf, _write_byte_count);
+            }
+            delete [] _write_buf;
+            _write_buf = tmp_buf;
+        }
+
+        if((_write_buf_size - _write_byte_count) < length)
+        {
+            result = 0;
+        }
+        else
+        {
+            ptr = &(_write_buf[_write_byte_count]);
+            result = msg->Write(&ptr);
+            _write_byte_count += result;
+        }
+    }
+
+    delete msg;
+
+    return result;
+}
+
+
+Message *SocketConnection::Recv()
+{
+    Message       *result      = NULL;
+    ParserMap     *parsers     = GetParsers();
+    uint32_t       msg_hdr_len = Message::GetHeaderLength();
+    uint8_t       *ptr;
+    uint32_t       type;
+    uint32_t       length;
+    MessageParser  parser;
+
+    if((NULL != parsers) && (msg_hdr_len <= _read_byte_count))
+    {
+        ptr = _read_buf;
+        Message::ParseHeader(&ptr, &type, &length);
+
+        if((length + msg_hdr_len) <= _read_byte_count)
+        {
+            parser = parsers->find(type)->second;
+            result = parser(&ptr, length);
+        }
+    }
+
+    return result;
 }
 
 

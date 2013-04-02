@@ -40,6 +40,7 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "config_manager.hpp"
 #include "data_store.hpp"
 #include "app_connection.hpp"
+#include "app_messages.hpp"
 
 #include "darwinet_server.hpp"
 
@@ -395,25 +396,45 @@ void DarwinetServer::accept_app_connection(void)
 void DarwinetServer::process_app_connections(void)
 {
     AppConnection *app;
+    uint8_t       *key;
+    uint32_t       key_length;
+    Message       *msg;
+    Message       *reply;
 
-    app = (AppConnection *)(_apps->GetFirstData(NULL, NULL));
+    app = (AppConnection *)(_apps->GetFirstData(&key, &key_length));
 
     while(NULL != app)
     {
+        msg = app->Recv();
+        if(NULL != msg)
+        {
+            switch(msg->GetType())
+            {
+                case APP_MESSAGE_TYPE_QVER:
+                {
+                    /* The version values are defined by the makefile. */
+                    reply = new DarwinetVersionMessage((uint32_t)MAJOR_VER, (uint32_t)MINOR_VER);
+                    app->Send(reply);
+                    break;
+                }
 
 
-        /* TODO: Each app connection needs to process data read or errors received. At this point we need some mechanism for the app connection class to talk to this one so that this code can:
-         *
-         * 1) remove the app connection if an error occurred and the socket was closed.
-         * 2) Send messages to other nodes if required
-         *
-         * We still need to decide the operational process of this class - i.e. what it needs to do. Initially we are doing a simple chat program prototype. like the non-group friends stuff I designed for Peernet. The design I want for it is an open domain - unlike Kjell-Olov's basic design, the set of domain members is potentially infinite and joining does not require invitation, nor does a full list of domain members form part of the domain information. Instead each user forms their own list of "friends" within the domain.
-         */
+                default:
+                {
+                    break;
+                }
+            }
 
+            delete msg;
+        }
 
+        if(true == app->IsFinished())
+        {
+            _apps->Remove(key, key_length);
+            delete app;
+        }
 
-
-        app = (AppConnection *)(_apps->GetNextData(NULL, NULL));
+        app = (AppConnection *)(_apps->GetNextData(&key, &key_length));
     }
 }
 

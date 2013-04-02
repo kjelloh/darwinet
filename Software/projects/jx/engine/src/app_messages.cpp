@@ -21,31 +21,47 @@ JONTOM XIRE HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT,
 UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 */
 
-/*
- * This class implements a connection to an application. It handles buffering
- * reads and writes to and from the socket as well as storing application and
- * user information and state values.
- */
+
+#include <stdint.h>
+#include <stdbool.h>
+
+#include "app_messages.hpp"
 
 
-#ifndef _APP_CONNECTION_HPP_
-#define _APP_CONNECTION_HPP_
-
-
-
-#include "socket_connection.hpp"
-
-
-class AppConnection : public SocketConnection
+DarwinetVersionMessage::DarwinetVersionMessage(uint8_t **ptr, uint32_t length)
+                      : Message(APP_MESSAGE_TYPE_DVER, (sizeof(uint32_t) * 2))
 {
-public:
-    AppConnection(int socket_fd);
-    virtual ~AppConnection();
+    /* TODO: Throw an error or something if the length is wrong. */
+    if(8U != length)
+    {
+        _major_version = 0U;
+        _minor_version = 0U;
+        *ptr += length;
+    }
+    else
+    {
+        _major_version = ParseUint32(ptr);
+        _minor_version = ParseUint32(ptr);
+    }
+}
 
-private:
 
-};
+DarwinetVersionMessage::DarwinetVersionMessage(uint32_t major, uint32_t minor)
+                      : Message(APP_MESSAGE_TYPE_DVER, (sizeof(uint32_t) * 2))
+{
+    _major_version = major;
+    _minor_version = minor;
+}
 
 
-#endif /* !_APP_CONNECTION_HPP_ */
+uint32_t DarwinetVersionMessage::Write(uint8_t **ptr)
+{
+    uint32_t length = Message::Write(ptr);
+
+    length += WriteUint32(_major_version, ptr);
+    length += WriteUint32(_minor_version, ptr);
+
+    return length;
+}
+
 

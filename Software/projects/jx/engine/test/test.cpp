@@ -24,9 +24,14 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 #include <signal.h>
 #include <errno.h>
 #include <unistd.h>
+#include <fcntl.h>
+#define __USE_GNU            /* To enable declaration of ppoll(). */
+#include <poll.h>
+#undef __USE_GNU
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -34,6 +39,8 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 #include "working_directory.hpp"
 #include "darwinet_server.hpp"
+#include "app_connection.hpp"
+#include "app_messages.hpp"
 
 
 #define DEFAULT_SERVER_PORT  4242U
@@ -129,11 +136,15 @@ static int test_engine_connect(void)
     WorkingDirectory   *wd1;
     WorkingDirectory   *wd2;
     pid_t               engine_pid = 0;
-    pid_t               test_pid     = 0;
+    pid_t               test_pid   = 0;
     bool                exists;
     uint16_t            port;
     struct sockaddr_in  addr;
     int                 sock_fd;
+    AppConnection      *connection;
+    Message            *msg        = NULL;
+    struct pollfd       poll_fd;
+    int                 retval;
 
     wd1 = WorkingDirectory::OpenWorkingDirectory("/tmp", "test");
     if(NULL == wd1)
@@ -196,22 +207,73 @@ static int test_engine_connect(void)
                     }
                     else
                     {
-                        if(0 != connect(sock_fd, (const sockaddr *)(&addr), sizeof(struct sockaddr_in)))
+                        if(-1 == fcntl(sock_fd, F_SETFL, O_NONBLOCK))
                         {
-                            fprintf(stderr, "Failed to connect to Darwinet engine.\n");
+                            fprintf(stderr, "failed to set socket non-blocking.\n");
                             fail_count++;
+                            (void)close(sock_fd);
+                        }
+                        else if((0 != connect(sock_fd, (const sockaddr *)(&addr), sizeof(struct sockaddr_in))) &&
+                                 (EINPROGRESS != errno))
+                        {
+                            fprintf(stderr, "Failed to connect to Darwinet engine (%s).\n", strerror(errno));
+                            fail_count++;
+                            (void)close(sock_fd);
                         }
                         else
                         {
+                            connection = new AppConnection(sock_fd);
+                            if((sizeof(uint32_t) * 2) != connection->Send(new QueryVersionMessage()))
+                            {
+                                fprintf(stderr, "Incorrect number of bytes written for Query Version message.\n");
+                                fail_count++;
+                            }
+                            else
+                            {
+                                while(NULL == msg)
+                                {
+                                    connection->InitialisePoll(&poll_fd);
+                                    retval = poll(&poll_fd, 1, 1000);
+                                    if(0 > retval)
+                                    {
+                                        if((EAGAIN != retval) && (EINTR != retval))
+                                        {
+                                            fprintf(stderr, "Failed to poll socket.\n");
+                                            fail_count++;
+                                            break;
+                                        }
+                                    }
+                                    else if(0 == retval)
+                                    {
+                                        fprintf(stderr, "Timed out waiting for response from Darwinet engine.\n");
+                                        fail_count++;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        connection->ProcessPoll(&poll_fd);
+                                        msg = connection->Recv();
 
+                                        if(true == connection->IsFinished())
+                                        {
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
 
+                            delete connection;
 
-
-
-                            (void)shutdown(sock_fd, SHUT_RDWR);
+                            if(NULL == msg)
+                            {
+                                fprintf(stderr, "No reply message received from Darwinet engine.\n");
+                                fail_count++;
+                            }
+                            else
+                            {
+                                /* TODO: Verify reply message is correct. */
+                            }
                         }
-
-                        (void)close(sock_fd);
                     }
                 }
 

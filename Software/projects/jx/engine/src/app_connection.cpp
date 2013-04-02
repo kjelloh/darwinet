@@ -21,51 +21,38 @@ JONTOM XIRE HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT,
 UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 */
 
-/*
- * This class implements a socket connection. It handles buffering
- * reads and writes to and from, and general operations on, a socket.
- */
-
-
-#ifndef _SOCKET_CONNECTION_HPP_
-#define _SOCKET_CONNECTION_HPP_
-
 
 #include <stdint.h>
+#include <string.h>
+
+#include "message.hpp"
+#include "app_messages.hpp"
+
+#include "app_connection.hpp"
 
 
-class SocketConnection
+static ParserMap f_parser_map;
+
+
+AppConnection::AppConnection(int socket_fd)
+              :SocketConnection(socket_fd)
 {
-public:
-    SocketConnection(int socket_fd);
-    virtual ~SocketConnection();
-
-    /**
-     * @brief Initialise a poll() fd structure for this connection.
-     *
-     * @param[in]    poll_fd           poll() fd structure to initialise.
-     */
-    void InitialisePoll(struct pollfd *poll_fd);
-
-    /**
-     * @brief Process the results of a call to poll().
-     *
-     * @param[in]    poll_fd           poll() fd structure to process.
-     */
-    void ProcessPoll(struct pollfd *poll_fd);
-
-protected:
-    int      _socket_fd;
-    uint32_t  _read_buf_size;
-    uint32_t  _read_byte_count;
-    uint8_t  *_read_buf;
-    uint32_t  _write_buf_size;
-    uint32_t  _write_byte_count;
-    uint8_t  *_write_buf;
-
-};
+    if(f_parser_map.empty())
+    {
+        ADD_PARSER(f_parser_map, APP_MESSAGE_TYPE_QVER, QueryVersionMessage);
+        ADD_PARSER(f_parser_map, APP_MESSAGE_TYPE_DVER, DarwinetVersionMessage);
+    }
+}
 
 
+AppConnection::~AppConnection()
+{
+}
 
-#endif /* !_SOCKET_CONNECTION_HPP_ */
+
+ParserMap *AppConnection::GetParsers()
+{
+    return &f_parser_map;
+}
+
 

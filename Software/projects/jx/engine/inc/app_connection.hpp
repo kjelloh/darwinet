@@ -21,17 +21,33 @@ JONTOM XIRE HAS NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT,
 UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 */
 
+/*
+ * This class implements a connection between the Darwinet engine and an
+ * application.
+ */
 
-#include "app_connection.hpp"
+
+#ifndef _APP_CONNECTION_HPP_
+#define _APP_CONNECTION_HPP_
 
 
-AppConnection::AppConnection(int socket_fd)
-              :SocketConnection(socket_fd)
+
+#include "socket_connection.hpp"
+
+
+class AppConnection : public SocketConnection
 {
-}
+public:
+    AppConnection(int socket_fd);
+    virtual ~AppConnection();
+
+protected:
+    virtual ParserMap *GetParsers();
+
+private:
+
+};
 
 
-AppConnection::~AppConnection()
-{
-}
+#endif /* !_APP_CONNECTION_HPP_ */
 

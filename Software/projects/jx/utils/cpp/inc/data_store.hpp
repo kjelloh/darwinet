@@ -44,6 +44,12 @@ public:
     DataStore();
     ~DataStore();
 
+    /**
+     * @brief Get a count of data items in the data store.
+     *
+     * @return Number of data items in the data store.
+     */
+    uint32_t GetDatacount() { return _data_count; }
 
     /**
      * @brief Add a data element to the data store.

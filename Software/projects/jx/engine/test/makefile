@@ -19,7 +19,7 @@ ifeq ($(SYSTEM),Cygwin)
 endif
 
 
-.PHONY: all clean test_exec
+.PHONY: all clean test_exec utils
 
 all: test_exec
 
@@ -31,8 +31,11 @@ test_exec: $(TARGET)
 	@echo Executing tests.
 	@./$(TARGET)
 
-$(TARGET): $(OBJ_FILES)
+$(TARGET): $(OBJ_FILES) utils
 	$(CPPC) -o $@ $(OBJ_FILES) $(LN_FLAGS)
+
+utils:
+	$(MAKE) -C ../../utils/cpp
 
 $(OBJ_DIR)/%.opp : %.cpp
 	@if [ ! -d $(OBJ_DIR) ]; then $(RM) $(OBJ_DIR); echo "Creating directory: $(OBJ_DIR)"; mkdir $(OBJ_DIR); fi
