@@ -228,7 +228,7 @@
 //		c_DataRepresentationFramework::c_UTF16String::const_iterator iter = sFilePath.begin();
 //		c_DataRepresentationFramework::c_UTF16String node_caption;
 //
-//		// Start by checking if there is a preceeding server node, one started with \\
+//		// Start by checking if there is a preceeding server node, one started with '\\'
 //		bool thisIsAServerNode = false;
 //		if (*iter == '\\') {
 //			if ((iter+1) != sFilePath.end()) {
@@ -237,7 +237,7 @@
 //					iter++; // skip first backslash
 //					iter++; // skip second backslash
 //					thisIsAServerNode = true;
-//					node_caption.anonymous() = L"\\\\"; // Server node caption includes the \\
+//					node_caption.anonymous() = L"\\\\"; // Server node caption includes the '\\'
 //				}
 //			}
 //		}
