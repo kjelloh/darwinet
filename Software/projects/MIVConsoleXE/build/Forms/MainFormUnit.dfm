@@ -1,7 +1,7 @@
 object MainForm: TMainForm
   Left = 0
   Top = 0
-  Caption = 'Darwinet'
+  Caption = 'Darwinet MIV Console'
   ClientHeight = 118
   ClientWidth = 337
   Color = clBtnFace

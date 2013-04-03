@@ -3,7 +3,7 @@
 			<ProjectGuid>{6A549985-0529-4267-A98C-5FF8F1CFCF81}</ProjectGuid>
 			<ProjectVersion>13.4</ProjectVersion>
 			<FrameworkType>VCL</FrameworkType>
-			<MainSource>darwinet_bcb_1.cpp</MainSource>
+			<MainSource>MIVConsoleXE.cpp</MainSource>
 			<Base>True</Base>
 			<Config Condition="'$(Config)'==''">Debug</Config>
 			<Platform Condition="'$(Platform)'==''">Win32</Platform>
@@ -173,9 +173,6 @@
 				<DependentOn>darwinet\MainFramework.h</DependentOn>
 				<BuildOrder>6</BuildOrder>
 			</CppCompile>
-			<CppCompile Include="darwinet_bcb_1.cpp">
-				<BuildOrder>0</BuildOrder>
-			</CppCompile>
 			<CppCompile Include="Forms\ApplicationFormUnit.cpp">
 				<Form>ApplicationForm</Form>
 				<DependentOn>Forms\ApplicationFormUnit.h</DependentOn>
@@ -197,10 +194,13 @@
 				<BuildOrder>4</BuildOrder>
 			</CppCompile>
 			<None Include="HistoryOfChanges.txt"/>
-			<FormResources Include="Forms\MessagingFormUnit.dfm"/>
+			<CppCompile Include="MIVConsoleXE.cpp">
+				<BuildOrder>0</BuildOrder>
+			</CppCompile>
 			<FormResources Include="Forms\MIVFormUnit.dfm"/>
 			<FormResources Include="Forms\ApplicationFormUnit.dfm"/>
 			<FormResources Include="Forms\MainFormUnit.dfm"/>
+			<FormResources Include="Forms\MessagingFormUnit.dfm"/>
 			<FormResources Include="..\..\..\common\cpp\DarwinetRADLib\BusinessLogFormUnit.dfm"/>
 			<FormResources Include="..\..\..\common\cpp\DarwinetRADLib\ABOUT.dfm"/>
 			<FormResources Include="..\..\..\common\cpp\DarwinetRADLib\EditPropertiesFormUnit.dfm"/>
@@ -223,7 +223,7 @@
 			<BorlandProject>
 				<CPlusPlusBuilder.Personality>
 					<Source>
-						<Source Name="MainSource">darwinet_bcb_1.cpp</Source>
+						<Source Name="MainSource">MIVConsoleXE.cpp</Source>
 					</Source>
 					<VersionInfo>
 						<VersionInfo Name="IncludeVerInfo">False</VersionInfo>
@@ -268,6 +268,7 @@
 				<Platforms>
 					<Platform value="Win32">True</Platform>
 				</Platforms>
+				<ModelSupport>False</ModelSupport>
 			</BorlandProject>
 			<ProjectFileVersion>12</ProjectFileVersion>
 		</ProjectExtensions>
