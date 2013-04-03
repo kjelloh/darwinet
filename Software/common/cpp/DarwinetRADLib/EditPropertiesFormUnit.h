@@ -9,6 +9,9 @@
 #ifndef EditPropertiesFormUnitH
 #define EditPropertiesFormUnitH
 //---------------------------------------------------------------------------
+ #ifdef __BCPLUSPLUS__
+// RAD Studio XE compilation
+//---------------------------------------------------------------------------
 #include <Classes.hpp>
 #include <Controls.hpp>
 #include <StdCtrls.hpp>
@@ -71,4 +74,5 @@ public:		// User declarations
 //---------------------------------------------------------------------------
 extern PACKAGE TEditPropertiesForm *EditPropertiesForm;
 //---------------------------------------------------------------------------
+#endif // __BCPLUSPLUS__
 #endif

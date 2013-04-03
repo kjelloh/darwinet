@@ -9,6 +9,9 @@
 #ifndef BusinessLogUnitH
 #define BusinessLogUnitH
 //---------------------------------------------------------------------------
+ #ifdef __BCPLUSPLUS__
+// RAD Studio XE compilation
+//---------------------------------------------------------------------------
 //#include <stdio.h> // FILE...
 //#include <system.hpp> // AnsiString
 #include <string>
@@ -491,4 +494,5 @@ private:
 	CATCH_AND_LOG_STD_EXCEPTION_DESIGN_INSUFFICIENCY\
 	CATCH_AND_LOG_GENERAL_EXCEPTION_DESIGN_INSUFFICIENCY
 
+#endif // __BCPLUSPLUS__
 #endif

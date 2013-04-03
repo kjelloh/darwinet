@@ -9,6 +9,9 @@
 #ifndef IDEInterfacedSourceH
 #define IDEInterfacedSourceH
 //---------------------------------------------------------------------------
+ #ifdef __BCPLUSPLUS__
+// RAD Studio XE compilation
+//---------------------------------------------------------------------------
 #include "FilePathFramework.h" // c_FilePath
 //---------------------------------------------------------------------------
 
@@ -125,4 +128,5 @@ private:
 	c_ThreadGate m_gate;
 };
 
+#endif // __BCPLUSPLUS__
 #endif

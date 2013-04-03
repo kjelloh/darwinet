@@ -8,11 +8,15 @@
 
 #ifndef DataRepresentationFrameWorkH
 #define DataRepresentationFrameWorkH
-
+//---------------------------------------------------------------------------
+ #ifdef __BCPLUSPLUS__
+// RAD Studio XE compilation
+//---------------------------------------------------------------------------
 #include <vector>
 #include <string>
 #include <boost/strong_typedef.hpp> // BOOST_STRONG_TYPEDEF
 #include <System.hpp> // Import IDE types
+//---------------------------------------------------------------------------
 
 /*
 
@@ -23,7 +27,7 @@
 	They allow overloading based on string representation while providing compability
 	with STL string handling with the following additional behavior.
 
-	They do NOT allow implicit construct os assignment to anonymous strings. Instead
+	They do NOT allow implicit construct or assignment to anonymous strings. Instead
 	any string to be feed to the representation aware string class must be
 	explicitally denoted as anonymous. The following mechanism are made available.
 
@@ -869,4 +873,5 @@ namespace DataRepresentationFramework {
 
 };
 
+#endif // __BCPLUSPLUS__
 #endif

@@ -5,6 +5,11 @@
  * This file is part of and is developed by the Darwinet project at https://sourceforge.net/projects/darwinet/
  */
 //---------------------------------------------------------------------------
+
+//---------------------------------------------------------------------------
+ #ifdef __BCPLUSPLUS__
+// RAD Studio XE compilation
+//---------------------------------------------------------------------------
 #pragma hdrstop
 
 #include "DataRepresentationFrameWork.h"
@@ -1388,3 +1393,5 @@ c_DataRepresentationFramework::c_AsciiString c_DataRepresentationFramework::intT
 
 	return result;
 }
+#endif // __BCPLUSPLUS__
+

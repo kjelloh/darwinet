@@ -9,6 +9,9 @@
 #ifndef DateAndTimeFrameworkH
 #define DateAndTimeFrameworkH
 //---------------------------------------------------------------------------
+ #ifdef __BCPLUSPLUS__
+// RAD Studio XE compilation
+//---------------------------------------------------------------------------
 //#include <string> // std::string
 #include <stdio.h> // sprintf...
 #include <windows.h> // SYSTEMTIME, GetSystemTime()...
@@ -51,4 +54,5 @@ private:
 
 };
 
+#endif // __BCPLUSPLUS__
 #endif

@@ -6,9 +6,12 @@
  */
 //---------------------------------------------------------------------------
 
-
+//---------------------------------------------------------------------------
+ #ifdef __BCPLUSPLUS__
+// RAD Studio XE compilation
+//---------------------------------------------------------------------------
 #pragma hdrstop
-
+//---------------------------------------------------------------------------
 #include "DateAndTimeFramework.h"
 #include <sstream>
 #include <string>
@@ -134,3 +137,5 @@ c_DataRepresentationFramework::c_AsciiString c_YYYYMMDDHHMMSSmmm::getFormatedDat
 	return result;
 }
 //---------------------------------------------------------------------------
+#endif // __BCPLUSPLUS__
+

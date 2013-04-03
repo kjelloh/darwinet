@@ -9,6 +9,9 @@
 #ifndef FilePathFrameworkH
 #define FilePathFrameworkH
 //---------------------------------------------------------------------------
+ #ifdef __BCPLUSPLUS__
+// RAD Studio XE compilation
+//---------------------------------------------------------------------------
 #include <string>
 #include <vector>
 #include "DataRepresentationFrameWork.h"
@@ -880,4 +883,5 @@ typedef c_FilePathFrameworkT<c_UTF16FilePath> c_FilePathFramework;
 //------------------------------------------------------------------------------
 
 
+#endif // __BCPLUSPLUS__
 #endif

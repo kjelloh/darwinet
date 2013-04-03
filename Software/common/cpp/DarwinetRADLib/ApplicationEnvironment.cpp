@@ -6,8 +6,12 @@
  */
 //---------------------------------------------------------------------------
 
+//---------------------------------------------------------------------------
+ #ifdef __BCPLUSPLUS__
+// RAD Studio XE compilation
+//---------------------------------------------------------------------------
 #pragma hdrstop
-
+//---------------------------------------------------------------------------
 #include "ApplicationEnvironment.h"
 #include "DataRepresentationFrameWork.h"
 #include "ApplicationProperties.h"
@@ -442,4 +446,5 @@ c_DataRepresentationFramework::c_UTF16String c_Application::getBuildVersionAndDa
 //	return BUILD_DATE_AND_TIME_STRING;
 	return result;
 }
+#endif // __BCPLUSPLUS__
 

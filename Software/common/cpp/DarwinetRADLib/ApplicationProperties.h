@@ -8,6 +8,10 @@
 
 #ifndef ApplicationPropertiesH
 #define ApplicationPropertiesH
+//---------------------------------------------------------------------------
+ #ifdef __BCPLUSPLUS__
+// RAD Studio XE compilation
+//---------------------------------------------------------------------------
 
 #include <classes.hpp> // TStringList etc
 #include "FilePathFramework.h" // c_FilePath
@@ -324,4 +328,5 @@ private:
 //};
 typedef c_ApplicationPropertiesModel c_ApplicationProperties;
 
+#endif // __BCPLUSPLUS__
 #endif

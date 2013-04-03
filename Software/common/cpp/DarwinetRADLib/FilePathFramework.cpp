@@ -7,12 +7,15 @@
 //---------------------------------------------------------------------------
 
 
+//---------------------------------------------------------------------------
+ #ifdef __BCPLUSPLUS__
+// RAD Studio XE compilation
+//---------------------------------------------------------------------------
 #pragma hdrstop
-
+//---------------------------------------------------------------------------
 //#include "FilePathFramework.h"
 //#include "Sysutils.hpp" // FileExists...
 //#include "BusinessLogUnit.h"
-
 //---------------------------------------------------------------------------
 
 #pragma package(smart_init)
@@ -470,3 +473,5 @@
 //	// Now rename the saved live log to this name
 //	RenameFile(old_file_name_path.toString().c_str(),new_file_name_path.toString().c_str());
 //}
+#endif // __BCPLUSPLUS__
+

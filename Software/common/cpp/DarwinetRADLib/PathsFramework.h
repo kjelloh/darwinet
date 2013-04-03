@@ -9,6 +9,9 @@
 #ifndef PathsFrameworkH
 #define PathsFrameworkH
 //---------------------------------------------------------------------------
+ #ifdef __BCPLUSPLUS__
+// RAD Studio XE compilation
+//---------------------------------------------------------------------------
 #include <vector>
 #include "BusinessLogUnit.h"
 #include "DataRepresentationFrameWork.h"
@@ -1786,4 +1789,5 @@ namespace deprecated {
 }
 
 
+#endif // __BCPLUSPLUS__
 #endif

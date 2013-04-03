@@ -6,15 +6,18 @@
  */
 //---------------------------------------------------------------------------
 
-
+//---------------------------------------------------------------------------
+ #ifdef __BCPLUSPLUS__
+// RAD Studio XE compilation
+//---------------------------------------------------------------------------
 #pragma hdrstop
-
+//---------------------------------------------------------------------------
 #include "ApplicationProperties.h"
 #include <Dialogs.hpp>
 #include "BusinessLogUnit.h" // DESIGN_INSUFFICIENCY_LOG(...)
-
 //---------------------------------------------------------------------------
-
+#pragma package(smart_init)
+//---------------------------------------------------------------------------
 /**
   * Creates an empty property model
   */
@@ -587,4 +590,5 @@ void c_ApplicationPropertiesModelChangeDetector::onApplicationPropertiesModelDel
 //
 //}
 
-#pragma package(smart_init)
+#endif // __BCPLUSPLUS__
+

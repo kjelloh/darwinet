@@ -8,6 +8,10 @@
 
 #ifndef ApplicationEnvironmentH
 #define ApplicationEnvironmentH
+//---------------------------------------------------------------------------
+ #ifdef __BCPLUSPLUS__
+// RAD Studio XE compilation
+//---------------------------------------------------------------------------
 #include "FilePathFramework.h" // c_FilePath
 #include "ApplicationProperties.h"
 
@@ -316,5 +320,5 @@ public:
 
 
 };
-
+#endif // __BCPLUSPLUS__
 #endif

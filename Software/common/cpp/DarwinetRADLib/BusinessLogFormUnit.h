@@ -9,6 +9,9 @@
 #ifndef BusinessLogFormUnitH
 #define BusinessLogFormUnitH
 //---------------------------------------------------------------------------
+ #ifdef __BCPLUSPLUS__
+// RAD Studio XE compilation
+//---------------------------------------------------------------------------
 #include <Classes.hpp>
 #include <Controls.hpp>
 #include <StdCtrls.hpp>
@@ -66,4 +69,5 @@ public:		// User declarations
 //---------------------------------------------------------------------------
 extern PACKAGE TBusinessLogForm *BusinessLogForm;
 //---------------------------------------------------------------------------
+#endif // __BCPLUSPLUS__
 #endif

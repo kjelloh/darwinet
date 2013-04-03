@@ -6,8 +6,12 @@
  */
 //---------------------------------------------------------------------------
 
+//---------------------------------------------------------------------------
+ #ifdef __BCPLUSPLUS__
+// RAD Studio XE compilation
+//---------------------------------------------------------------------------
 #pragma hdrstop
-
+//---------------------------------------------------------------------------
 #include "ThreadHiveFrameWork.h"
 #include "BusinessLogUnit.h"
 //---------------------------------------------------------------------------
@@ -21,4 +25,5 @@
 void c_ThreadHive::requestWork(c_HivedThreadClientIfc* pHivedThreadClient) {
 	LOG_NOT_IMPLEMENTED;
 }
+#endif // __BCPLUSPLUS__
 

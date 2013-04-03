@@ -4,7 +4,12 @@
  *
  * This file is part of and is developed by the Darwinet project at https://sourceforge.net/projects/darwinet/
  */
-//---------------------------------------------------------------------
+//---------------------------------------------------------------------------
+
+//---------------------------------------------------------------------------
+ #ifdef __BCPLUSPLUS__
+// RAD Studio XE compilation
+//---------------------------------------------------------------------------
 #include <vcl.h>
 #pragma hdrstop
 
@@ -92,4 +97,4 @@ __fastcall TAboutBox::TAboutBox(TComponent* AOwner)
 //
 //	return BUILD_DATE_AND_TIME_STRING;
 //}
-
+#endif // __BCPLUSPLUS__

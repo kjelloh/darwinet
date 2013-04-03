@@ -6,6 +6,11 @@
  */
 //---------------------------------------------------------------------------
 
+//---------------------------------------------------------------------------
+ #ifdef __BCPLUSPLUS__
+// RAD Studio XE compilation
+//---------------------------------------------------------------------------
+
 #include <vcl.h>
 #pragma hdrstop
 
@@ -121,4 +126,4 @@ void __fastcall TBusinessLogForm::PollLogTimerTimer(TObject *Sender)
 
 
 
-
+#endif // __BCPLUSPLUS__
