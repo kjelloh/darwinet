@@ -1,12 +1,26 @@
-/*
- * DarwinetEngineProxy.cpp
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- *  Created on: 1 apr 2013
- *      Author: Administrator
+ * This file is part of and is developed by the Darwinet project at https://sourceforge.net/projects/darwinet/
  */
 
 #include "DarwinetEngineProxy.h"
 #include <iostream> // std::cout
+#include "externals/InProcStaticDarwinetEngine/InProcDarwinetEngine.h"
+
+/**
+ * Implement one InProcDarwinetEngine as
+ * a "singleton" created by the instance() method.
+ */
+static InProcDarwinetEngine::shared_ptr pInProcDarwinetEngine_instance = NULL;
+
+InProcDarwinetEngine::shared_ptr getInProcDarwinetEngineInstance() {
+	if (pInProcDarwinetEngine_instance == NULL) {
+		pInProcDarwinetEngine_instance = new InProcDarwinetEngine();
+	}
+	return pInProcDarwinetEngine_instance;
+}
 
 DarwinetEngineProxy::DarwinetEngineProxy()
 	: m_pDarwinetDomainProxy(NULL)
