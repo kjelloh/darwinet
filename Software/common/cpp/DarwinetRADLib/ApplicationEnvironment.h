@@ -9,7 +9,6 @@
 #ifndef ApplicationEnvironmentH
 #define ApplicationEnvironmentH
 //---------------------------------------------------------------------------
- #ifdef __BCPLUSPLUS__
 // RAD Studio XE compilation
 //---------------------------------------------------------------------------
 #include "FilePathFramework.h" // c_FilePath
@@ -18,18 +17,18 @@
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 /**
-  * An Applciation environment defines a run time envrionment.
+  * An Application environment defines a run time environment.
   * The run time environment defines two other environments.
-  * 1) The frame work environment.
-  * 2) The workspapce environment.
+  * 1) The framework environment.
+  * 2) The workspace environment.
   *
   * The framework environment is the base of any framework needed
   * and/or used by the Application. Like - If the application is a
-  * darwinet applciation, the the Drawinet framework is defined in the
+  * darwinet application, the the Darwinet framework is defined in the
   * Application framework.
   *
   * The Workspace is the root to to the environment where the work data of
-  * the applciation is processed.
+  * the application is processed.
   *
   * Runtime environment ==> Framework
   * Runtime environment ==> WorkSpace
@@ -48,14 +47,15 @@
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 /**
-  * Models a base class of anapplication project.
+  * Models a base class of an application project.
   */
 class c_ApplicationProject {
 public:
 	/**
 	  * Constructs a project using provided project root folder
 	  */
-	c_ApplicationProject(const c_FilePath& project_root_folder, const c_DataRepresentationFramework::c_UTF16String& sCaption);
+//	c_ApplicationProject(const c_FilePath& project_root_folder, const c_DataRepresentationFramework::c_UTF16String& sCaption);
+	c_ApplicationProject(const c_FilePath& project_root_folder, const c_FileName& sCaption);
 
 	/**
 	  * Returns the root folder path of this workspace
@@ -82,14 +82,15 @@ private:
 	c_FilePath m_project_root_folder;
 
 	/**
-	  * private storage of the name of this project
-	  */
-	c_DataRepresentationFramework::c_UTF16String m_sCaption;
-
-	/**
 	  * Private storage of our properties model instance
 	  */
 	c_ApplicationPropertiesModel* m_pPropertiesModel;
+
+	/**
+	  * private storage of the name of this project
+	  */
+//	c_DataRepresentationFramework::c_UTF16String m_sCaption;
+	c_FileName m_sCaption;
 
 };
 
@@ -115,7 +116,8 @@ public:
 	  * Sets Application to use within current workspace.
 	  * Will use a default work space if none has been set.
 	  */
-	void setCurrentProject(const c_DataRepresentationFramework::c_UTF16String& sApplicationRootFolderName);
+//	void setCurrentProject(const c_DataRepresentationFramework::c_UTF16String& sApplicationRootFolderName);
+	void setCurrentProject(const c_FileName& sApplicationRootFolderName);
 
 	/**
 	  * Returns current set Application.
@@ -238,6 +240,12 @@ private:
 	  */
 	c_ApplicationRunTimeEnvironent();
 
+
+	/**
+	  * Private storage of set work space
+	  */
+	c_ApplicationFrameWork* m_pApplicationFrameWork;
+
 	/**
 	  * Private storage of current set workspace
 	  */
@@ -251,9 +259,9 @@ private:
 	c_ApplicationPropertiesModel* m_RunTimePropertiesModel;
 
 	/**
-	  * Private storage of set work space
+	  * Private storage of path to exe file of this application
 	  */
-	c_ApplicationFrameWork* m_pApplicationFrameWork;
+	c_FilePath m_ExeFilePath;
 
 	/**
 	  * Returns path to work space folder
@@ -270,10 +278,6 @@ private:
 	  */
 	static c_ApplicationRunTimeEnvironent* m_pInstance;
 
-	/**
-	  * Private storage of path to exe file of this application
-	  */
-	c_FilePath m_ExeFilePath;
 
 };
 
@@ -292,7 +296,7 @@ public:
 	/**
 	  * Returns the name of this exe file.
 	  */
-	static const c_DataRepresentationFramework::c_UTF16String c_Application::ExeName();
+	static const c_FileName ExeName();
 
 	/**
 	  * Returns this application version info product name field contents
@@ -318,7 +322,5 @@ public:
 	  */
 	static c_DataRepresentationFramework::c_UTF16String getBuildVersionAndDateAndTimeString();
 
-
 };
-#endif // __BCPLUSPLUS__
 #endif

@@ -8,18 +8,47 @@
 
 
 //---------------------------------------------------------------------------
- #ifdef __BCPLUSPLUS__
-// RAD Studio XE compilation
-//---------------------------------------------------------------------------
+#ifdef __BCPLUSPLUS__
 #pragma hdrstop
+#endif
 //---------------------------------------------------------------------------
 #include "IDEInterfacedSource.h"
+#ifdef __BCPLUSPLUS__
 #include <SyncObjs.hpp> // TCriticalSection
 #include <Forms.hpp>
+#endif
 
 //---------------------------------------------------------------------------
 
+#ifdef __BCPLUSPLUS__
 #pragma package(smart_init)
+#endif
+
+
+
+
+#ifdef __BCPLUSPLUS__
+typedef TCriticalSection c_CriticalSection;
+#else
+
+class c_CriticalSectionImpl {
+public:
+	c_CriticalSectionImpl()
+	{;}
+
+	void Acquire() {
+		#warning c_CriticalSectionImpl::Acquire() not implemented for this build environment
+	}
+
+	void Release() {
+		#warning c_CriticalSectionImpl::Release() not implemented for this build environment
+	}
+private:
+};
+
+typedef c_CriticalSectionImpl c_CriticalSection;
+#endif
+
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
@@ -30,7 +59,7 @@ public:
 	  * Constructor
 	  */
 	c_ThreadGateImpl()
-		: m_pCriticalSection(new TCriticalSection()) {
+		: m_pCriticalSection(new c_CriticalSection()) {
 	}
 	/**
 	  * Claim access through the gate.
@@ -54,7 +83,7 @@ private:
 	/**
 	  * Private storage of thread synchronizing instance to use
 	  */
-	TCriticalSection* m_pCriticalSection;
+	c_CriticalSection* m_pCriticalSection;
 };
 
 //---------------------------------------------------------------------------
@@ -68,5 +97,4 @@ c_ThreadGate::c_ThreadGate()
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-#endif // __BCPLUSPLUS__
 

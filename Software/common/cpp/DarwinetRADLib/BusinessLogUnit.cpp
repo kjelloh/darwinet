@@ -7,36 +7,40 @@
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
- #ifdef __BCPLUSPLUS__
-// RAD Studio XE compilation
-//---------------------------------------------------------------------------
-
+#ifdef __BCPLUSPLUS__ // RAD Studio XE compilation
 #pragma hdrstop
+#endif
 
 #include "BusinessLogUnit.h"
 #include "IDEInterfacedSource.h" // c_ThreadGate
 #include <fstream>
 #include "ApplicationEnvironment.h" // c_Application
 
+#ifdef __BCPLUSPLUS__ // RAD Studio XE compilation
 # pragma warn -8072 // Seems to be a known Issue for  boost in Borland CPP 101112/KoH
+#endif
 #include <boost/format.hpp>
+#ifdef __BCPLUSPLUS__ // RAD Studio XE compilation
 # pragma warn +8072 // Enable again. See above
+#endif
 
 //---------------------------------------------------------------------------
 
+#ifdef __BCPLUSPLUS__ // RAD Studio XE compilation
 #pragma package(smart_init)
+#endif
 
 /**
   * Defines the number of blanks used when indentation level is changed.
   */
-const INDENT_CHANGE_WIDTH = 4;
+const unsigned int INDENT_CHANGE_WIDTH = 4;
 
 /**
   * Class that encapsulates the business log.
   * The business log is to be used to log normal and excpetional
   * activites of the application operations.
   */
-class c_BussinessLogger : c_BussinessLoggerIfc {
+class c_BussinessLogger : public c_BussinessLoggerIfc {
 public:
 
 	/**
@@ -232,7 +236,7 @@ public:
 
 private:
 	/**
-	  * Private storage of thread gate to protect multipple thread call to the
+	  * Private storage of thread gate to protect multiple thread call to the
 	  * business logger
 	  */
 	c_ThreadGate m_ThreadGate;
@@ -244,16 +248,16 @@ private:
 	c_ThreadGate m_LogEntryThreadGate;
 
 	/**
-	  * Private storage of output file stream to store
-	  * logged entries
-	  */
-	std::ofstream m_LogStream;
-
-	/**
 	  * Private storage of queued enrties to be shown in the user
 	  * interface.
 	  */
 	std::queue<c_BussinessLogEntry*> m_UILogEntries;
+
+	/**
+	  * Private storage of output file stream to store
+	  * logged entries
+	  */
+	std::ofstream m_LogStream;
 
 	/**
 	  * Private helper method that stores provided entry into the Log.
@@ -307,6 +311,7 @@ c_LogString toLogString(const c_DataRepresentationFramework::c_UTF16String& sEnt
 	return c_DataRepresentationFramework::toUTF8String(sEntry);
 }
 
+#ifdef __BCPLUSPLUS__ // RAD Studio XE compilation
 /**
   * Converts provided IDE string to Log string representation.
   * Will use compile time information to determine
@@ -318,11 +323,12 @@ c_LogString toLogString(const String& sEntry) {
 	return c_DataRepresentationFramework::toUTF8String(_UTF16sz(sEntry.c_str()));
 #else // #ifdef _DELPHI_STRING_UNICODE
 	// IDE uses Ansi for String.
-	// Note - Asume Ascii for now. Ansi may actually contain chars 0..255 but we avoid this problem for now...
+	// Note - Assume Ascii for now. ANSI may actually contain chars 0..255 but we avoid this problem for now...
 	// TODO 101119: Consider handling 0..255 char array in some safe way here. Check String code page?
 	return c_DataRepresentationFramework::toUTF8String(_Asciisz(sEntry.c_str()));
 #endif // _DELPHI_STRING_UNICODE
 }
+#endif
 
 ///**
 //  * Converts provided C++ literal string to Log string representation
@@ -338,6 +344,7 @@ c_LogString toLogString(const c_DataRepresentationFramework::c_ISO_8859_1_String
 	return c_DataRepresentationFramework::toUTF8String(sEntry);
 }
 
+#if defined(__BCPLUSPLUS__) || defined(__CYGWIN32__)
 /**
   * Returns a log string with a text describing the menaing of provided Windows api error code.
   */
@@ -358,12 +365,14 @@ c_LogString logStringOfWinApiErrorCode(DWORD api_error_code) {
 		(LPTSTR) &lpMsgBuf,
 		0, NULL );
 
-	result += toLogString(lpMsgBuf);
+	result += toLogString(_UTF16sz(lpMsgBuf));
 	LocalFree(lpMsgBuf);
 
 	return result;
 }
+#endif
 
+#ifdef __BCPLUSPLUS__ // RAD Studio XE compilation
 /**
   * Returns provided Windows HRESULKT code as a descriptive Log string
   */
@@ -378,6 +387,7 @@ c_LogString logStringOfWinApiHResultCode(HRESULT hresult) {
 	}
 	return result;
 }
+#endif
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 /**
@@ -857,8 +867,8 @@ void c_BussinessLogger::StoreEntryInLog(c_BussinessLogEntry* pEntry) {
 		// Try to open the file
 		c_FilePath LogFilePath = c_Application::getExeRootPath();
 		c_FileName exeFileName = c_Application::ExeName();
-		c_DataRepresentationFramework::c_UTF16String sLogFileName = exeFileName.NameWithoutExtension();
-		sLogFileName.anonymous() += L".log";
+		c_FileName sLogFileName = exeFileName.NameWithoutExtension();
+		sLogFileName += _UTF8sz(".log");
 		LogFilePath += sLogFileName;
 		try {
 			this->m_LogStream.open(LogFilePath.toString().c_str());
@@ -874,14 +884,16 @@ void c_BussinessLogger::StoreEntryInLog(c_BussinessLogEntry* pEntry) {
 			}
 		}
 		catch (std::exception& e) {
-			c_LogString sMessage(__FUNCTION__". Exception = \"");
+			c_LogString sMessage(__FUNCTION__);
+			sMessage += _UTF8sz(". Exception = \"");
 			sMessage += _UTF8sz(e.what());
 			sMessage += _UTF8sz("\"");
 			// Failed to open the file. Add log entry directlly to queue
 			m_UILogEntries.push(new c_BussinessLogEntry(e_BussinessLogEntryType_DesignInsufficiency,sMessage));
 		}
 		catch (...) {
-			c_LogString sMessage(__FUNCTION__". General Ecxception cought. Failed to create application persistent log file. Name=\"");
+			c_LogString sMessage(__FUNCTION__);
+			sMessage += _UTF8sz(". General Ecxception cought. Failed to create application persistent log file. Name=\"");
 			sMessage += c_DataRepresentationFramework::toUTF8String(LogFilePath.toString());
 			sMessage += _UTF8sz("\"");
 			// Failed to open the file. Add log entry directlly to queue
@@ -957,4 +969,3 @@ void c_BussinessLogger::decrementDevelopmentTraceIndent() {
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
-#endif // __BCPLUSPLUS__

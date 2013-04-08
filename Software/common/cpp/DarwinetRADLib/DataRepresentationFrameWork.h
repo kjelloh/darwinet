@@ -9,39 +9,55 @@
 #ifndef DataRepresentationFrameWorkH
 #define DataRepresentationFrameWorkH
 //---------------------------------------------------------------------------
- #ifdef __BCPLUSPLUS__
-// RAD Studio XE compilation
-//---------------------------------------------------------------------------
 #include <vector>
 #include <string>
-#include <boost/strong_typedef.hpp> // BOOST_STRONG_TYPEDEF
+#include <boost/strong_typedef.hpp> // boost::addable<S>
+#include <stdexcept> // std::runtime_error
+#include <algorithm> // std::find_if
+#ifdef __BCPLUSPLUS__ // RAD Studio XE compilation
 #include <System.hpp> // Import IDE types
+#endif
 //---------------------------------------------------------------------------
 
 /*
 
 	A note about representation aware strings
 
+	Representation aware strings encapsulates two apsects of string contents.
+	1. Storage representation. (e.g. size and organization of the data used to represent the string)
+	2. Encoding of the string (e.g. encoded in ASCII, UTF8, UTF16 etc)
+
+	The string classes are designed to require the programmer to be aware of both storage and encoding aspects when
+	using strings. Storagae or encoding transforms must show up in code (not happen implicitly and uncontrolled)
+
 	The classes c_XXXString defines strong typed strings that inherits std::basic string.
 
-	They allow overloading based on string representation while providing compability
+	They allow overloading based on string representation while providing compatibility
 	with STL string handling with the following additional behavior.
 
 	They do NOT allow implicit construct or assignment to anonymous strings. Instead
 	any string to be feed to the representation aware string class must be
-	explicitally denoted as anonymous. The following mechanism are made available.
+	Explicitly denoted as anonymous. The following mechanism are made available.
 
-	1. Explicit call to constructor: c_XXXString myXXXString(<anonymous std::string och char*>)
+	1. Explicit call to constructor: c_XXXString myXXXString(<anonymous std::string or char*>)
 	2. Feed with strong type wrapper: myXXXString = _XXXsz(<char array pointer>);
 	3. Fall back to anonymous base string: myXXXString.anonymous() = <STL string>
 
-	None of theese performs any encodings!! The programmes must use these constructs
+	None of these performs any encodings!! The programmer must use these constructs
 	when knowing that the anonymous source string is in compatible representation!
+	This may seen as the "inut" point where a string enters the representation aware string domian.
 
-	All string representation change is made with explcit clall to toXXXString() methods.
-	This ensure that all represention domain crossing show up in the code.
+	All string representation change is made with explicit call to toXXXString() methods.
+	This ensure that all representation domain crossing show up in the code.
+	toXXXString handles both stioareg and encoding trasnforms.
 
 	Good link on code pages: http://en.wikipedia.org/wiki/Code_page
+	Unicde orgnaisation home at: http://www.unicode.org
+	The CLDR - Unicode Common Locale Data Repository project at http://cldr.unicode.org/index
+	ICU - International Components for Unicode at http://site.icu-project.org
+
+	Note: The Unocde organsiation works with more than string encoding. They handle aspects of transforming
+	between locales (a locale defines Date, Calendar, Text, Currency etc. of say a country or region.)
 
 	/Kjell-Olov Högdahl
 
@@ -93,7 +109,7 @@ public:
 	/**
 	  * Wrapper for anonymous char arrays.
 	  * Note: Made as pre-processor macro to make declarations really strong typed.
-	  * typedefs from template instanciated with the same class will be regarded as the same type by C++...
+	  * typedefs from template instantiated with the same class will be regarded as the same type by C++...
 	  */
 	#define TYPE_WRAPPED_CHAR_ARRAY(C,T) \
 	class T { \
@@ -110,7 +126,7 @@ public:
 	/**
 	  * Wrapper for anonymous char arrays.
 	  * Note: Made as pre-processor macro to make declarations really strong typed.
-	  * typedefs from template instanciated with the same class will be regarded as the same type by C++...
+	  * typedefs from template instantiated with the same class will be regarded as the same type by C++...
 	  */
 	#define TYPE_WRAPPED_STDSTRING(S,T) \
 	class T { \
@@ -129,12 +145,17 @@ public:
 	  * Strong types that wraps basic anonymous char arrays and defines
 	  * arrays of specified representation.
 	  */
-	TYPE_WRAPPED_CHAR(char32_t,UCF4c);
+
+	#if defined(__BCPLUSPLUS__) or defined(__CYGWIN32__)
+	TYPE_WRAPPED_CHAR(char32_t,UCF4c); // To compile; be sure to pass --std=c++0x or --std=c++11 to g++ compiler (depending on compiler version)
+	#endif
 	TYPE_WRAPPED_CHAR(char,Latin1c);
 	TYPE_WRAPPED_CHAR(char,Literalc);
 	TYPE_WRAPPED_CHAR(char,Asciic);
 	TYPE_WRAPPED_CHAR(char,UTF8c);
 
+//	TYPE_WRAPPED_CHAR_ARRAY(wchar_t,UTF16sz); // Or use u"bla bla" for UTF-16 literals
+//	TYPE_WRAPPED_CHAR_ARRAY(wchar_t,WideAsciisz); // whar_t array containing Ascii chars only
 	TYPE_WRAPPED_CHAR_ARRAY(wchar_t,UTF16sz); // Or use u"bla bla" for UTF-16 literals
 	TYPE_WRAPPED_CHAR_ARRAY(wchar_t,WideAsciisz); // whar_t array containing Ascii chars only
 	TYPE_WRAPPED_CHAR_ARRAY(char,UTF8sz);
@@ -149,7 +170,6 @@ public:
 	TYPE_WRAPPED_STDSTRING(std::string,Asciis);
 
 	// Inspired by BOOST_STRONG_TYPEDEF in <boost/strong_typedef.hpp>
-
 	/**
 	  * Do NOT allow implicit cast/assign or construct from anonymous input
 	  */
@@ -158,9 +178,7 @@ public:
 	D() : S() {;} /* Default constructor */                                                     \
 	D(const D & d_) : S(d_) {;} /* Copy constructor */                                 \
 	explicit D(const S& s_) : S(s_) {;} /* Require explicit construct from anonymous input */                         \
-	explicit D(const C* sz) : S(sz) {;} /* Require explicit construct from anonymous input */\
-	explicit D(S::const_iterator _begin,S::const_iterator _end) : S(_begin,_end) {;};
-
+	explicit D(const C* sz) : S(sz) {;} /* Require explicit construct from anonymous input */\	explicit D(S::const_iterator _begin,S::const_iterator _end) : S(_begin,_end) {;};
 	/**
 	  * Do allow implicit cast/assign or construct from anonymous input
 	  */
@@ -169,25 +187,15 @@ public:
 	D() : S() {;} /* Default constructor */                                                     \
 	D(const D & d_) : S(d_) {;} /* Copy constructor */                                 \
 	D(const S& s_) : S(s_) {;} /* Allow implicit construct from anonymous input */                         \
-	D(const C* sz) : S(sz) {;} /* Allow implicit construct from anonymous input */\
-	D(S::const_iterator _begin,S::const_iterator _end) : S(_begin,_end) {;};
-
-	/**
-	  * Allow modification from ascii input
-	  */
-	#define STRONG_STRING_TYPE_MODIFIABLE_FROM_ASCII \
-	public:\
-	D(const c_AsciiString& sAscii): S() {std::copy(sAscii.begin(),sAscii.end(),std::back_inserter(*this));} /* Allow implicit construct from Ascii strings */\
-	D(const Asciis& asciis): S() {*this = c_AsciiString(asciis);} /* Allow implicit construct from wrapped Ascii string */\
-	D(const Asciisz& asciisz): S() {*this = c_AsciiString(asciisz);} /* Allow implicit construct from wrapped Ascii char array */\
-	D(const c_DataRepresentationFramework::Asciic asciic) : S() {*this = c_AsciiString(asciic);}\
+	D(const C* sz) : S(sz) {;} /* Allow implicit construct from anonymous input */\	D(S::const_iterator _begin,S::const_iterator _end) : S(_begin,_end) {;};
+	/**	  * Allow modification from ascii input	  */	#define STRONG_STRING_TYPE_MODIFIABLE_FROM_ASCII \	public:\	D(const c_AsciiString& sAscii): S() {std::copy(sAscii.begin(),sAscii.end(),std::back_inserter(*this));} /* Allow implicit construct from Ascii strings */\	D(const Asciis& asciis): S() {*this = c_AsciiString(asciis);} /* Allow implicit construct from wrapped Ascii string */\	D(const Asciisz& asciisz): S() {*this = c_AsciiString(asciisz);} /* Allow implicit construct from wrapped Ascii char array */\	D(const c_DataRepresentationFramework::Asciic asciic) : S() {*this = c_AsciiString(asciic);}\
 
 	/**
 	  * Common constructors and operators of strong typed string
 	  */
 	#define STRONG_STRING_TYPE_COMMON_BODY \
 	public: \
-	typedef std::basic_string<C> S;                          \
+	/* typedef std::basic_string<C> S; */                          \
 	typedef C CharType; \
 	D & operator=(const D & rhs) { this->anonymous() = rhs.anonymous(); return *this;}   /* Assign to other D */ \
 	S& anonymous() {return (*this);} \
@@ -197,6 +205,7 @@ public:
 	D& operator+=(const D& other_instance) {this->anonymous() += other_instance; return *this;} \
 	D operator+(const D& other_instance) {D result(*this); result += other_instance; return result;} \
 	void test(const D& d) {;};
+
 
 	/**
 	  * Strong typed Ascii string class.
@@ -211,6 +220,7 @@ public:
 	{
 		STRONG_STRING_TYPE_CONSTRUCTORS_EXPLICIT_FROM_ANONYMOUS_BASE
 		STRONG_STRING_TYPE_COMMON_BODY
+	public:
 
 	public:
 
@@ -416,7 +426,7 @@ public:
 		boost::addable<S>
 		,public S
 	{
-		STRONG_STRING_TYPE_CONSTRUCTORS_EXPLICIT_FROM_ANONYMOUS_BASE
+		STRONG_STRING_TYPE_CONSTRUCTORS_IMPLICIT_FROM_ANONYMOUS_BASE
 		STRONG_STRING_TYPE_COMMON_BODY
 
 	public:
@@ -481,7 +491,7 @@ public:
 	  * so definition could not be templetized nor macro-based.
 	  */
 	#define  D c_UTF16String
-	#define  C wchar_t
+	#define  C wchar_t // Use whar_t storage (not char16_t. whar_t is defined to be the size to hold unicode chars)
 	#define S std::basic_string<C>
 	class D :
 		boost::addable<S>
@@ -515,10 +525,11 @@ public:
 		// Allow explicit construct from anonymous strings
 		explicit D(const std::string& sAnonymous):S() { std::copy(sAnonymous.begin(),sAnonymous.end(),std::back_inserter(*this));}
 
-		/**
-		  * Allow implicit type conversion from WideAsciisz wrapped char arrays
-		  */
-		D(const c_DataRepresentationFramework::WideAsciisz& wide_ascii_sz) : S(wide_ascii_sz.ref()) {;}
+// whar_t and char16_t are of different size in g++. Thus creation of a std::string<char16_t> from a whar_t* requires char by char narrowing of size.
+//		/**
+//		  * Allow implicit type conversion from WideAsciisz wrapped char arrays
+//		  */
+//		D(const c_DataRepresentationFramework::WideAsciisz& wide_ascii_sz) : S(wide_ascii_sz.ref()) {;}
 
 	private:
 		/**
@@ -633,20 +644,24 @@ public:
 	  * Narrows provided string to an c_DataRepresentationFramework::c_AsciiString.
 	  * Characters out of range will be logged.
 	  */
-	static c_DataRepresentationFramework::c_AsciiString c_DataRepresentationFramework::toAsciiString(const std::string& sString);
+//	static c_DataRepresentationFramework::c_AsciiString c_DataRepresentationFramework::toAsciiString(const std::string& sString);
+	static c_DataRepresentationFramework::c_AsciiString toAsciiString(const std::string& sString);
 
 	/**
 	  * Narrows provided string to an c_DataRepresentationFramework::c_AsciiString.
 	  * Characters out of range will be logged.
 	  */
-	static c_DataRepresentationFramework::c_AsciiString c_DataRepresentationFramework::toAsciiString(const std::wstring& sWideString);
+//	static c_DataRepresentationFramework::c_AsciiString c_DataRepresentationFramework::toAsciiString(const std::wstring& sWideString);
+	static c_DataRepresentationFramework::c_AsciiString toAsciiString(const std::wstring& sWideString);
 
 	/**
 	  * Narrows provided string to an c_DataRepresentationFramework::c_AsciiString.
 	  * Characters out of range will be logged.
 	  */
-	static c_DataRepresentationFramework::c_AsciiString c_DataRepresentationFramework::toAsciiString(const c_DataRepresentationFramework::c_UTF16String& sUTF16String);
+//	static c_DataRepresentationFramework::c_AsciiString c_DataRepresentationFramework::toAsciiString(const c_DataRepresentationFramework::c_UTF16String& sUTF16String);
+	static c_DataRepresentationFramework::c_AsciiString toAsciiString(const c_DataRepresentationFramework::c_UTF16String& sUTF16String);
 
+	#ifdef __BCPLUSPLUS__ // RAD Studio XE compilation
 	/**
 	  * map String used by IDE to typedef
 	  */
@@ -656,7 +671,9 @@ public:
 	  * Narrows provided string to an c_DataRepresentationFramework::c_AsciiString.
 	  * Characters out of range will be logged.
 	  */
-	static c_DataRepresentationFramework::c_AsciiString c_DataRepresentationFramework::toAsciiString(const c_IDEString& sIDEString);
+//	static c_DataRepresentationFramework::c_AsciiString c_DataRepresentationFramework::toAsciiString(const c_IDEString& sIDEString);
+	static c_DataRepresentationFramework::c_AsciiString toAsciiString(const c_IDEString& sIDEString);
+	#endif
 
 	/**
 	  * Parses provided string containg a currency value and converts it to an int
@@ -773,18 +790,21 @@ public:
 //	static c_DataRepresentationFramework::c_AsciiString& trimRight(c_DataRepresentationFramework::c_AsciiString &s);
 
 	// trim from both ends (from http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring)
-	static template <class S> S& trimLeftAndRight(S &s) {
+	template <class S>
+	static S& trimLeftAndRight(S &s) {
 		return trimLeft(trimRight(s));
 	}
 
 	// trim from start (from http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring)
-	static template <class S> S& trimLeft(S &s) {
+	template <class S>
+	static S& trimLeft(S &s) {
 		s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
 		return s;
 	}
 
 	// trim from end (from http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring)
-	static template <class S> S& trimRight(S &s) {
+	template <class S>
+	static S& trimRight(S &s) {
 		s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
 		return s;
 	}
@@ -801,7 +821,9 @@ public:
   * wrap an anonymous char, char array into a strong typed char or array
   * that defines representation.
   */
+#if defined(__BCPLUSPLUS__) or defined(__CYGWIN32__)
 typedef c_DataRepresentationFramework::UCF4c _UCF4c;
+#endif
 typedef c_DataRepresentationFramework::Latin1c _Latin1c;
 typedef c_DataRepresentationFramework::Literalc _Literalc;
 typedef c_DataRepresentationFramework::Asciic _Asciic;
@@ -832,7 +854,7 @@ namespace DataRepresentationFramework {
 	// Note: This one is selected only if none of the specilaizations below applies
 	template <typename _ThisString,typename _OtherString>
 	struct StringConvertTrait {
-		// This un-specilized template simply returns the provided string as is.
+		// This un-specialized template simply returns the provided string as is.
 		// NOTE: If you get a compiler error here it is becaus you have not provided
 		// a specialization below that converts provided string to the type _OtherString.
 		static _OtherString toString(const _ThisString& s) {return s;}; // convert to same type
@@ -872,6 +894,4 @@ namespace DataRepresentationFramework {
 	};
 
 };
-
-#endif // __BCPLUSPLUS__
 #endif

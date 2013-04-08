@@ -9,12 +9,14 @@
 #ifndef DateAndTimeFrameworkH
 #define DateAndTimeFrameworkH
 //---------------------------------------------------------------------------
- #ifdef __BCPLUSPLUS__
 // RAD Studio XE compilation
 //---------------------------------------------------------------------------
 //#include <string> // std::string
-#include <stdio.h> // sprintf...
+// #include <stdio.h> // sprintf...
+
+#if defined(__BCPLUSPLUS__) || defined(__CYGWIN32__)
 #include <windows.h> // SYSTEMTIME, GetSystemTime()...
+#endif
 #include "DataRepresentationFrameWork.h" // c_DataRepresentationFramework::c_AsciiString
 
 //---------------------------------------------------------------------------
@@ -54,5 +56,4 @@ private:
 
 };
 
-#endif // __BCPLUSPLUS__
 #endif

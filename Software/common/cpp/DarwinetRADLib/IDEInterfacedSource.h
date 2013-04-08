@@ -9,11 +9,6 @@
 #ifndef IDEInterfacedSourceH
 #define IDEInterfacedSourceH
 //---------------------------------------------------------------------------
- #ifdef __BCPLUSPLUS__
-// RAD Studio XE compilation
-//---------------------------------------------------------------------------
-#include "FilePathFramework.h" // c_FilePath
-//---------------------------------------------------------------------------
 
 /**
   * This unit contains classes and types that tries to hide
@@ -46,9 +41,9 @@ public:
 };
 
 /**
-  * Helper class to instanciate development tool and environment independent
+  * Helper class to instantiate development tool and environment independent
   * thread gate instances.
-  * Instanciate one for each scope you whant to synchronize thread access too.
+  * Instantiate one for each scope you want to synchronize thread access too.
   * Use the instance together with c_ThreadSynchronizer in the following way.
   * ...
   * // Define the thread gate somewhere for your resource
@@ -128,5 +123,4 @@ private:
 	c_ThreadGate m_gate;
 };
 
-#endif // __BCPLUSPLUS__
 #endif

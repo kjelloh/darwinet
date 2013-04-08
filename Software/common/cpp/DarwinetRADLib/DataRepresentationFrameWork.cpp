@@ -7,10 +7,9 @@
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
- #ifdef __BCPLUSPLUS__
-// RAD Studio XE compilation
-//---------------------------------------------------------------------------
+#ifdef __BCPLUSPLUS__
 #pragma hdrstop
+#endif
 
 #include "DataRepresentationFrameWork.h"
 #include <stdio.h> // sprintf
@@ -19,12 +18,17 @@
 #include <ctype.h> // isspace...
 #include "BusinessLogUnit.h"
 #include <sstream>
-#include <locale>
+// #include <locale>
+
 #include <iomanip> // std::setfill(),std::setw()...
 
+#ifdef __BCPLUSPLUS__
 # pragma warn -8072 // Seems to be a known Issue for  boost in Borland CPP 101112/KoH
+#endif
 #include <boost/format.hpp>
+#ifdef __BCPLUSPLUS__
 # pragma warn +8072 // Enable again. See above
+#endif
 
 // Defined way of including boost utf8 codecvt
 #define BOOST_UTF8_BEGIN_NAMESPACE namespace boost {namespace utf8 {
@@ -35,13 +39,21 @@
 // note the following code will generate on some platforms where
 // wchar_t is defined as UCS2.  The warnings are superfluous as
 // the specialization is never instantitiated with such compilers.
+#ifdef __BCPLUSPLUS__
 # pragma warn -8068 // See note above 101112/KoH
-#include <libs/detail/utf8_codecvt_facet.cpp>
+#endif
+// #include <libs/detail/utf8_codecvt_facet.cpp>
+#include "boost/detail/utf8_codecvt_facet.hpp"
+#ifdef __BCPLUSPLUS__
 # pragma warn .8068 // See note above 101112/KoH
+#endif
 
-#include "utf8.h" // From http://sourceforge.net/projects/utfcpp/
+#include "utf8/source/utf8.h" // From http://sourceforge.net/projects/utfcpp/
+#include "common/unicode/unistr.h" // C++ UnicodeString from icu4c
 
+#ifdef __BCPLUSPLUS__
 #pragma package(smart_init)
+#endif
 
 //---------------------------------------------------------------------------
 
@@ -58,21 +70,21 @@ bool c_DataRepresentationFramework::doTests() {
 
 	Representation aware strings enforces the following policy:
 
-	1. Explicit Construct from anomynous strings trusted. The programmer
+	1. Explicit Construct from anonymous strings trusted. The programmer
 	   expresses in code that input string is in correct representation.
 	2. Implicit type-cast from anonymous string NOT allowed. Will generate
 	   a compile error. The programmer is forced to express asumed representation
 	   of anonymous string using wrapper or explicit construct.
 	3. Assign or append from anonymous string is NOT allowed. Will generate
-	   a compile error. The programmer is forced to use explcit constructor
-	   or wrapper to express the asumed representation of the anonymous string
+	   a compile error. The programmer is forced to use explicit constructor
+	   or wrapper to express the assumed representation of the anonymous string
 	4. Type-cast from representation conformant string class is allowed
-	   when possible. Like from Ascii to most of the other classes.
-	5. Any representation transformation must be expressed explicitally
+	   when possible. Like from ASCII to most of the other classes.
+	5. Any representation transformation must be expressed explicitly
 	   using toXXX methods. No representation change will take place
-	   implicitally. The programmer is forced to express representation
+	   Implicitly. The programmer is forced to express representation
 	   transformation in code.
-	6. Data type transformation will occurr implicit. Like between
+	6. Data type transformation will occur implicit. Like between
 	   char strings, wide char strings and four byte char strings.
 	   The framework guards string encoding, not string memory construct.
 
@@ -113,9 +125,9 @@ bool c_DataRepresentationFramework::doTests() {
 
 	// Explicit from anonymous char.
 	{
-		char source = 'c';
 
 		#ifdef COMPILE_UNALLOWED_CONSTRUCTS
+		char source = 'c';
 		c_DataRepresentationFramework::c_AsciiString sAsciiString(source);
 		c_DataRepresentationFramework::c_CppLiteralString sCppLiteralString(source);
 		c_DataRepresentationFramework::c_ISO_8859_1_String sISO_8859_1_String(source);
@@ -123,12 +135,12 @@ bool c_DataRepresentationFramework::doTests() {
 		c_DataRepresentationFramework::c_UTF8String sUTF8String(source);
 		c_DataRepresentationFramework::c_UTF16String sUTF16String(source);
 		c_DataRepresentationFramework::c_UCF4String sUCF4String(source);
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 	}
 
 	// Explicit from anonymous char array.
 	{
-		char* source = "This is an anonymous string";
+		const char* source = "This is an anonymous string";
 
 		c_DataRepresentationFramework::c_AsciiString sAsciiString(source);
 		c_DataRepresentationFramework::c_CppLiteralString sCppLiteralString(source);
@@ -164,7 +176,9 @@ bool c_DataRepresentationFramework::doTests() {
 
 	// Implicit from anonymous char.
 	{
+		#ifdef COMPILE_UNALLOWED_CONSTRUCTS
 		char source = 'c';
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Copy construct
 		#ifdef COMPILE_UNALLOWED_CONSTRUCTS
@@ -175,7 +189,7 @@ bool c_DataRepresentationFramework::doTests() {
 		c_DataRepresentationFramework::c_BinaryString sBinaryString = source;
 		c_DataRepresentationFramework::c_UTF16String sUTF16String = source;
 		c_DataRepresentationFramework::c_UCF4String sUCF4String = source;
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Assign
 		#ifdef COMPILE_UNALLOWED_CONSTRUCTS
@@ -186,7 +200,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sBinaryString = source;
 		sUTF16String = source;
 		sUCF4String = source;
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Append
 		#ifdef COMPILE_UNALLOWED_CONSTRUCTS
@@ -197,15 +211,19 @@ bool c_DataRepresentationFramework::doTests() {
 		sBinaryString += source;
 		sUTF16String += source;
 		sUCF4String += source;
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 	}
 
 	// Implicit from anonymous char array.
 	{
-		char* source = "This is an anonymous char array";
+		const char* source = "This is an anonymous char array";
 
 		// Copy construct
+		#ifdef __BCPLUSPLUS__
 		c_DataRepresentationFramework::c_BinaryString sBinaryString = source;
+		#else
+		c_DataRepresentationFramework::c_BinaryString sBinaryString(source);
+		#endif
 		#ifdef COMPILE_UNALLOWED_CONSTRUCTS
 		c_DataRepresentationFramework::c_AsciiString sAsciiString = source;
 		c_DataRepresentationFramework::c_CppLiteralString sCppLiteralString = source;
@@ -213,7 +231,7 @@ bool c_DataRepresentationFramework::doTests() {
 		c_DataRepresentationFramework::c_UTF8String sUTF8String = source;
 		c_DataRepresentationFramework::c_UTF16String sUTF16String = source;
 		c_DataRepresentationFramework::c_UCF4String sUCF4String = source;
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Assign
 		sBinaryString = source;
@@ -224,7 +242,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sUTF8String = source;
 		sUTF16String = source;
 		sUCF4String = source;
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Append
 		sBinaryString += source;
@@ -235,7 +253,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sUTF8String += source;
 		sUTF16String += source;
 		sUCF4String += source;
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 	}
 
 	// Implicit from anonymous string
@@ -251,7 +269,7 @@ bool c_DataRepresentationFramework::doTests() {
 		c_DataRepresentationFramework::c_UTF8String sUTF8String = source;
 		c_DataRepresentationFramework::c_UTF16String sUTF16String = source;
 		c_DataRepresentationFramework::c_UCF4String sUCF4String = source;
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Assign
 		sBinaryString = source;
@@ -262,7 +280,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sUTF8String = source;
 		sUTF16String = source;
 		sUCF4String = source;
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Append
 		sBinaryString += source;
@@ -273,7 +291,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sUTF8String += source;
 		sUTF16String += source;
 		sUCF4String += source;
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 	}
 
 	// Explicit from ascii
@@ -305,7 +323,7 @@ bool c_DataRepresentationFramework::doTests() {
 		c_DataRepresentationFramework::c_UCF4String sUCF4String = source;
 		#ifdef COMPILE_UNALLOWED_CONSTRUCTS
 		c_DataRepresentationFramework::c_BinaryString sBinaryString = source; // Not needed. Assign to anonymous instead.
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Assign
 		sAsciiString = source;
@@ -316,7 +334,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sUCF4String = source;
 		#ifdef COMPILE_UNALLOWED_CONSTRUCTS
 		sBinaryString = source; // Not needed. Use append to anonymous char.
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Append
 		sAsciiString += source;
@@ -327,12 +345,12 @@ bool c_DataRepresentationFramework::doTests() {
 		sUCF4String += source;
 		#ifdef COMPILE_UNALLOWED_CONSTRUCTS
 		sBinaryString += source; // Not needed. Use append to anonymous char.
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 	}
 
 	// Assign to wrapped ascii char array
 	{
-		char* source = "This is an ascii string";
+		const char* source = "This is an ascii string";
 		typedef _Asciis t_Wrapper;
 
 		// Copy construct
@@ -344,7 +362,7 @@ bool c_DataRepresentationFramework::doTests() {
 		c_DataRepresentationFramework::c_UCF4String sUCF4String = t_Wrapper(source);
 		#ifdef COMPILE_UNALLOWED_CONSTRUCTS
 		c_DataRepresentationFramework::c_BinaryString sBinaryString = t_Wrapper(source); // Not needed. Assign to anonymous instead.
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Assign
 		sAsciiString = t_Wrapper(source);
@@ -355,7 +373,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sUCF4String = t_Wrapper(source);
 		#ifdef COMPILE_UNALLOWED_CONSTRUCTS
 		sBinaryString = t_Wrapper(source); // Not needed. Use append to anonymous char.
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Append
 		sAsciiString += t_Wrapper(source);
@@ -366,7 +384,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sUCF4String += t_Wrapper(source);
 		#ifdef COMPILE_UNALLOWED_CONSTRUCTS
 		sBinaryString += t_Wrapper(source); // Not needed. Use append to anonymous char.
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 	}
 	// Assign to wrapped ascii string
 	{
@@ -382,7 +400,7 @@ bool c_DataRepresentationFramework::doTests() {
 		c_DataRepresentationFramework::c_UCF4String sUCF4String = t_Wrapper(source);
 		#ifdef COMPILE_UNALLOWED_CONSTRUCTS
 		c_DataRepresentationFramework::c_BinaryString sBinaryString = t_Wrapper(source); // Not needed. Assign to anonymous instead.
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Assign
 		sAsciiString = t_Wrapper(source);
@@ -393,7 +411,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sUCF4String = t_Wrapper(source);
 		#ifdef COMPILE_UNALLOWED_CONSTRUCTS
 		sBinaryString = t_Wrapper(source); // Not needed. Use append to anonymous char.
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Append
 		sAsciiString += t_Wrapper(source);
@@ -404,7 +422,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sUCF4String += t_Wrapper(source);
 		#ifdef COMPILE_UNALLOWED_CONSTRUCTS
 		sBinaryString += t_Wrapper(source); // Not needed. Use append to anonymous char.
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 	}
 	// Assign to Literal string
 	{
@@ -428,7 +446,7 @@ bool c_DataRepresentationFramework::doTests() {
 		c_DataRepresentationFramework::c_BinaryString sBinaryString = source; // Not needed. Assign to anonymous instead.
 		c_DataRepresentationFramework::c_UTF16String sUTF16String = source;
 		c_DataRepresentationFramework::c_UCF4String sUCF4String = source;
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Assign
 		sCppLiteralString = source;
@@ -439,7 +457,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sBinaryString = source; // Not needed. Use append to anonymous char.
 		sUTF16String = source;
 		sUCF4String = source;
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Append
 		sISO_8859_1_String += source;
@@ -450,7 +468,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sBinaryString += source; // Not needed. Use append to anonymous char.
 		sUTF16String += source;
 		sUCF4String += source;
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 	}
 
 	// Assign to ISO 8859-1 string
@@ -466,7 +484,7 @@ bool c_DataRepresentationFramework::doTests() {
 		c_DataRepresentationFramework::c_BinaryString sBinaryString = source; // Not needed. Assign to anonymous instead.
 		c_DataRepresentationFramework::c_UTF16String sUTF16String = source;
 		c_DataRepresentationFramework::c_UCF4String sUCF4String = source;
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Assign
 		sISO_8859_1_String = source;
@@ -477,7 +495,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sBinaryString = source; // Not needed. Use append to anonymous char.
 		sUTF16String = source;
 		sUCF4String = source;
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Append
 		sISO_8859_1_String += source;
@@ -488,7 +506,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sBinaryString += source; // Not needed. Use append to anonymous char.
 		sUTF16String += source;
 		sUCF4String += source;
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 	}
 
 	// Explicit wrapped from Literal
@@ -504,13 +522,13 @@ bool c_DataRepresentationFramework::doTests() {
 		c_DataRepresentationFramework::c_UTF8String sUTF8String(source); // Need expanding to multi byte
 		c_DataRepresentationFramework::c_UTF16String sUTF16String(source); // Need expanding to multi byte
 		c_DataRepresentationFramework::c_UCF4String sUCF4String(source); // Needs mapping to UCF. Range 0x80 .. 0x9F may contain printable chars but is reserved for UCF control chars
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 	}
 
 	// Assign to wrapped literal char array
 	{
-		char* source = "This is an literal string";
+		const char* source = "This is an literal string";
 		typedef _Literalsz t_Wrapper;
 
 		// Copy construct
@@ -522,7 +540,7 @@ bool c_DataRepresentationFramework::doTests() {
 		c_DataRepresentationFramework::c_BinaryString sBinaryString = t_Wrapper(source); // Not needed. Assign to anonymous instead.
 		c_DataRepresentationFramework::c_UTF16String sUTF16String = t_Wrapper(source);
 		c_DataRepresentationFramework::c_UCF4String sUCF4String = t_Wrapper(source);
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Assign
 		sCppLiteralString = t_Wrapper(source);
@@ -533,7 +551,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sBinaryString = t_Wrapper(source); // Not needed. use anonymous rvalue
 		sUTF16String = t_Wrapper(source);
 		sUCF4String = t_Wrapper(source);
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Append
 		sCppLiteralString += t_Wrapper(source);
@@ -544,7 +562,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sBinaryString += t_Wrapper(source); // Not needed. use anonymous rvalue
 		sUTF16String += t_Wrapper(source);
 		sUCF4String += t_Wrapper(source);
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 	}
 	// Assign to wrapped literal string
 	{
@@ -560,7 +578,7 @@ bool c_DataRepresentationFramework::doTests() {
 		c_DataRepresentationFramework::c_BinaryString sBinaryString = t_Wrapper(source); // Not needed. Assign to anonymous instead.
 		c_DataRepresentationFramework::c_UTF16String sUTF16String = t_Wrapper(source);
 		c_DataRepresentationFramework::c_UCF4String sUCF4String = t_Wrapper(source);
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Assign
 		sCppLiteralString = t_Wrapper(source);
@@ -571,7 +589,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sBinaryString = t_Wrapper(source); // Not needed. use anonymous rvalue
 		sUTF16String = t_Wrapper(source);
 		sUCF4String = t_Wrapper(source);
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Append
 		sCppLiteralString += t_Wrapper(source);
@@ -582,7 +600,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sBinaryString += t_Wrapper(source); // Not needed. use anonymous rvalue
 		sUTF16String += t_Wrapper(source);
 		sUCF4String += t_Wrapper(source);
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 	}
 
 	// Assign to wrapped ascii char
@@ -599,7 +617,7 @@ bool c_DataRepresentationFramework::doTests() {
 		c_DataRepresentationFramework::c_UCF4String sUCF4String = t_Wrapper(source);
 		#ifdef COMPILE_UNALLOWED_CONSTRUCTS
 		c_DataRepresentationFramework::c_BinaryString sBinaryString = t_Wrapper(source); // Not needed. Assign to anonymous instead.
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Assign
 		sAsciiString = t_Wrapper(source);
@@ -610,7 +628,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sUCF4String = t_Wrapper(source);
 		#ifdef COMPILE_UNALLOWED_CONSTRUCTS
 		sBinaryString = t_Wrapper(source); // Not needed. Use append to anonymous char.
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Append
 		sAsciiString += t_Wrapper(source);
@@ -621,7 +639,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sUCF4String += t_Wrapper(source);
 		#ifdef COMPILE_UNALLOWED_CONSTRUCTS
 		sBinaryString += t_Wrapper(source); // Not needed. Use append to anonymous char.
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 	}
 
 	// Assign to wrapped literal char
@@ -638,7 +656,7 @@ bool c_DataRepresentationFramework::doTests() {
 		c_DataRepresentationFramework::c_BinaryString sBinaryString = t_Wrapper(source); // Not needed. Assign to anonymous instead.
 		c_DataRepresentationFramework::c_UTF16String sUTF16String = t_Wrapper(source);
 		c_DataRepresentationFramework::c_UCF4String sUCF4String = t_Wrapper(source);
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Assign
 		sCppLiteralString = t_Wrapper(source);
@@ -649,7 +667,7 @@ bool c_DataRepresentationFramework::doTests() {
 		sBinaryString = t_Wrapper(source); // Not needed. use anonymous rvalue
 		sUTF16String = t_Wrapper(source);
 		sUCF4String = t_Wrapper(source);
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 
 		// Append
 		sCppLiteralString += t_Wrapper(source);
@@ -660,12 +678,12 @@ bool c_DataRepresentationFramework::doTests() {
 		sBinaryString += t_Wrapper(source); // Not needed. use anonymous rvalue
 		sUTF16String += t_Wrapper(source);
 		sUCF4String += t_Wrapper(source);
-		#endif COMPILE_UNALLOWED_CONSTRUCTS
+		#endif // COMPILE_UNALLOWED_CONSTRUCTS
 	}
 
 	// Implicit cast to ISO 8859-1 from wrapped anonymous char array
 	{
-		char* source = "This is an anonymous string";
+		const char* source = "This is an anonymous string";
 
 		methodWithParameter<c_DataRepresentationFramework::c_ISO_8859_1_String>(_Asciisz(source));
 		methodWithParameter<c_DataRepresentationFramework::c_ISO_8859_1_String>(_Literalsz(source));
@@ -692,7 +710,7 @@ bool c_DataRepresentationFramework::doTests() {
 template <class S> c_DataRepresentationFramework::c_AsciiString toAsciiStringT(const S& s_) {
 	c_DataRepresentationFramework::c_AsciiString result;
 	// Copy only ascii chars (they map 1-to-1 between UTF-16 and Ascii)
-	for (S::const_iterator iter = s_.begin(); iter != s_.end(); iter++) {
+	for (typename S::const_iterator iter = s_.begin(); iter != s_.end(); iter++) {
 		if (*iter <= 0x7F) {
 			result.anonymous() += static_cast<char>(*iter);
 		}
@@ -729,6 +747,7 @@ c_DataRepresentationFramework::c_AsciiString c_DataRepresentationFramework::toAs
 	return toAsciiStringT(sUTF16String);
 }
 
+#ifdef __BCPLUSPLUS__
 /**
   * Narrows provided string to an c_DataRepresentationFramework::c_AsciiString.
   * Characters out of range will be logged.
@@ -737,11 +756,13 @@ c_DataRepresentationFramework::c_AsciiString c_DataRepresentationFramework::toAs
 	c_DataRepresentationFramework::c_UTF16String sUTF16String(sIDEString.c_str());
 	return toAsciiStringT(sUTF16String);
 }
+#endif
 
 /**
   * Decodes provided string to an UTF-8 string
   */
 c_DataRepresentationFramework::c_UTF8String c_DataRepresentationFramework::toUTF8String(const c_DataRepresentationFramework::c_UTF16String& sUTF16String) {
+	c_DataRepresentationFramework::c_UTF8String result;
 	/*
 	From: http://lists.boost.org/boost-users/2009/06/49039.php
 
@@ -753,13 +774,28 @@ c_DataRepresentationFramework::c_UTF8String c_DataRepresentationFramework::toUTF
 	MultiByteToWideChar() and WideCharToMultiByte() instead (as there is no
 	UTF-8 locale on Windows).
 	*/
-// 101216/KoH Returns empty string... Have not time to investigate why
+// 101216/KoH Returns empty string... Have not time to investigate why this does not work
 //	c_DataRepresentationFramework::c_UTF8String result;
 //	utf8::utf16to8(sUTF16String.begin(), sUTF16String.end(), std::back_inserter(result));
 //	return result;
 
+	#ifdef __BCPLUSPLUS__
 	UTF8String sUTF8String = UnicodeString(sUTF16String.c_str());
-	return _UTF8sz(sUTF8String.c_str());
+	result = _UTF8sz(sUTF8String.c_str());
+	#else
+	/**
+	 * 130407/KoH
+	 * icu::UnicodeString requires icu4c from http://site.icu-project.org.
+	 * If you compiler does not recognize the code it may be that you have not Install it to your build environment or missed to add it to include paths.
+	 * TODO: Add it as subversion external to this library (e.g. http://source.icu-project.org/repos/icu/icu/tags/release-51-1)
+	 */
+	icu::UnicodeString sUnicodeString(sUTF16String.c_str());
+	sUnicodeString.toUTF8String(result);
+	c_LogString sMessage("c_DataRepresentationFramework::toUTF8String not tested for using icu::UnicodeString");
+	LOG_DESIGN_INSUFFICIENCY(sMessage);
+	#warning "c_DataRepresentationFramework::toUTF8String not tested for using icu::UnicodeString"
+	#endif
+	return result;
 }
 
 /**
@@ -845,10 +881,16 @@ c_DataRepresentationFramework::c_UTF8String c_DataRepresentationFramework::toUTF
   * and encode it in UTF8.
   */
 c_DataRepresentationFramework::c_UTF8String c_DataRepresentationFramework::toUTF8String(const c_DataRepresentationFramework::c_CppLiteralString& sCppLiteralString) {
+	c_DataRepresentationFramework::c_UTF8String result;
+	#ifdef __BCPLUSPLUS__
 	// Use IDE strings for conversion
 	AnsiString sCPPLiteral(sCppLiteralString.c_str()); // Will use current code page by default which we asume the literal to be in
 	UTF8String sResult(sCPPLiteral); // Encode in UTF8 string
-	return _UTF8sz(sResult.c_str());
+	result = _UTF8sz(sResult.c_str());
+	#else
+	#warning  c_DataRepresentationFramework::toUTF8String not adapted to this build environment
+	#endif
+	return result;
 }
 
 /**
@@ -857,10 +899,16 @@ c_DataRepresentationFramework::c_UTF8String c_DataRepresentationFramework::toUTF
   * and encode it in UTF8.
   */
 c_DataRepresentationFramework::c_UTF8String c_DataRepresentationFramework::toUTF8String(const c_DataRepresentationFramework::c_ISO_8859_1_String& sISO_8859_1_String) {
+	c_DataRepresentationFramework::c_UTF8String result;
+	#ifdef __BCPLUSPLUS__
 	// Use IDE strings for conversion
 	AnsiString sCodePage1252(sISO_8859_1_String.c_str()); // Asume current code page is windows 1252 which is a superset of ISO-8859-1
 	UTF8String sResult(sCodePage1252); // Encode in UTF8 string
-	return _UTF8sz(sResult.c_str());
+	result = _UTF8sz(sResult.c_str());
+	#else
+	#warning  c_DataRepresentationFramework::toUTF8String not adapted to this build environment
+	#endif
+	return result;
 }
 
 /**
@@ -914,9 +962,15 @@ c_DataRepresentationFramework::c_UTF16String c_DataRepresentationFramework::toUT
   */
 c_DataRepresentationFramework::c_UTF16String c_DataRepresentationFramework::toUTF16String(const c_DataRepresentationFramework::c_ISO_8859_1_String& sISO_8859_1_String) {
 	c_DataRepresentationFramework::c_UTF16String result;
+	#ifdef __BCPLUSPLUS__
+	// Use IDE strings for conversion
 	AnsiString sCodePage1252(sISO_8859_1_String.c_str()); // Wrap in Code Page 1252 string (Should be compile environment default Ansi code page)
 	String sUTF16String(sCodePage1252); // De-encode from Code Page 1252 to UTF16 string
 	result = _UTF16sz(sUTF16String.c_str());
+	#else
+	#warning  c_DataRepresentationFramework::toUTF16String not adapted to this build environment
+	#endif
+
 	return result;
 }
 //---------------------------------------------------------------------------
@@ -925,11 +979,16 @@ c_DataRepresentationFramework::c_UTF16String c_DataRepresentationFramework::toUT
   */
 c_DataRepresentationFramework::c_ISO_8859_1_String c_DataRepresentationFramework::toISO_8859_1_String(const c_DataRepresentationFramework::c_UTF16String& sUTF16String) {
 	c_DataRepresentationFramework::c_ISO_8859_1_String result;
+	#ifdef __BCPLUSPLUS__
+	// Use IDE strings for conversion
 	AnsiString sWindows1252(sUTF16String.c_str()); // Will encode to current code page by default
 												   // which we asume to be standard widnows code page 1252
 												   // which in turn is the same as ISO 8859-1 except that
 												   // 0x80 .. 0x9F may contain printable characters.
 	result.anonymous() = sWindows1252.c_str();
+	#else
+	#warning  c_DataRepresentationFramework::toISO_8859_1_String not adapted to this build environment
+	#endif
 	return result;
 }
 //---------------------------------------------------------------------------
@@ -939,10 +998,15 @@ c_DataRepresentationFramework::c_ISO_8859_1_String c_DataRepresentationFramework
   */
 c_DataRepresentationFramework::c_ISO_8859_1_String c_DataRepresentationFramework::toISO_8859_1_String(const c_DataRepresentationFramework::c_UTF8String& sUTF8String) {
 	c_DataRepresentationFramework::c_ISO_8859_1_String result;
+	#ifdef __BCPLUSPLUS__
+	// Use IDE strings for conversion
 	System::UTF8String systemUTF8String(sUTF8String.c_str()); // Use RAD studio UTF8 String instance
 	System::AnsiString sWindows1252(systemUTF8String); // Encode to Ansi string which should use current code page which should be default 1252.
 													   // And Code Page 1252 is a supereset of ISO 8859-1.
 	result.anonymous() = sWindows1252.c_str();
+	#else
+	#warning  c_DataRepresentationFramework::toISO_8859_1_String not adapted to this build environment
+	#endif
 	return result;
 }
 
@@ -1157,7 +1221,7 @@ c_DataRepresentationFramework::t_raw_vector c_DataRepresentationFramework::parse
 		sMessage.anonymous() += "Parsing hex string: ";
 		sMessage.anonymous() += HexNibblePairString;
 		sMessage.anonymous() += "\nException: ";
-		sMessage += toLogString(e.what());
+		sMessage += toLogString(_UTF8sz(e.what()));
 		throw std::runtime_error(sMessage);
 	}
 	return result;
@@ -1393,5 +1457,4 @@ c_DataRepresentationFramework::c_AsciiString c_DataRepresentationFramework::intT
 
 	return result;
 }
-#endif // __BCPLUSPLUS__
 

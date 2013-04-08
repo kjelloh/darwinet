@@ -7,25 +7,30 @@
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
- #ifdef __BCPLUSPLUS__
-// RAD Studio XE compilation
-//---------------------------------------------------------------------------
+#ifdef __BCPLUSPLUS__
 #pragma hdrstop
+#endif
 //---------------------------------------------------------------------------
 #include "DateAndTimeFramework.h"
 #include <sstream>
 #include <string>
 
+#ifdef __BCPLUSPLUS__
 # pragma warn -8072 // Seems to be a known Issue for  boost in Borland CPP 101112/KoH
+#endif
 #include <boost/format.hpp>
+#ifdef __BCPLUSPLUS__
 # pragma warn +8072 // Enable again. See above
+#endif
 
 #include "DataRepresentationFrameWork.h"
 #include "BusinessLogUnit.h"
 
 //---------------------------------------------------------------------------
 
+#ifdef __BCPLUSPLUS__
 #pragma package(smart_init)
+#endif
 
 /**
   * Creates a time stamp with current time setting
@@ -137,5 +142,4 @@ c_DataRepresentationFramework::c_AsciiString c_YYYYMMDDHHMMSSmmm::getFormatedDat
 	return result;
 }
 //---------------------------------------------------------------------------
-#endif // __BCPLUSPLUS__
 

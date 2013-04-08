@@ -8,12 +8,12 @@
 
 #ifndef ApplicationPropertiesH
 #define ApplicationPropertiesH
-//---------------------------------------------------------------------------
- #ifdef __BCPLUSPLUS__
-// RAD Studio XE compilation
-//---------------------------------------------------------------------------
 
+#ifdef __BCPLUSPLUS__
 #include <classes.hpp> // TStringList etc
+#else
+#include <map>
+#endif
 #include "FilePathFramework.h" // c_FilePath
 #include "DataRepresentationFrameWork.h"
 
@@ -21,14 +21,26 @@
 
 /**
   * Application properties classes.
-  * The whole property environment operates using UTF-16 strings
-  * based on IDE defined String.
   */
+
+#ifdef __BCPLUSPLUS__
+typedef String c_PropertyString; // Use IDE String
+typedef TStringList c_PropertyList;
+typedef TStringList* c_PropertyListPtr; // Use Ide TStringList
+#else
+typedef c_DataRepresentationFramework::c_UTF8String c_PropertyString; // Use UTF8 string
+typedef std::vector<std::map<c_PropertyString,c_PropertyString>  > c_PropertyList;
+typedef c_PropertyList* c_PropertyListPtr;
+#endif
 
 /**
   * Models a set of property values
   */
+#ifdef __BCPLUSPLUS__
 typedef std::vector<String> c_PropertyValues;
+#else
+typedef std::vector<c_DataRepresentationFramework::c_UTF8String> c_PropertyValues;
+#endif
 
 /**
   * Interface to be implemented by an Application properties
@@ -43,7 +55,7 @@ public:
 	  * Called by model when a property vale has been changed
 	  * or added.
 	  */
-	virtual void onApplicationPropertiesModelValueChange(const String& name,const String& value)=0;
+	virtual void onApplicationPropertiesModelValueChange(const c_PropertyString& name,const c_PropertyString& value)=0;
 
 	/**
 	  * Called when the model has been cleared of all contents
@@ -95,35 +107,35 @@ public:
 	/**
 	  * Returns the undefined value for provided key.
 	  */
-	String getUndefinedValueOfKey(const String& name);
+	c_PropertyString getUndefinedValueOfKey(const c_PropertyString& name);
 
 	/**
 	  * Returns true if property with provided key is undefined or contains the
 	  * value reserved for an undefined property (getUndefinedValueOfKey(name)).
 	  */
-	bool isUndefined(const String& name);
+	bool isUndefined(const c_PropertyString& name);
 
 	/**
 	  * Returns value of property with name. Returns default value
 	  * if no value is defined for name.
 	  */
-	String getPropertyValue(const String& name,const String& defaultValue="");
+	c_PropertyString getPropertyValue(const c_PropertyString& name,const c_PropertyString& defaultValue=_UTF8sz(""));
 
 	/**
 	  * Returns a list of values of property of provided name.
 	  * Used for properties that stores a list of values
 	  */
-	c_PropertyValues getPropertyValues(const String& name,const String& defaultValue="");
+	c_PropertyValues getPropertyValues(const c_PropertyString& name,const c_PropertyString& defaultValue=_UTF8sz(""));
 
 	/**
 	  * Sets property of provided name to provided list of values
 	  */
-	void setPropertyValues(const String& name,const c_PropertyValues& values);
+	void setPropertyValues(const c_PropertyString& name,const c_PropertyValues& values);
 
 	/**
 	  * Sets property with name to provided value
 	  */
-	void setPropertyValue(const String& name,const String& value);
+	void setPropertyValue(const c_PropertyString& name,const c_PropertyString& value);
 
 	/**
 	  * Will load properties from persistens storage
@@ -138,28 +150,28 @@ public:
 	/**
 	  * Returns the string list containg property (name,value) pairs
 	  */
-	TStringList* getProperties();
+	c_PropertyListPtr getProperties();
 
 	/**
 	  * Marks provided property as obsolete
 	  */
-	void setObsoleteProperty(const String& name);
+	void setObsoleteProperty(const c_PropertyString& name);
 
 	/**
 	  * Returns the string list containg obsolete property names
 	  */
-	TStringList* getObsoleteProperties();
+	c_PropertyListPtr getObsoleteProperties();
 
 	/**
 	  * Sets obsolete properties list to the one provided.
 	  * The list is cloned.
 	  */
-	void setObsoleteProperties(TStringList* pObsoleteNames);
+	void setObsoleteProperties(c_PropertyListPtr pObsoleteNames);
 
 	/**
 	  * Returns true if provided property name is registered as obsolete
 	  */
-	bool isObsoleteProperty(const String& name);
+	bool isObsoleteProperty(const c_PropertyString& name);
 
 	/**
 	  * Copies our properties to provided properties
@@ -193,7 +205,7 @@ private:
 	/**
 	  * Private storage of property values
 	  */
-	TStringList* m_pProperties;
+	c_PropertyListPtr m_pProperties;
 
 	/**
 	  * Private storage of complete path to the Application ini file
@@ -203,7 +215,7 @@ private:
 	/**
 	  * Private storage of property values
 	  */
-	TStringList* m_pObsoleteNames;
+	c_PropertyListPtr m_pObsoleteNames;
 
 	std::vector<c_ApplicationPropertiesModelListenerIfc*> m_listeners;
 
@@ -215,7 +227,7 @@ private:
 	/**
 	  * Report change of name to all registered listeners
 	  */
-	void reportChangeToListeners(const String& name,const String& value);
+	void reportChangeToListeners(const c_PropertyString& name,const c_PropertyString& value);
 
 	/**
 	  * Report cleared model to all registered listeners
@@ -280,7 +292,7 @@ private:
 	  * Called by model when a property vale has been changed
 	  * or added.
 	  */
-	virtual void onApplicationPropertiesModelValueChange(const String& name,const String& value);
+	virtual void onApplicationPropertiesModelValueChange(const c_PropertyString& name,const c_PropertyString& value);
 
 	/**
 	  * Called when the model has been cleared of all contents
@@ -328,5 +340,4 @@ private:
 //};
 typedef c_ApplicationPropertiesModel c_ApplicationProperties;
 
-#endif // __BCPLUSPLUS__
 #endif

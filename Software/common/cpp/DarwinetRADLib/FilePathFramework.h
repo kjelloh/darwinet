@@ -9,13 +9,37 @@
 #ifndef FilePathFrameworkH
 #define FilePathFrameworkH
 //---------------------------------------------------------------------------
- #ifdef __BCPLUSPLUS__
-// RAD Studio XE compilation
-//---------------------------------------------------------------------------
 #include <string>
 #include <vector>
 #include "DataRepresentationFrameWork.h"
 #include "BusinessLogUnit.h"
+
+//------------------------------------------------------------------------------
+
+/**
+  * Invalid File Path Node Append exception class
+  * for File Path of type A
+  */
+template <class A>
+class c_InvalidFilePathNodeAppend : public std::runtime_error {
+public:
+	typedef typename A::node_type N;
+
+	/**
+	  * Creates an exception object about invalid node append
+	  */
+	c_InvalidFilePathNodeAppend(const A* pArray,const N& node)
+		: std::runtime_error(
+			   std::string("Failed to append \"")
+			+  c_DataRepresentationFramework::toUTF8String(pArray->toString()).anonymous()
+			+  std::string("\" with \"")
+			+  c_DataRepresentationFramework::toUTF8String(node.getCaption()).anonymous()
+			+  std::string("\""))
+			// TODO 101110, Risk of throw which is not allowed in constructor. Consider storing node and array and build string on what() call.
+	{
+	}
+
+};
 
 //---------------------------------------------------------------------------
 /**
@@ -135,72 +159,13 @@ private:
 };
 
 
-
-//class c_FilePathNode : public c_DataRepresentationFramework::c_UTF16String {
-//public:
-//
-//	/**
-//	  * Constructs a file path node with provided caption and type
-//	  */
-//	c_FilePathNode(
-//		const c_DataRepresentationFramework::c_UTF16String& caption=c_DataRepresentationFramework::c_UTF16String(L"")
-//		,e_FilePahNodeType type=eFilePahNodeType_Undefined);
-//
-//	/**
-//	  * Copy constructor
-//	  */
-//	c_FilePathNode(const c_FilePathNode& other_value);
-//
-//	/**
-//	  * Asignment operator
-//	  */
-//	c_FilePathNode& operator=(const c_FilePathNode& other_value);
-//
-//	/**
-//	  * Returns this node captiin (string contents)
-//	  */
-//	c_DataRepresentationFramework::c_UTF16String getCaption() const;
-//
-//	/**
-//	  * Returns the file name without the extension.
-//	  * I.e the part of the name before '.'
-//	  */
-//	c_DataRepresentationFramework::c_UTF16String NameWithoutExtension() const;
-//
-//	/**
-//	  * Returns this node type
-//	  */
-//	e_FilePahNodeType getType() const;
-//
-//	/**
-//	  * Sets this node type
-//	  */
-//	void setType(e_FilePahNodeType type);
-//
-//	/**
-//	  * Returns true if the node may be a
-//	  * directory node. For example a drive node
-//	  * or a server node may NOT be a directory node.
-//	  * Used by directory creating method to know if
-//	  * the node shall be cerated as directory
-//	  * in the file system.
-//	  */
-//	bool mayBeDirectoryNode() const;
-//
-//private:
-//	/**
-//	  * Private storage of this node type
-//	  */
-//	e_FilePahNodeType m_type;
-//};
-
 /**
   * File path made up of nodes of type N
   */
 template <class N>
 class c_FilePathNodeArray : public std::vector<N> {
 public:
-	typedef N::string_type  S;
+	typedef typename N::string_type  S;
 
 	/**
 	  * Constructs an array of file path nodes from provided file path string.
@@ -235,7 +200,7 @@ public:
 	/**
 	  * Asignment to string path operator
 	  */
-	c_FilePathNodeArray<N>& operator=(const N::string_type& sFilePath) {
+	c_FilePathNodeArray<N>& operator=(const typename N::string_type& sFilePath) {
 		c_FilePathNodeArray<N> temp_copy(sFilePath);
 		static_cast<std::vector<N>&>(*this).swap(temp_copy);
 		return *this;
@@ -255,7 +220,7 @@ public:
 	/**
 	  * Sum operator array + string path
 	  */
-	c_FilePathNodeArray<N> operator+(const N::string_type& sFilePath) const {
+	c_FilePathNodeArray<N> operator+(const typename N::string_type& sFilePath) const {
 		c_FilePathNodeArray<N> result(*this);
 		result += c_FilePathNodeArray<N>(sFilePath);
 		return result;
@@ -292,7 +257,8 @@ public:
 	  */
 	bool operator==(const c_FilePathNodeArray<N>& other_value) const {
 // DEBUG
-c_LogString sMessage(__FUNCTION__" Comparing ");
+c_LogString sMessage(__FUNCTION__);
+sMessage += " Comparing ";
 sMessage += toLogString(this->toDebugString());
 sMessage += _Asciisz(" to ");
 sMessage += toLogString(other_value.toDebugString());
@@ -317,10 +283,12 @@ LOG_DEVELOPMENT_TRACE(sMessage);
 			c_FilePathNodeArray<N>::const_iterator other_iter = other_value.begin();
 			while (this_iter != this->end()) {
 				// Compare captions in same case as DOS does
-				N::string_type sThisCaption = this_iter->getCaption();
-				N::string_type sOtherCaption = other_iter->getCaption();
+				typename N::string_type sThisCaption = this_iter->getCaption();
+				typename N::string_type sOtherCaption = other_iter->getCaption();
+				#if defined(__BCPLUSPLUS__) || defined(__CYGWIN32__)
 				std::transform (sThisCaption.begin (), sThisCaption.end (), sThisCaption.begin (), (int(*)(int)) std::toupper);
 				std::transform (sOtherCaption.begin (), sOtherCaption.end (), sOtherCaption.begin (), (int(*)(int)) std::toupper);
+				#endif // (__BCPLUSPLUS__ || __CYGWIN32__)
 				if (!(sThisCaption == sOtherCaption)) {
 					break; // Give up
 				}
@@ -332,6 +300,7 @@ LOG_DEVELOPMENT_TRACE(sMessage);
 		return result;
 	}
 
+	#if defined(__BCPLUSPLUS__) || defined(__CYGWIN32__)
 	/**
 	  * Appends provided node as last node in the array.
 	  * Will throw an exception if the node violates current path.
@@ -368,9 +337,9 @@ LOG_DEVELOPMENT_TRACE(sMessage);
 						}
 						this->push_back(node);
 
-						// Update type of prevous node. We now know it has
+						// Update type of previous node. We now know it has
 						// to be a drive, server or a directory as these are the only ones
-						// allowed to have preceeding nodes.
+						// allowed to have preceding nodes.
 						if (    (this->back().getType() != eFilePahNodeType_Drive)
 							 && (this->back().getType() != eFilePahNodeType_Server)) {
 							this->back().setType(eFilePahNodeType_Directory);
@@ -387,6 +356,8 @@ LOG_DEVELOPMENT_TRACE(sMessage);
 
 		}
 	}
+	#endif // defined(__BCPLUSPLUS__) || defined(__CYGWIN32__)
+
 
 	/**
 	  * Appends provided array after our current nodes.
@@ -410,11 +381,12 @@ LOG_DEVELOPMENT_TRACE(sMessage);
 		return result;
 	}
 
+    #if defined(__BCPLUSPLUS__) || defined(__CYGWIN32__)
 	/**
 	  * Returns this node path as a string path
 	  */
-	N::string_type toString() const {
-		N::string_type result;
+	typename N::string_type toString() const {
+		typename N::string_type result;
 		c_FilePathNodeArray<N>::const_iterator iter = this->begin();
 		bool firstNode = true;
 		while (iter != this->end()) {
@@ -430,16 +402,19 @@ LOG_DEVELOPMENT_TRACE(sMessage);
 
 			iter++;
 		}
-		// Add end
-	//
+		// Add end	"//"
 		return result;
 	}
+    #else
+    #error "Not defined for this environment"
+    #endif
 
+	#if defined(__BCPLUSPLUS__) || defined(__CYGWIN32__)
 	/**
 	  * Returns this node path as a debug information string
 	  */
-	N::string_type toDebugString() const {
-		N::string_type result;
+	typename N::string_type toDebugString() const {
+		typename N::string_type result;
 		c_FilePathNodeArray<N>::const_iterator iter = this->begin();
 		int index = 0;
 		while (iter != this->end()) {
@@ -458,11 +433,17 @@ LOG_DEVELOPMENT_TRACE(sMessage);
 	//
 		return result;
 	}
+	#else
+	#error "Not defined for this environment"
+	#endif
 
-	typedef std::vector<N>::iterator iterator;
-	typedef std::vector<N>::const_iterator const_iterator;
+	typedef typename std::vector<N>::iterator iterator;
+	typedef typename std::vector<N>::const_iterator const_iterator;
 	typedef N node_type;
 private:
+
+
+	#if defined(__BCPLUSPLUS__) || defined(__CYGWIN32__)
 	/**
 	  * Builds this array from privded file path string
 	  */
@@ -480,10 +461,10 @@ private:
 
 			// Separate on ':','\','.'
 
-			N::string_type::const_iterator iter = sFilePath.begin();
-			N::string_type node_caption;
+			typename N::string_type::const_iterator iter = sFilePath.begin();
+			typename N::string_type node_caption;
 
-			// Start by checking if there is a preceeding server node, one started with \\
+			// Start by checking if there is a preceeding server node, one started with '\\'
 			bool thisIsAServerNode = false;
 			if (*iter == '\\') {
 				if ((iter+1) != sFilePath.end()) {
@@ -492,7 +473,7 @@ private:
 						iter++; // skip first backslash
 						iter++; // skip second backslash
 						thisIsAServerNode = true;
-						node_caption = _Asciisz("\\\\"); // Server node caption includes the \\
+						node_caption = _Asciisz("\\\\"); // Server node caption includes the '\\'
 					}
 				}
 			}
@@ -533,187 +514,24 @@ private:
 		catch (...) {
 		}
 	}
-};
-
-///**
-//  * Models an array of file path nodes.
-//  * May be used to model file paths.
-//  */
-//class c_FilePathNodeArray : public std::vector<c_FilePathNode> {
-//public:
-//
-//	/**
-//	  * Constructs an array of file path nodes from provided UTF-16 file path string.
-//	  */
-//	c_FilePathNodeArray(const c_DataRepresentationFramework::c_UTF16String& sFilePath = c_DataRepresentationFramework::c_UTF16String(L""));
-//
-//	/**
-//	  * Copy constructor
-//	  */
-//	c_FilePathNodeArray(const c_FilePathNodeArray& other_value);
-//
-//	/**
-//	  * Asignment to our type operator
-//	  */
-//	c_FilePathNodeArray& operator=(const c_FilePathNodeArray& other_value);
-//
-//	/**
-//	  * Assignment to string path operator
-//	  */
-//	c_FilePathNodeArray& operator=(const c_DataRepresentationFramework::c_UTF16String& sFilePath);
-//
-//	/**
-//	  * Sum operator for two arrays
-//	  */
-//	c_FilePathNodeArray operator+(const c_FilePathNodeArray& other_value) const;
-//
-//	/**
-//	  * Sum operator array + string path
-//	  */
-//	c_FilePathNodeArray operator+(const c_DataRepresentationFramework::c_UTF16String& sFilePath) const;
-//
-//	/**
-//	  * Add operator to add node
-//	  */
-//	void operator+=(const c_FilePathNode& node);
-//
-//	/**
-//	  * Add operator to add path array
-//	  */
-//	void operator+=(const c_FilePathNodeArray& other_value);
-//
-//	/**
-//	  * Add operator to add null terminated path string
-//	  */
-//	void operator+=(const c_DataRepresentationFramework::c_UTF16String& sFilePath);
-//
-//	/**
-//	  * Path contents Equal test operator.
-//	  * Two paths are equal if all nodes match.
-//	  */
-//	bool operator==(const c_FilePathNodeArray& other_value) const;
-//
-//	/**
-//	  * Appends provided node as last node in the array.
-//	  * Will throw an exception if the node violates current path.
-//	  */
-//	void append(const c_FilePathNode& node);
-//
-//	/**
-//	  * Appends provided array after our current nodes.
-//	  * Will throw an exception if the nodes violates current path.
-//	  */
-//	void append(const c_FilePathNodeArray& other_value);
-//
-//	/**
-//	  * Returns this path with the last node removed
-//	  */
-//	c_FilePathNodeArray getParentPath() const;
-//
-//	/**
-//	  * Returns this node path as a string path
-//	  */
-//	c_DataRepresentationFramework::c_UTF16String toString() const;
-//
-//	typedef std::vector<c_FilePathNode>::iterator iterator;
-//	typedef std::vector<c_FilePathNode>::const_iterator const_iterator;
-//private:
-//	/**
-//	  * Builds this array from privded file path string
-//	  */
-//	void buildArrayFromString(const c_DataRepresentationFramework::c_UTF16String& sFilePath);
-//};
-
-//------------------------------------------------------------------------------
-
-//class c_InvalidFilePathNodeAppend : public std::runtime_error {
-//public:
-//	/**
-//	  * Creates an exception object about invalid node append
-//	  */
-//	c_InvalidFilePathNodeAppend(const c_FilePathNodeArray* pArray,const c_FilePathNode& node);
-//
-//};
-
-/**
-  * Invalid File PAth Node Append exception class
-  * for File Path of type A
-  */
-template <class A>
-class c_InvalidFilePathNodeAppend : public std::runtime_error {
-public:
-	typedef A::node_type N;
-
-	/**
-	  * Creates an exception object about invalid node append
-	  */
-	c_InvalidFilePathNodeAppend(const A* pArray,const N& node)
-		: std::runtime_error(
-			   std::string("Failed to append \"")
-			+  c_DataRepresentationFramework::toUTF8String(pArray->toString()).anonymous()
-			+  std::string("\" with \"")
-			+  c_DataRepresentationFramework::toUTF8String(node.getCaption()).anonymous()
-			+  std::string("\""))
-			// TODO 101110, Risk of throw which is not allowed in constructor. Consider storing node and array and build string on what() call.
-	{
-	}
+	#else
+	#error "Not defined for this environment"
+	#endif
 
 };
 
-////------------------------------------------------------------------------------
-///**
-//  * Creates a static fascade towards routines ascociated with file path handling
-//  */
-//class c_FilePathFramework {
-//public:
-//
-//	/**
-//	  * Returns true if the directory defined by provided file path exists
-//	  * in the file system.
-//	  */
-//	static bool directoryPathExists(const c_FilePath& directory_path);
-//
-//	/**
-//	  * Creates provided directory path in file system.
-//	  * Each node in the path will be created if it does not yet exist
-//	  */
-//	static bool ensureDirectoryPathExists(const c_FilePath& directory_path);
-//
-//	/**
-//	  * Returns true if the file defined by provided file path exists
-//	  * in the file system.
-//	  */
-//	static bool fileExists(const c_FilePath& file_path);
-//
-//	/**
-//	  * Returns true if the file defined by provided file path exists
-//	  * in the file system.
-//	  */
-//	static bool ensureFileExists(const c_FilePath& file_path);
-//
-//	/**
-//	  * Deletes the file at provided path
-//	  */
-//	static void deleteFile(const c_FilePath& file_path);
-//
-//	/**
-//	  * Renames file with provided old file name in provided folder path to provided new file name.
-//	  */
-//	static void renameFile(const c_FilePath& folderPath,const c_FileName& oldFileName,const c_FileName& newFileName);
-//
-//};
 //------------------------------------------------------------------------------
 /**
-  * Creates a static fascade towards routines ascociated with file path handling
+  * Creates a static facade towards routines associated with file path handling
   */
 template <class A>
 class c_FilePathFrameworkT {
 public:
 
 	/**
-	  * Conveniant typedef
+	  * Convenient typedef
 	  */
-	typedef A::node_type N;
+	typedef typename A::node_type N;
 
 	/**
 	  * Creates provided directory path in file system.
@@ -721,7 +539,11 @@ public:
 	  */
 	static bool directoryPathExists(const A& directory_path) {
 		bool result = false; // default
+		#if defined(__BCPLUSPLUS__)
 		result = DirectoryExists(directory_path.toString().c_str());
+		#else
+		LOG_NOT_IMPLEMENTED;
+		#endif
 		return result;
 	}
 
@@ -733,8 +555,9 @@ public:
 	static bool ensureDirectoryPathExists(const A& directory_path) {
 		bool result = false; // default
 
+		#if defined(__BCPLUSPLUS__)
 		// Loop through the path and ensure that each directory node exists
-		A::const_iterator iter = directory_path.begin();
+		typename A::const_iterator iter = directory_path.begin();
 		A current_path;
 		while (iter != directory_path.end()) {
 			current_path += *iter;
@@ -747,7 +570,8 @@ public:
 					if (!CreateDir(current_path.toString().c_str())) {
 						// Failed to create it. Give up
 						DWORD api_error_code = GetLastError();
-						c_LogString sMessage(__FUNCTION__" failed. CreateDir() returned error ");
+						c_LogString sMessage(__FUNCTION__);
+						sMessage += " failed. CreateDir() returned error ";
 						sMessage += logStringOfWinApiErrorCode(api_error_code);
 						LOG_DESIGN_INSUFFICIENCY(sMessage);
 						break;
@@ -757,6 +581,10 @@ public:
 			iter++;
 		}
 		result = (iter == directory_path.end()); // true if did not break in the process
+		#else
+		LOG_NOT_IMPLEMENTED;
+		#endif
+
 		return result;
 	}
 
@@ -767,13 +595,17 @@ public:
 	  */
 	static bool fileExists(const A& file_path) {
 		bool result = false; // default
-//		result = FileExists(AnsiString(file_path.toString().c_str()));
+		#if defined(__BCPLUSPLUS__)
 		String sFilePath(file_path.toString().c_str());
 		if (FileExists(sFilePath)) {
 			// Get the file attributes to detect it is really a file
 			unsigned short Attributes = FileGetAttr(sFilePath);
 			result = !(Attributes & faDirectory); // Not a directory
 		}
+		#else
+		LOG_NOT_IMPLEMENTED;
+		#endif
+
 		return result;
 	}
 
@@ -782,7 +614,12 @@ public:
 	  * Deletes the file at provided path
 	  */
 	static void deleteFile(const A& file_path) {
+		#if defined(__BCPLUSPLUS__)
 		DeleteFile(file_path.toString().c_str());
+		#else
+		LOG_NOT_IMPLEMENTED;
+		#endif
+
 	}
 
 	/**
@@ -795,7 +632,11 @@ public:
 		new_file_name_path += newFileName;
 
 		// Now rename the saved live log to this name
+		#if defined(__BCPLUSPLUS__)
 		RenameFile(old_file_name_path.toString().c_str(),new_file_name_path.toString().c_str());
+		#else
+		LOG_NOT_IMPLEMENTED;
+		#endif
 	}
 
 	/**
@@ -803,13 +644,16 @@ public:
 	  */
 	static bool copyFile(const A& source_path,const A& target_path) {
 		bool result = false; // default
+		#if defined(__BCPLUSPLUS__)
 		ensureDirectoryPathExists(target_path.getParentPath());
 		// Call Windows API
 		result = CopyFile(source_path.toString().c_str(),target_path.toString().c_str(),false); // Copy and succeed even if target exists
+		#else
+		LOG_NOT_IMPLEMENTED;
+		#endif
 		return result;
 	}
 
-	//------------------------------------------------------------------------------
 	//------------------------------------------------------------------------------
 
 	/**
@@ -821,6 +665,7 @@ public:
 		#undef COMPILE_UNALLOWED_CONSTRUCTS // Do NOT compile constructs that must generate compile errors
 
 		{
+			#if defined(__BCPLUSPLUS__)
 
 			std::string s1;
 			std::string s2;
@@ -857,13 +702,18 @@ public:
 			}
 			c_UTF8FilePath sUTF8FilePath2 = "\\Mapp1\\Mapp med ö\\Filnamn med ö.txt";
 			c_FilePath sPath2 = ""; // Not allowed from anonymous string
-			#endif COMPILE_UNALLOWED_CONSTRUCTS
+			#endif // COMPILE_UNALLOWED_CONSTRUCTS
+
+			#else
+			LOG_NOT_IMPLEMENTED;
+			#endif
+
 		}
 
 		#undef COMPILE_UNALLOWED_CONSTRUCTS // Do NOT compile constructs that must generate compile errors
 	}
-};
 
+};
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
@@ -874,14 +724,15 @@ typedef c_FilePathNode<c_DataRepresentationFramework::c_UTF16String> c_UTF16File
 typedef c_FilePathNodeArray<c_UTF16FileName> c_UTF16FilePath;
 
 /**
-  * Conveniant type defs for default types to use
+  * Convenient type defs. for default types to use
   */
+#if defined(__BCPLUSPLUS__)
 typedef c_UTF16FileName c_FileName;
 typedef c_UTF16FilePath c_FilePath;
-typedef c_FilePathFrameworkT<c_UTF16FilePath> c_FilePathFramework;
+#else
+typedef c_UTF8FileName c_FileName;
+typedef c_UTF8FilePath c_FilePath;
+#endif
+typedef c_FilePathFrameworkT<c_FilePath> c_FilePathFramework;
 
-//------------------------------------------------------------------------------
-
-
-#endif // __BCPLUSPLUS__
 #endif

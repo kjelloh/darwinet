@@ -3,7 +3,7 @@
 #ifndef VERSINFOH
 #define VERSINFOH
 
-#include "DataRepresentationFrameWork.h"
+#include "../DataRepresentationFrameWork.h"
 
 //---------------------------------------------------------------------------
 

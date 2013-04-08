@@ -7,29 +7,32 @@
 //---------------------------------------------------------------------------
 
 //---------------------------------------------------------------------------
- #ifdef __BCPLUSPLUS__
-// RAD Studio XE compilation
-//---------------------------------------------------------------------------
+#ifdef __BCPLUSPLUS__
 #pragma hdrstop
+#endif
 //---------------------------------------------------------------------------
 #include "ApplicationEnvironment.h"
 #include "DataRepresentationFrameWork.h"
 #include "ApplicationProperties.h"
 #include "BusinessLogUnit.h"
 #include "DateAndTimeFramework.h"
+#ifdef __BCPLUSPLUS__
 #include "Forms.hpp" // Application instance
-#include "versinfo.h"
+#endif
+#include "VersionInfo/versinfo.h"
 
 //---------------------------------------------------------------------------
 
+#ifdef __BCPLUSPLUS__
 #pragma package(smart_init)
+#endif
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
 /**
   * Constructs a project using provided project root folder
   */
-c_ApplicationProject::c_ApplicationProject(const c_FilePath& project_root_folder,const c_DataRepresentationFramework::c_UTF16String& sCaption)
+c_ApplicationProject::c_ApplicationProject(const c_FilePath& project_root_folder,const c_FileName& sCaption)
 	: m_project_root_folder(project_root_folder)
 	  ,m_pPropertiesModel(NULL)
 	  ,m_sCaption(sCaption)
@@ -61,9 +64,9 @@ c_ApplicationPropertiesModel* const c_ApplicationProject::getProperties() {
 			this->m_pPropertiesModel->loadProperties(c_Application::getExeRootPath());
 		}
 		catch (...) {
-			c_DataRepresentationFramework::c_UTF16String sMessage(L"Load of Applciation properties from \"");
-			sMessage += this->m_pPropertiesModel->getPersistentStoragePath().toString();
-			sMessage.anonymous() += L"\". Will create file.";
+			c_LogString sMessage("Load of Applciation properties from \"");
+			sMessage += toLogString(this->m_pPropertiesModel->getPersistentStoragePath().toString());
+			sMessage += _UTF8sz("\". Will create file.");
 			LOG_BUSINESS(sMessage);
 			// File may not exist. Create it.
 			this->m_pPropertiesModel->saveProperties();
@@ -106,7 +109,7 @@ c_FilePath& c_ApplicationWorkSpace::getRootPath() {
   * Sets Application to use within current workspace.
   * Will use a default work space if none has been set.
   */
-void c_ApplicationWorkSpace::setCurrentProject(const c_DataRepresentationFramework::c_UTF16String& sApplicationRootFolderName) {
+void c_ApplicationWorkSpace::setCurrentProject(const c_FileName& sApplicationRootFolderName) {
 	if (m_pCurrentProject != NULL) {
 		delete m_pCurrentProject;
 		m_pCurrentProject = NULL;
@@ -114,7 +117,8 @@ void c_ApplicationWorkSpace::setCurrentProject(const c_DataRepresentationFramewo
 
 	c_FilePath project_root_folder = this->getRootPath();
 	if (sApplicationRootFolderName.length() == 0) {
-		project_root_folder += u"default";
+//		project_root_folder += u"default";
+		project_root_folder += _UTF8sz("default");
 	}
 	else {
 		project_root_folder += sApplicationRootFolderName;
@@ -130,7 +134,8 @@ void c_ApplicationWorkSpace::setCurrentProject(const c_DataRepresentationFramewo
   */
 c_ApplicationProject* c_ApplicationWorkSpace::getCurrentProject() {
 	if (this->m_pCurrentProject == NULL) {
-		this->setCurrentProject(c_DataRepresentationFramework::c_UTF16String(L"")); // Use work space folder as Project folder
+//		this->setCurrentProject(c_FileName(L"")); // Use work space folder as Project folder
+		this->setCurrentProject(c_FileName(_UTF8sz(""))); // Use work space folder as Project folder
 	}
 	return m_pCurrentProject;
 }
@@ -290,9 +295,9 @@ c_ApplicationProject* c_ApplicationRunTimeEnvironent::getCurrentProject() {
   */
 c_ApplicationRunTimeEnvironent::c_ApplicationRunTimeEnvironent()
 	: m_pCurrentWorkSpace(NULL)
-	  ,m_ExeFilePath(c_Application::getExeRootPath())
 	  ,m_pApplicationFrameWork(NULL)
 	  ,m_RunTimePropertiesModel(NULL)
+	  ,m_ExeFilePath(c_Application::getExeRootPath())
 {
 
 }
@@ -325,11 +330,12 @@ private:
 	/**
 	  * Private constructor of this singleton
 	  */
-	c_VersionInfo() : VersionInfo(c_Application::ExeName())
+	c_VersionInfo()
+		: VersionInfo(c_DataRepresentationFramework::toUTF16String(c_Application::ExeName()))
 	{
 		if (!this->hasInfo()) {
-			// Failed to retreive version info
-			LOG_DESIGN_INSUFFICIENCY(_UTF8sz("c_VersionInfo failed to retreive version info for this application."));
+			// Failed to retrieve version info
+			LOG_DESIGN_INSUFFICIENCY(_UTF8sz("c_VersionInfo failed to retrieve version info for this application."));
 		}
 	};
 
@@ -350,23 +356,29 @@ c_VersionInfo* c_VersionInfo::m_pInstance = NULL;
   * Returns the file path to current Application exectution folder
   */
 c_FilePath c_Application::getExeRootPath() {
+	#ifdef __BCPLUSPLUS__ // RAD Studio XE compilation
 	c_FilePath result(c_DataRepresentationFramework::c_UTF16String(ExtractFileDir(Application->ExeName).c_str()));
+	#else
+	#warning c_Application::getExeRootPath() not yet implemented for this build environment
+	c_FilePath result;
+	#endif
 	return result;
 }
 
 /**
   * Returns the name of this exe file.
   */
-const c_DataRepresentationFramework::c_UTF16String c_Application::ExeName() {
-	c_DataRepresentationFramework::c_UTF16String result(ExtractFileName(Application->ExeName).c_str());
-	return result;
+const c_FileName c_Application::ExeName() {
+//	c_DataRepresentationFramework::c_UTF16String result(ExtractFileName(Application->ExeName).c_str());
+//	return result;
+	return c_Application::getExeRootPath().back().NameWithoutExtension();
 }
 
 /**
   * Returns this application version info product name field contents
   */
 const c_DataRepresentationFramework::c_UTF16String c_Application::getVersionInfoProductName() {
-	c_DataRepresentationFramework::c_UTF16String result = u"??";
+	c_DataRepresentationFramework::c_UTF16String result(u"??");
 
 	if (c_VersionInfo::instance()->hasInfo()) {
 		result = c_VersionInfo::instance()->ProductName();
@@ -378,7 +390,7 @@ const c_DataRepresentationFramework::c_UTF16String c_Application::getVersionInfo
   * Returns this application version info Version field contents
   */
 const c_DataRepresentationFramework::c_UTF16String c_Application::getVersionInfoVersion() {
-	c_DataRepresentationFramework::c_UTF16String result = u"??";
+	c_DataRepresentationFramework::c_UTF16String result(u"??");
 
 	if (c_VersionInfo::instance()->hasInfo()) {
 		result = c_DataRepresentationFramework::intToDecimalString(c_VersionInfo::instance()->majorVersion());
@@ -396,7 +408,7 @@ const c_DataRepresentationFramework::c_UTF16String c_Application::getVersionInfo
   * Returns this application version info Copyright field contents
   */
 const c_DataRepresentationFramework::c_UTF16String c_Application::getVersionInfoCopyRight() {
-	c_DataRepresentationFramework::c_UTF16String result = u"??";
+	c_DataRepresentationFramework::c_UTF16String result(u"??");
 
 	if (c_VersionInfo::instance()->hasInfo()) {
 		result = c_VersionInfo::instance()->LegalCopyright();
@@ -407,7 +419,7 @@ const c_DataRepresentationFramework::c_UTF16String c_Application::getVersionInfo
   * Returns this application version info Comments field contents
   */
 const c_DataRepresentationFramework::c_UTF16String c_Application::getVersionInfoComments() {
-	c_DataRepresentationFramework::c_UTF16String result = u"??";
+	c_DataRepresentationFramework::c_UTF16String result(u"??");
 
 	if (c_VersionInfo::instance()->hasInfo()) {
 		result = c_VersionInfo::instance()->Comments();
@@ -419,32 +431,9 @@ const c_DataRepresentationFramework::c_UTF16String c_Application::getVersionInfo
   * returns the Date and time when this application was built
   */
 c_DataRepresentationFramework::c_UTF16String c_Application::getBuildVersionAndDateAndTimeString() {
+	static c_DataRepresentationFramework::c_UTF16String BUILD_DATE_AND_TIME_STRING(u" Build:" __DATE__ u"  " __TIME__);
 	c_DataRepresentationFramework::c_UTF16String result(c_Application::getVersionInfoVersion());
-
-	static c_DataRepresentationFramework::c_UTF16String BUILD_DATE_AND_TIME_STRING =  u" Build:" __DATE__ u"  " __TIME__;
-
 	result += BUILD_DATE_AND_TIME_STRING;
-
-//	VersionInfo anInfo(c_Application::ExeName());
-//	String sVersion = "Version: ";
-//	if (anInfo.hasInfo()) {
-//		sVersion += anInfo.majorVersion();
-//		sVersion += ".";
-//		sVersion += anInfo.minorVersion();
-//		sVersion += ".";
-//		sVersion += anInfo.build();
-//		sVersion += ".";
-//		sVersion += anInfo.subBuild();
-//	}
-//	else {
-//		LOG_DESIGN_INSUFFICIENCY(_Literalsz("TAboutBox::getBuildVersionAndDateAndTimeString, failed to retreive version information"));
-//		sVersion += "??";
-//	}
-//
-//	static String BUILD_DATE_AND_TIME_STRING = sVersion + " Build:" __DATE__ "  " __TIME__;
-//
-//	return BUILD_DATE_AND_TIME_STRING;
 	return result;
 }
-#endif // __BCPLUSPLUS__
 

@@ -9,15 +9,10 @@
 #ifndef BusinessLogUnitH
 #define BusinessLogUnitH
 //---------------------------------------------------------------------------
- #ifdef __BCPLUSPLUS__
 // RAD Studio XE compilation
 //---------------------------------------------------------------------------
-//#include <stdio.h> // FILE...
-//#include <system.hpp> // AnsiString
 #include <string>
-//#include <fstream>
 #include <queue>
-//#include "IDEInterfacedSource.h" // c_ThreadGate
 #include "DateAndTimeFramework.h" // c_YYYYMMDDHHMMSSmmmm
 #include "DataRepresentationFrameWork.h"
 
@@ -47,22 +42,28 @@ c_LogString toLogString(const c_DataRepresentationFramework::c_UTF16String& sEnt
   */
 c_LogString toLogString(const c_DataRepresentationFramework::c_ISO_8859_1_String& sEntry);
 
+#ifdef __BCPLUSPLUS__ // RAD Studio XE compilation
 /**
   * Converts provided IDE string to Log string representation.
   * Will use compile time information to determine
   * representation of IDE string (UTF16, Ansi etc...)
   */
 c_LogString toLogString(const String& sEntry);
+#endif
 
+#if defined(__BCPLUSPLUS__) || defined(__CYGWIN32__)
 /**
   * Returns a log string with a text describing the menaing of provided Windows api error code.
   */
 c_LogString logStringOfWinApiErrorCode(DWORD api_error_code);
+#endif
 
+#if defined(__BCPLUSPLUS__) || defined(__CYGWIN32__)
 /**
   * Returns provided Windows HRESULKT code as a descriptive Log string
   */
 c_LogString logStringOfWinApiHResultCode(HRESULT hresult);
+#endif
 
 enum e_BussinessLogEntryType {
 	e_BussinessLogEntryType_DesignInsufficiency
@@ -103,12 +104,6 @@ public:
 	static c_LogString StringOfBussinessLogEntryType(e_BussinessLogEntryType entry_type);
 
 private:
-
-	/**
-	  * Private storage of date and time of this entry
-	  */
-	c_YYYYMMDDHHMMSSmmm m_YYYYMMDDHHMMSSmmm;
-
 	/**
 	  * Private storage of the type of this entry
 	  */
@@ -119,17 +114,22 @@ private:
 	  */
 	c_LogString m_sBody;
 
+	/**
+	  * Private storage of date and time of this entry
+	  */
+	c_YYYYMMDDHHMMSSmmm m_YYYYMMDDHHMMSSmmm;
+
 	DWORD m_ThreadId;
 };
 
 /**
   * Interface to Business logger singleton.
-  * The business log is to be used to log normal and excpetional
-  * activites of the application operations.
+  * The business log is to be used to log normal and exceptional
+  * activities of the application operations.
   * Note: The Logger is exposed though this interface to separate
   * this header file from dependence of other units of the application.
   * This enables it to be included in other header files without causing
-  * circular references and couse compiler errors.
+  * circular references and cause compiler errors.
   */
 class c_BussinessLoggerIfc {
 public:
@@ -154,7 +154,7 @@ public:
 
 	/**
 	  * Design insufficiency log about a not implemented function/Method
-	  * Will asume C++ string literal allows ascii 0..255 and
+	  * Will assume C++ string literal allows ascii 0..255 and
 	  * decode to string representation used by Business Log engine
 	  */
 	virtual void LogNotImplemented(const c_DataRepresentationFramework::c_CppLiteralString& sFunctionName) = 0;
@@ -162,20 +162,20 @@ public:
 	/**
 	  * Design insufficiency log.
 	  * Used to trace events where the application design
-	  * is unsufficient to handle an event in run-time.
+	  * is insufficient to handle an event in run-time.
 	  * This log is active in released application execution.
 	  */
 	virtual void LogDesignInsufficiency(const c_LogString& sEntry) = 0;
 
 	/**
 	  * Design insufficiency log for UTF16 string.
-	  * Will decode to string represetnation used by Business Log engine
+	  * Will decode to string representation used by Business Log engine
 	  */
 	virtual void LogDesignInsufficiency(const c_DataRepresentationFramework::c_UTF16String& sUTF16Entry) = 0;
 
 	/**
 	  * Design insufficiency log for  C++ String literal array.
-	  * Will asume C++ string literal allows ascii 0..255 and
+	  * Will assume C++ string literal allows ascii 0..255 and
 	  * decode to string representation used by Business Log engine
 	  */
 	virtual void LogDesignInsufficiency(const c_DataRepresentationFramework::c_CppLiteralString& sCppLiteralEntry) = 0;
@@ -183,7 +183,7 @@ public:
 	/**
 	  * Design insufficiency log
 	  * Used to trace events where the application design
-	  * is unsufficient to handle an event in run-time.
+	  * is insufficient to handle an event in run-time.
 	  * This log is active in released application execution.
 	  */
 	virtual void LogDesignInsufficiency(const c_LogString& sEntry,int i1) = 0;
@@ -191,7 +191,7 @@ public:
 	/**
 	  * Design insufficiency log
 	  * Used to trace events where the application design
-	  * is unsufficient to handle an event in run-time.
+	  * is insufficient to handle an event in run-time.
 	  * This log is active in released application execution.
 	  */
 	virtual void LogDesignInsufficiency(const c_LogString& sEntry,int i1,int i2) = 0;
@@ -199,7 +199,7 @@ public:
 	/**
 	  * Design insufficiency log
 	  * Used to trace events where the application design
-	  * is unsufficient to handle an event in run-time.
+	  * is insufficient to handle an event in run-time.
 	  * This log is active in released application execution.
 	  */
 	virtual void LogDesignInsufficiency(const c_LogString& sEntry,const c_LogString& s1) = 0;
@@ -207,7 +207,7 @@ public:
 	/**
 	  * Design insufficiency log
 	  * Used to trace events where the application design
-	  * is unsufficient to handle an event in run-time.
+	  * is insufficient to handle an event in run-time.
 	  * This log is active in released application execution.
 	  */
 	virtual void LogDesignInsufficiency(const c_LogString& sEntry,const c_LogString& s1,const c_LogString& s2) = 0;
@@ -280,7 +280,7 @@ public:
 	/**
 	  * Design insufficiency log of an object instance using an instance Id 0,1,2...
 	  * Used to trace events where the application design
-	  * is unsufficient to handle an event in run-time.
+	  * is insufficient to handle an event in run-time.
 	  * This log is active in released application execution.
 	  */
 	virtual void LogDesignInsufficiency(int instance_id,const c_LogString& sEntry) = 0;
@@ -363,7 +363,7 @@ private:
 // Log a design insufficiency
 
 // Log a design insufficiency about current function not implemented
-#define LOG_NOT_IMPLEMENTED c_BussinessLoggerIfc::instance()->LogNotImplemented(_Literalsz(__FUNC__));
+#define LOG_NOT_IMPLEMENTED c_BussinessLoggerIfc::instance()->LogNotImplemented(_Literalsz(__FUNCTION__));
 
 #define LOG_DESIGN_INSUFFICIENCY(S) c_BussinessLoggerIfc::instance()->LogDesignInsufficiency(S)
 // Log a design insufficiency integrating an integer into supplied text
@@ -392,7 +392,7 @@ private:
 //	#define LOG_SCOPE_ENTRY(S) c_BussinessLoggerIfc::instance()->LogScopeEntry(S)
 
 	#define LOG_FUNCTION_SCOPE\
-		sFunctionEntryString += _UTF8sz(__FUNCTION__);\
+		c_LogString sFunctionEntryString(__FUNCTION__);\
 		c_DevelopmentLogTraceIndentator DevelopmentLogTraceIndentator(sFunctionEntryString);
 	#define LOG_METHOD_SCOPE \
 		c_LogString sFunctionEntryString(c_DataRepresentationFramework::intToHexString(reinterpret_cast<unsigned int>(this))); \
@@ -451,17 +451,20 @@ private:
 #define LOG_BUSINESS_O(O,S) c_BussinessLoggerIfc::instance()->LogBussiness(O,S)
 
 #define LOG_IDE_EXCEPTION_DESIGN_INSUFFICIENCY \
-		c_LogString sMessage(__FUNCTION__" failed. Exception=");\
+		c_LogString sMessage(__FUNCTION__);\
+		sMessage += _UTF8sz(" failed. Exception="); \
 		sMessage += toLogString(e.Message);\
 		LOG_DESIGN_INSUFFICIENCY(sMessage);
 
 #define LOG_STD_EXCEPTION_DESIGN_INSUFFICIENCY \
-		c_LogString sMessage(__FUNCTION__" failed. Exception=");\
+		c_LogString sMessage(__FUNCTION__);\
+		sMessage += _UTF8sz(" failed. Exception=");\
 		sMessage += _UTF8sz(e.what());\
 		LOG_DESIGN_INSUFFICIENCY(sMessage)
 
 #define LOG_GENERAL_EXCEPTION_DESIGN_INSUFFICIENCY \
-		c_LogString sMessage(__FUNCTION__" failed. General Exception cought.");\
+		c_LogString sMessage(__FUNCTION__);\
+		sMessage += _UTF8sz(" failed. General Exception cought.");\
 		LOG_DESIGN_INSUFFICIENCY(sMessage)
 
 #define CATCH_AND_LOG_IDE_EXCEPTION_DESIGN_INSUFFICIENCY \
@@ -494,5 +497,4 @@ private:
 	CATCH_AND_LOG_STD_EXCEPTION_DESIGN_INSUFFICIENCY\
 	CATCH_AND_LOG_GENERAL_EXCEPTION_DESIGN_INSUFFICIENCY
 
-#endif // __BCPLUSPLUS__
 #endif
