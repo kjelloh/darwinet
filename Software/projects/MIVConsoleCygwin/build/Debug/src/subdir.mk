@@ -32,7 +32,7 @@ CPP_DEPS += \
 src/%.o: ../src/%.cpp
 	@echo 'Building file: $<'
 	@echo 'Invoking: Cygwin C++ Compiler'
-	g++ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
+	g++ -D_DEBUG -I"C:\subversion\darwinet\trunk\Software\externals\boost_1_53_0" -I"C:\subversion\darwinet\trunk\Software\externals\icu4c_51_1\source" -I"C:\subversion\darwinet\trunk\Software\externals\icu4c_51_1\source\common" -I"C:\subversion\darwinet\trunk\Software\externals\icu4c_51_1\source\common\unicode" -O0 -g3 -Wall -c -fmessage-length=0 --std=c++0x -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 
