@@ -31,6 +31,7 @@ UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "data_store.hpp"
 #include "working_directory.hpp"
 #include "config_manager.hpp"
+#include "auth_manager.hpp"
 
 
 static char *test_strings[] =
@@ -163,301 +164,304 @@ static int test_working_directory(void)
         fprintf(stderr, "Failed to open working directory /tmp/test_dir.\n");
         fail_count++;
     }
-
-    wd2 = WorkingDirectory::OpenWorkingDirectory("/tmp/", "test_dir");
-    if(NULL == wd2)
-    {
-        fprintf(stderr, "Failed to re-open working directory /tmp/test_dir.\n");
-        fail_count++;
-    }
     else
     {
-        if(false == wd1->LockFile("lock_test", &pid))
+        wd2 = WorkingDirectory::OpenWorkingDirectory("/tmp/", "test_dir");
+        if(NULL == wd2)
         {
-            fprintf(stderr, "LockFile() failed to execute.\n");
-            fail_count++;
-        }
-        else if(0 != pid)
-        {
-            fprintf(stderr, "LockFile() failed to lock the file first time.\n");
+            fprintf(stderr, "Failed to re-open working directory /tmp/test_dir.\n");
             fail_count++;
         }
         else
         {
             if(false == wd1->LockFile("lock_test", &pid))
             {
-                fprintf(stderr, "LockFile() failed to execute recursively.\n");
+                fprintf(stderr, "LockFile() failed to execute.\n");
+                fail_count++;
+            }
+            else if(0 != pid)
+            {
+                fprintf(stderr, "LockFile() failed to lock the file first time.\n");
                 fail_count++;
             }
             else
             {
-                if(0 != pid)
+                if(false == wd1->LockFile("lock_test", &pid))
                 {
-                    fprintf(stderr, "LockFile() failed to lock the file recursively.\n");
+                    fprintf(stderr, "LockFile() failed to execute recursively.\n");
+                    fail_count++;
+                }
+                else
+                {
+                    if(0 != pid)
+                    {
+                        fprintf(stderr, "LockFile() failed to lock the file recursively.\n");
+                        fail_count++;
+                    }
+                }
+
+                if(false == wd2->LockFile("lock_test", &pid))
+                {
+                    fprintf(stderr, "LockFile() failed to execute for already locked file.\n");
+                    fail_count++;
+                }
+                else
+                {
+                    if(0 == pid)
+                    {
+                        fprintf(stderr, "LockFile() managed to lock already locked file.\n");
+                        fail_count++;
+                    }
+
+                    if(getpid() != pid)
+                    {
+                        fprintf(stderr, "LockFile() returned incorrect PID. Expected %d, got %d.\n",
+                                getpid(), pid);
+                        fail_count++;
+                    }
+                }
+
+                fp2 = wd2->OpenWriteFile("lock_test");
+                if(NULL != fp2)
+                {
+                    fprintf(stderr, "OpenWriteFile() opened file locked by someone else.\n");
+                    fail_count++;
+                    (void)wd2->CloseWriteFile("lock_test");
+                }
+
+                fp1 = wd1->OpenWriteFile("lock_test");
+                if(NULL == fp1)
+                {
+                    fprintf(stderr, "OpenWriteFile() failed to open file locked by self.\n");
+                    fail_count++;
+                }
+
+                if(false == wd1->UnlockFile("lock_test"))
+                {
+                    fprintf(stderr, "UnlockFile() failed to execute.\n");
+                    fail_count++;
+                }
+
+                fp2 = wd2->OpenWriteFile("lock_test");
+                if(NULL != fp2)
+                {
+                    fprintf(stderr, "OpenWriteFile() opened file already opened for write by someone else.\n");
+                    fail_count++;
+                    (void)wd2->CloseWriteFile("lock_test");
+                }
+
+                if(false == wd2->LockFile("lock_test", &pid))
+                {
+                    fprintf(stderr, "LockFile() failed to execute for unlocked file.\n");
+                    fail_count++;
+                }
+                else
+                {
+                    if(0 != pid)
+                    {
+                        fprintf(stderr, "LockFile() failed to lock unlocked file.\n");
+                        fail_count++;
+                    }
+                }
+
+                if(true == wd1->UnlockFile("lock_test"))
+                {
+                    fprintf(stderr, "UnlockFile() managed to unlock a file locked by someone else.\n");
                     fail_count++;
                 }
             }
 
-            if(false == wd2->LockFile("lock_test", &pid))
+            if(NULL != fp1)
             {
-                fprintf(stderr, "LockFile() failed to execute for already locked file.\n");
-                fail_count++;
-            }
-            else
-            {
-                if(0 == pid)
+                fprintf(fp1, "%s", test_strings[0]);
+
+                if(false == wd2->FileExists("lock_test", &exists))
                 {
-                    fprintf(stderr, "LockFile() managed to lock already locked file.\n");
+                    fprintf(stderr, "FileExists() failed to execute.\n");
+                    fail_count++;
+                }
+                else
+                {
+                    if(true == exists)
+                    {
+                        fprintf(stderr, "FileExists() detected non-existent file.\n");
+                        fail_count++;
+                    }
+                }
+
+                if(false == wd2->FileExists("lock_test.new", &exists))
+                {
+                    fprintf(stderr, "FileExists() failed to execute.\n");
+                    fail_count++;
+                }
+                else
+                {
+                    if(false == exists)
+                    {
+                        fprintf(stderr, "FileExists() didn't detect file \"lock_test.new\".\n");
+                        fail_count++;
+                    }
+                }
+
+                if(true == wd2->CloseWriteFile("lock_test"))
+                {
+                    fprintf(stderr, "CloseWriteFile() closed write file opened by someone else.\n");
                     fail_count++;
                 }
 
-                if(getpid() != pid)
-                {
-                    fprintf(stderr, "LockFile() returned incorrect PID. Expected %d, got %d.\n",
-                            getpid(), pid);
-                    fail_count++;
-                }
-            }
-
-            fp2 = wd2->OpenWriteFile("lock_test");
-            if(NULL != fp2)
-            {
-                fprintf(stderr, "OpenWriteFile() opened file locked by someone else.\n");
-                fail_count++;
-                (void)wd2->CloseWriteFile("lock_test");
-            }
-
-            fp1 = wd1->OpenWriteFile("lock_test");
-            if(NULL == fp1)
-            {
-                fprintf(stderr, "OpenWriteFile() failed to open file locked by self.\n");
-                fail_count++;
-            }
-
-            if(false == wd1->UnlockFile("lock_test"))
-            {
-                fprintf(stderr, "UnlockFile() failed to execute.\n");
-                fail_count++;
-            }
-
-            fp2 = wd2->OpenWriteFile("lock_test");
-            if(NULL != fp2)
-            {
-                fprintf(stderr, "OpenWriteFile() opened file already opened for write by someone else.\n");
-                fail_count++;
-                (void)wd2->CloseWriteFile("lock_test");
-            }
-
-            if(false == wd2->LockFile("lock_test", &pid))
-            {
-                fprintf(stderr, "LockFile() failed to execute for unlocked file.\n");
-                fail_count++;
-            }
-            else
-            {
-                if(0 != pid)
-                {
-                    fprintf(stderr, "LockFile() failed to lock unlocked file.\n");
-                    fail_count++;
-                }
-            }
-
-            if(true == wd1->UnlockFile("lock_test"))
-            {
-                fprintf(stderr, "UnlockFile() managed to unlock a file locked by someone else.\n");
-                fail_count++;
-            }
-        }
-
-        if(NULL != fp1)
-        {
-            fprintf(fp1, "%s", test_strings[0]);
-
-            if(false == wd2->FileExists("lock_test", &exists))
-            {
-                fprintf(stderr, "FileExists() failed to execute.\n");
-                fail_count++;
-            }
-            else
-            {
-                if(true == exists)
-                {
-                    fprintf(stderr, "FileExists() detected non-existent file.\n");
-                    fail_count++;
-                }
-            }
-
-            if(false == wd2->FileExists("lock_test.new", &exists))
-            {
-                fprintf(stderr, "FileExists() failed to execute.\n");
-                fail_count++;
-            }
-            else
-            {
-                if(false == exists)
-                {
-                    fprintf(stderr, "FileExists() didn't detect file \"lock_test.new\".\n");
-                    fail_count++;
-                }
-            }
-
-            if(true == wd2->CloseWriteFile("lock_test"))
-            {
-                fprintf(stderr, "CloseWriteFile() closed write file opened by someone else.\n");
-                fail_count++;
-            }
-
-            if(false == wd1->CloseWriteFile("lock_test"))
-            {
-                fprintf(stderr, "CloseWriteFile() failed to execute.\n");
-                fail_count++;
-            }
-
-            if(false == wd2->FileExists("lock_test", &exists))
-            {
-                fprintf(stderr, "FileExists() failed to execute.\n");
-                fail_count++;
-            }
-            else
-            {
-                if(false == exists)
-                {
-                    fprintf(stderr, "FileExists() didn't detect file \"lock_test\".\n");
-                    fail_count++;
-                }
-            }
-        }
-
-        fp1 = wd2->OpenReadFile("lock_test");
-        if(NULL == fp1)
-        {
-            fprintf(stderr, "OpenReadFile() failed to open file.\n");
-            fail_count++;
-        }
-        else
-        {
-            fp2 = wd2->OpenWriteFile("lock_test");
-            if(NULL == fp2)
-            {
-                fprintf(stderr, "OpenWriteFile() failed to open file.\n");
-                fail_count++;
-            }
-            else
-            {
-                fprintf(fp2, "%s", test_strings[1]);
-
-                if(false == wd2->CloseWriteFile("lock_test"))
+                if(false == wd1->CloseWriteFile("lock_test"))
                 {
                     fprintf(stderr, "CloseWriteFile() failed to execute.\n");
                     fail_count++;
                 }
+
+                if(false == wd2->FileExists("lock_test", &exists))
+                {
+                    fprintf(stderr, "FileExists() failed to execute.\n");
+                    fail_count++;
+                }
+                else
+                {
+                    if(false == exists)
+                    {
+                        fprintf(stderr, "FileExists() didn't detect file \"lock_test\".\n");
+                        fail_count++;
+                    }
+                }
             }
 
-            if(NULL == fgets(buffer, 32, fp1))
+            fp1 = wd2->OpenReadFile("lock_test");
+            if(NULL == fp1)
             {
-                fprintf(stderr, "Failed to read from file.\n");
+                fprintf(stderr, "OpenReadFile() failed to open file.\n");
                 fail_count++;
             }
             else
             {
-                if(0 != strcmp(buffer, test_strings[0]))
+                fp2 = wd2->OpenWriteFile("lock_test");
+                if(NULL == fp2)
                 {
-                    fprintf(stderr, "Contents of file are not as expected.\n");
+                    fprintf(stderr, "OpenWriteFile() failed to open file.\n");
+                    fail_count++;
+                }
+                else
+                {
+                    fprintf(fp2, "%s", test_strings[1]);
+
+                    if(false == wd2->CloseWriteFile("lock_test"))
+                    {
+                        fprintf(stderr, "CloseWriteFile() failed to execute.\n");
+                        fail_count++;
+                    }
+                }
+
+                if(NULL == fgets(buffer, 32, fp1))
+                {
+                    fprintf(stderr, "Failed to read from file.\n");
+                    fail_count++;
+                }
+                else
+                {
+                    if(0 != strcmp(buffer, test_strings[0]))
+                    {
+                        fprintf(stderr, "Contents of file are not as expected.\n");
+                        fail_count++;
+                    }
+                }
+
+                if(true == wd1->CloseReadFile("lock_test"))
+                {
+                    fprintf(stderr, "CloseReadFile() closed read file opened by someone else.\n");
+                    fail_count++;
+                }
+
+                if(false == wd2->CloseReadFile("lock_test"))
+                {
+                    fprintf(stderr, "CloseReadFile() failed to execute.\n");
                     fail_count++;
                 }
             }
 
-            if(true == wd1->CloseReadFile("lock_test"))
+            fp1 = wd2->OpenReadFile("lock_test");
+            if(NULL == fp1)
             {
-                fprintf(stderr, "CloseReadFile() closed read file opened by someone else.\n");
+                fprintf(stderr, "OpenReadFile() failed to open file.\n");
                 fail_count++;
             }
-
-            if(false == wd2->CloseReadFile("lock_test"))
+            else
             {
-                fprintf(stderr, "CloseReadFile() failed to execute.\n");
+                if(NULL == fgets(buffer, 32, fp1))
+                {
+                    fprintf(stderr, "Failed to read from file.\n");
+                    fail_count++;
+                }
+                else
+                {
+                    if(0 != strcmp(buffer, test_strings[1]))
+                    {
+                        fprintf(stderr, "Contents of file are not as expected after update.\n");
+                        fail_count++;
+                    }
+                }
+
+                if(false == wd2->CloseReadFile("lock_test"))
+                {
+                    fprintf(stderr, "CloseReadFile() failed to execute.\n");
+                    fail_count++;
+                }
+            }
+
+            delete wd2;
+
+            if(false == wd1->LockFile("lock_test", &pid))
+            {
+                fprintf(stderr, "LockFile() failed to execute for file unlocked by instance deletion.\n");
                 fail_count++;
+            }
+            else if(0 != pid)
+            {
+                fprintf(stderr, "LockFile() failed to lock the file unlocked by instance deletion.\n");
+                fail_count++;
+            }
+            else
+            {
+                if(false == wd1->UnlockFile("lock_test"))
+                {
+                    fprintf(stderr, "UnlockFile() failed to execute.\n");
+                    fail_count++;
+                }
             }
         }
 
-        fp1 = wd2->OpenReadFile("lock_test");
+        fp1 = wd1->OpenWriteFile("write_test");
         if(NULL == fp1)
         {
-            fprintf(stderr, "OpenReadFile() failed to open file.\n");
+            fprintf(stderr, "OpenWriteFile() failed to open file not locked by anyone.\n");
+            fail_count++;
+        }
+
+        wd2 = wd1->OpenWorkingDirectory("sub_1");
+        if(NULL == wd2)
+        {
+            fprintf(stderr, "Failed to open working directory /tmp/test_dir/sub_1.\n");
             fail_count++;
         }
         else
         {
-            if(NULL == fgets(buffer, 32, fp1))
+            wd3 = wd2->OpenWorkingDirectory("/sub_2/");
+            if(NULL == wd3)
             {
-                fprintf(stderr, "Failed to read from file.\n");
+                fprintf(stderr, "Failed to open working directory /tmp/test_dir/sub_1/sub_2.\n");
                 fail_count++;
             }
             else
             {
-                if(0 != strcmp(buffer, test_strings[1]))
-                {
-                    fprintf(stderr, "Contents of file are not as expected after update.\n");
-                    fail_count++;
-                }
+                delete wd3;
             }
 
-            if(false == wd2->CloseReadFile("lock_test"))
-            {
-                fprintf(stderr, "CloseReadFile() failed to execute.\n");
-                fail_count++;
-            }
+            delete wd2;
         }
 
-        delete wd2;
-
-        if(false == wd1->LockFile("lock_test", &pid))
-        {
-            fprintf(stderr, "LockFile() failed to execute for file unlocked by instance deletion.\n");
-            fail_count++;
-        }
-        else if(0 != pid)
-        {
-            fprintf(stderr, "LockFile() failed to lock the file unlocked by instance deletion.\n");
-            fail_count++;
-        }
-        else
-        {
-            if(false == wd1->UnlockFile("lock_test"))
-            {
-                fprintf(stderr, "UnlockFile() failed to execute.\n");
-                fail_count++;
-            }
-        }
-    }
-
-    wd2 = wd1->OpenWorkingDirectory("sub_1");
-    if(NULL == wd2)
-    {
-        fprintf(stderr, "Failed to open working directory /tmp/test_dir/sub_1.\n");
-        fail_count++;
-    }
-    else
-    {
-        wd3 = wd2->OpenWorkingDirectory("/sub_2/");
-        if(NULL == wd3)
-        {
-            fprintf(stderr, "Failed to open working directory /tmp/test_dir/sub_1/sub_2.\n");
-            fail_count++;
-        }
-        else
-        {
-            delete wd3;
-        }
-
-
-
-        delete wd2;
-    }
-
-
-    if(NULL != wd1)
-    {
         delete wd1;
     }
 
@@ -1095,6 +1099,64 @@ static int test_config_manager(void)
 }
 
 
+static int test_auth_manager(void)
+{
+    int               fail_count = 0;
+    WorkingDirectory *wd;
+    AuthManager      *auth1;
+    AuthManager      *auth2;
+
+    wd = WorkingDirectory::OpenWorkingDirectory("/tmp", "test_dir");
+    if(NULL == wd)
+    {
+        fprintf(stderr, "Failed to open working directory /tmp/test_dir.\n");
+        fail_count++;
+    }
+
+    auth1 = new AuthManager(wd, "Hello");
+    auth2 = new AuthManager(wd, "World");
+
+    if(true != auth1->CreateKeyPair())
+    {
+        fprintf(stderr, "Failed to create key pair 1.\n");
+        fail_count++;
+    }
+
+    if(true != auth2->CreateKeyPair())
+    {
+        fprintf(stderr, "Failed to create key pair 2.\n");
+        fail_count++;
+    }
+
+    if(true != auth1->SaveKeyPair("keys1"))
+    {
+        fprintf(stderr, "Failed to save key pair 1.\n");
+        fail_count++;
+    }
+
+    if(true != auth2->SaveKeyPair("keys2"))
+    {
+        fprintf(stderr, "Failed to save key pair 2.\n");
+        fail_count++;
+    }
+
+    delete auth1;
+    delete auth2;
+
+
+
+
+
+    if(true != WorkingDirectory::EraseWorkingDirectory("/tmp", "test_dir"))
+    {
+        fprintf(stderr, "Failed to remove working directory /tmp/test_dir.\n");
+        fail_count++;
+    }
+
+    return fail_count;
+}
+
+
 int main(int argc, char **argv)
 {
     int fail_count = 0U;
@@ -1102,6 +1164,7 @@ int main(int argc, char **argv)
     fail_count += test_data_store();
     fail_count += test_working_directory();
     fail_count += test_config_manager();
+    fail_count += test_auth_manager();
 
     printf("%d test errors.\n", fail_count);
 

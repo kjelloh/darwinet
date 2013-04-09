@@ -227,9 +227,11 @@ bool WorkingDirectory::CloseReadFile(const char *name)
 
 FILE *WorkingDirectory::OpenWriteFile(const char *name)
 {
-    FILE     *fp          = NULL;
-    FileData  file        = NULL;
-    bool      need_unlock = false;
+    FILE     *fp           = NULL;
+    FileData  file         = NULL;
+    bool      lock_success = true;
+    bool      need_unlock  = false;
+    pid_t     pid;
     char     *path;
     int       fd;
 
@@ -238,10 +240,22 @@ FILE *WorkingDirectory::OpenWriteFile(const char *name)
     {
         if(false == file->lock_held)
         {
-            need_unlock = LockFile(name, NULL);
+            lock_success = LockFile(name, &pid);
+            if(true == lock_success)
+            {
+                if(0 == pid)
+                {
+                    need_unlock = true;
+                }
+                else
+                {
+                    lock_success = false;
+                }
+            }
         }
 
-        if(true == file->lock_held)
+        /* The double check is a bit overkill, but safest. */
+        if((true == lock_success) && (true == file->lock_held))
         {
             path = get_full_path(name, ".new");
             if(NULL != path)
