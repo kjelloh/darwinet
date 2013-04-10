@@ -3,7 +3,7 @@
 SYSTEM    := $(shell uname -o)
 MAJOR_VER := 0
 MINOR_VER := $(shell svn info | grep "Revision: " | sed 's/.*: *//')
-CPPC      := g++
+CPPC      := g++ -std=c++11
 AR        := ar -crus
 RM        := rm -rf
 CPP_FLAGS := -DMAJOR_VER=$(MAJOR_VER) -DMINOR_VER=$(MINOR_VER) \

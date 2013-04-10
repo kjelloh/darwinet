@@ -1,7 +1,7 @@
 # Makefile for Darwinet utility class library.
 
 SYSTEM    := $(shell uname -o)
-CPPC      := g++
+CPPC      := g++ -std=c++11
 AR        := ar -crus
 RM        := rm -rf
 CPP_FLAGS := -Wall -g -Iinc $(shell libgcrypt-config --cflags)

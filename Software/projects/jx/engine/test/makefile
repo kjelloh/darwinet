@@ -1,7 +1,7 @@
 # Makefile for testing utility classes.
 
 SYSTEM    := $(shell uname -o)
-CPPC      := g++
+CPPC      := g++ -std=c++11
 AR        := ar -crus
 RM        := rm -rf
 CPP_FLAGS := -Wall -g -I../inc -I../../utils/cpp/inc
