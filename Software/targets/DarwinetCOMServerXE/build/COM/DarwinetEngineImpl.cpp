@@ -6,7 +6,6 @@
 
 #include "DarwinetEngineImpl.h"
 
-
 // ---------------------------------------------------------------------------
 // TDarwinetEngineImpl
 // ---------------------------------------------------------------------------
@@ -19,7 +18,7 @@ __fastcall TDarwinetEngineImpl::TDarwinetEngineImpl()
 // TDarwinetEngineImpl
 // ---------------------------------------------------------------------------
 __fastcall TDarwinetEngineImpl::TDarwinetEngineImpl(const System::_di_IInterface Controller)
-                              : inherited(Controller)
+							  : inherited(Controller)
 {
 }
 
@@ -28,8 +27,8 @@ __fastcall TDarwinetEngineImpl::TDarwinetEngineImpl(const System::_di_IInterface
 // TDarwinetEngineImpl
 // ---------------------------------------------------------------------------
 __fastcall TDarwinetEngineImpl::TDarwinetEngineImpl(Comobj::TComObjectFactory* Factory,
-                                      const System::_di_IInterface Controller)
-                              : inherited(Factory, Controller)
+									  const System::_di_IInterface Controller)
+							  : inherited(Factory, Controller)
 {
 }
 
@@ -59,16 +58,19 @@ void __fastcall TDarwinetEngineImpl::EventSinkChanged(const System::_di_IInterfa
 static void createFactory()
 {
   new TCppAutoObjectFactory<TDarwinetEngineImpl>(Comserv::GetComServer(),
-                           __classid(TDarwinetEngineImpl),
-                           CLSID_DarwinetEngine,
-                           Comobj::ciMultiInstance,
-                           Comobj::tmApartment);
+						   __classid(TDarwinetEngineImpl),
+						   CLSID_DarwinetEngine,
+						   Comobj::ciMultiInstance,
+						   Comobj::tmApartment);
 }
 #pragma startup createFactory 32
 
 
 IDarwinetDomain* STDMETHODCALLTYPE TDarwinetEngineImpl::getDomain()
 {
+	// Create the Domain COM object and return the interface to it
+	if (!this->m_COMIDarwinetDomain) {
+		m_COMIDarwinetDomain = CoDarwinetDomain::Create();
+	}
+	return m_COMIDarwinetDomain;
 }
-
-

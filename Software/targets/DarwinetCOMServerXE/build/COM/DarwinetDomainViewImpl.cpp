@@ -1,65 +1,54 @@
 // ---------------------------------------------------------------------------
-// DARWINETDOMAINIMPL : Implementation of TDarwinetDomainImpl (CoClass: DarwinetDomain, Interface: IDarwinetDomain)
+// DARWINETDOMAINVIEWIMPL : Implementation of TDarwinetDomainViewImpl (CoClass: DarwinetDomainView, Interface: IDarwinetDomainView)
 // ---------------------------------------------------------------------------
 #include <vcl.h>
 #pragma hdrstop
 
-#include "DarwinetDomainImpl.h"
+#include "DarwinetDomainViewImpl.h"
 
 
 // ---------------------------------------------------------------------------
-// TDarwinetDomainImpl
+// TDarwinetDomainViewImpl
 // ---------------------------------------------------------------------------
-__fastcall TDarwinetDomainImpl::TDarwinetDomainImpl()
+__fastcall TDarwinetDomainViewImpl::TDarwinetDomainViewImpl()
 {
 }
 
 
 // ---------------------------------------------------------------------------
-// TDarwinetDomainImpl
+// TDarwinetDomainViewImpl
 // ---------------------------------------------------------------------------
-__fastcall TDarwinetDomainImpl::TDarwinetDomainImpl(const System::_di_IInterface Controller)
+__fastcall TDarwinetDomainViewImpl::TDarwinetDomainViewImpl(const System::_di_IInterface Controller)
                               : inherited(Controller)
 {
 }
 
 
 // ---------------------------------------------------------------------------
-// TDarwinetDomainImpl
+// TDarwinetDomainViewImpl
 // ---------------------------------------------------------------------------
-__fastcall TDarwinetDomainImpl::TDarwinetDomainImpl(Comobj::TComObjectFactory* Factory,
+__fastcall TDarwinetDomainViewImpl::TDarwinetDomainViewImpl(Comobj::TComObjectFactory* Factory,
                                       const System::_di_IInterface Controller)
                               : inherited(Factory, Controller)
 {
 }
 
-void __fastcall TDarwinetDomainImpl::EventSinkChanged(const System::_di_IInterface EventSink)
+void __fastcall TDarwinetDomainViewImpl::EventSinkChanged(const System::_di_IInterface EventSink)
 {
   FEvents.Bind(EventSink);
 }
 
 // ---------------------------------------------------------------------------
-// TDarwinetDomainImpl - Class Factory
+// TDarwinetDomainViewImpl - Class Factory
 // ---------------------------------------------------------------------------
 static void createFactory()
 {
-  new TCppAutoObjectFactory<TDarwinetDomainImpl>(Comserv::GetComServer(),
-                           __classid(TDarwinetDomainImpl),
-                           CLSID_DarwinetDomain,
+  new TCppAutoObjectFactory<TDarwinetDomainViewImpl>(Comserv::GetComServer(),
+                           __classid(TDarwinetDomainViewImpl),
+                           CLSID_DarwinetDomainView,
                            Comobj::ciMultiInstance,
                            Comobj::tmApartment);
 }
 #pragma startup createFactory 32
-
-
-
-IDarwinetDomainView* STDMETHODCALLTYPE TDarwinetDomainImpl::getView()
-{
-	// Create the Domain COM object and return the interface to it
-	if (!this->m_COMIDarwinetDomainView) {
-		m_COMIDarwinetDomainView = CoDarwinetDomainView::Create();
-	}
-	return m_COMIDarwinetDomainView;
-}
 
 

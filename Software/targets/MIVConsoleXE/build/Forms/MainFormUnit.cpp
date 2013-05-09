@@ -25,55 +25,95 @@ TMainForm *MainForm;
   * in the GUI
   */
 void TMainForm::updateGUIToReflectChanges() {
-	this->EngineConnectButton->Caption = (this->m_pDarwinetEngine?"Close":"Connect");
+	bool DarwinetEngineCreated = false;
+	bool DarwinetDomainCreated = false;
+	bool ViewDomainCreated = false;
+	switch (m_DarwineEngineWrapperType) {
+		case eDarwineEngineWrapperType_Undefined:
+			DarwinetEngineCreated = (this->m_pDarwinetEngine); // Enable if the smart pointer referes to an instance
+		break;
+		case eDarwineEngineWrapperType_Proxy:
+		break;
+		case eDarwineEngineWrapperType_OCX:
+		break;
+		case eDarwineEngineWrapperType_TLB:
+			DarwinetEngineCreated = (this->m_pCOMIDarwinetEngine); // Enable if the smart pointer refers to an instance
+			DarwinetDomainCreated = (this->m_pCOMIDarwinetDomain); // Enable if the smart pointer refers to an instance
+			ViewDomainCreated = (this->m_pCOMIDarwinetDomainView); // Enable if the smart pointer refers to an instance
+		break;
+		case eDarwineEngineWrapperType_Unknown:
+		break;
+	default:
+		;
+	}
+	this->EngineConnectButton->Caption = (DarwinetEngineCreated?"Close":"Open");
+	this->DomainConnectButton->Enabled = DarwinetEngineCreated;
+	this->DomainConnectButton->Caption = (DarwinetDomainCreated?"Close":"Open");
+	this->ViewConnectButton->Enabled = DarwinetDomainCreated;
+	this->ViewConnectButton->Caption = (ViewDomainCreated?"Close":"Open");
 }
 
 //---------------------------------------------------------------------------
 __fastcall TMainForm::TMainForm(TComponent* Owner)
 	: TForm(Owner)
+	  ,m_DarwineEngineWrapperType(eDarwineEngineWrapperType_Undefined)
 {
+//	m_DarwineEngineWrapperType = eDarwineEngineWrapperType_Proxy;
+//	m_DarwineEngineWrapperType = eDarwineEngineWrapperType_OCX;
+	m_DarwineEngineWrapperType = eDarwineEngineWrapperType_TLB;
+
+	this->updateGUIToReflectChanges();
 }
 //---------------------------------------------------------------------------
-
-
-
-
 
 void __fastcall TMainForm::EngineConnectButtonClick(TObject *Sender)
 {
 
+	switch (m_DarwineEngineWrapperType) {
+		case eDarwineEngineWrapperType_Undefined:
+		break;
+		case eDarwineEngineWrapperType_Proxy: {
+			// Use Proxy framework (proxy <-> OCX <-> TLB <-> COM Server)
+			if (!m_pDarwinetEngine) {
+				m_pDarwinetEngine = c_DarwinetEngineFactory::createDarwinetEngine();
+			}
+			else {
+				m_pDarwinetEngine.reset(); // Release our reference the the Engine instance
+			}
+		}
+		break;
+		case eDarwineEngineWrapperType_OCX: {
+			// Use OCX (COM Interface wrapped into Components)
+			static TDarwinetEngine* pDarwinetEngine = NULL;
+			if (pDarwinetEngine == NULL) {
+				pDarwinetEngine = new TDarwinetEngine(NULL);
+				pDarwinetEngine->Connect();
+			}
+			else {
+				pDarwinetEngine->Disconnect();
+				delete pDarwinetEngine;
+				pDarwinetEngine = NULL;
+			}
+		}
+		break;
+		case eDarwineEngineWrapperType_TLB: {
+			// Use TLB (COM Interface wrapped into basic objects)
+			if (!m_pCOMIDarwinetEngine) {
+				m_pCOMIDarwinetEngine = CoDarwinetEngine::Create(); // Use creator method of co class
+
+			}
+			else {
+				m_pCOMIDarwinetEngine.Release();
+			}
+		}
+		break;
+		case eDarwineEngineWrapperType_Unknown:
+		break;
+	default:
+		;
+	}
 	// Bug in auto-generated code for events. See https://forums.embarcadero.com/message.jspa?messageID=445574&tstart=0
 	// See http://www.techvanguards.com
-
-	// Use Proxy framework (proxy <-> OCX <-> TLB <-> COM Server)
-	if (!m_pDarwinetEngine) {
-		m_pDarwinetEngine = c_DarwinetEngineFactory::createDarwinetEngine();
-	}
-	else {
-		m_pDarwinetEngine.reset(); // Release our reference the the Engine instance
-	}
-
-	// Use COM Component directly
-//	static TDarwinetEngine* pDarwinetEngine = NULL;
-//	if (pDarwinetEngine == NULL) {
-//		pDarwinetEngine = new TDarwinetEngine(NULL);
-//		pDarwinetEngine->Connect();
-//	}
-//	else {
-//		pDarwinetEngine->Disconnect();
-//		delete pDarwinetEngine;
-//		pDarwinetEngine = NULL;
-//	}
-
-	// Use COM Object directlly
-//	static TCOMIDarwinetEngine pCOMIDarwinetEngine; // The COM Interface "smart pointer
-//	if (!pCOMIDarwinetEngine) {
-//		pCOMIDarwinetEngine = CoDarwinetEngine::Create(); // Use creator method of co class
-//
-//	}
-//	else {
-//		pCOMIDarwinetEngine.Release();
-//	}
 
 	// Use COM Component in a Frame
 //	static TDarwinetEngineFrame* pDarwinetEngineFrame = NULL;
@@ -84,18 +124,70 @@ void __fastcall TMainForm::EngineConnectButtonClick(TObject *Sender)
 //		delete pDarwinetEngineFrame;
 //		pDarwinetEngineFrame = NULL;
 //	}
-
 	this->updateGUIToReflectChanges();
+
 }
 //---------------------------------------------------------------------------
 void __fastcall TMainForm::DomainConnectButtonClick(TObject *Sender)
 {
-	if (!m_pDarwinetDomain) {
-		m_pDarwinetDomain = m_pDarwinetEngine->getDomain();
+
+	switch (m_DarwineEngineWrapperType) {
+		case eDarwineEngineWrapperType_Undefined:
+		break;
+		case eDarwineEngineWrapperType_Proxy:
+			// Use Darwinet Engine Proxies
+			if (!m_pDarwinetDomain) {
+				m_pDarwinetDomain = m_pDarwinetEngine->getDomain();
+			}
+			else {
+				m_pDarwinetDomain.reset(); // release our reference to the Domain instance
+			}
+		break;
+		case eDarwineEngineWrapperType_OCX:
+		break;
+		case eDarwineEngineWrapperType_TLB:
+			// Use Darwinet Engine TLB
+			if (!m_pCOMIDarwinetDomain) {
+				m_pCOMIDarwinetDomain = CoDarwinetDomain::Create();
+			}
+			else {
+				m_pCOMIDarwinetDomain.Release();
+			}
+		break;
+		case eDarwineEngineWrapperType_Unknown:
+		break;
+	default:
+		;
 	}
-	else {
-		m_pDarwinetDomain.reset(); // release our reference to the Domain instance
+	this->updateGUIToReflectChanges();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TMainForm::ViewConnectButtonClick(TObject *Sender)
+{
+	switch (m_DarwineEngineWrapperType) {
+		case eDarwineEngineWrapperType_Undefined:
+		break;
+		case eDarwineEngineWrapperType_Proxy:
+		break;
+		case eDarwineEngineWrapperType_OCX:
+		break;
+		case eDarwineEngineWrapperType_TLB:
+			// Use Darwinet Engine TLB
+			if (!m_pCOMIDarwinetDomainView) {
+				m_pCOMIDarwinetDomainView = CoDarwinetDomainView::Create();
+			}
+			else {
+				m_pCOMIDarwinetDomainView.Release();
+			}
+		break;
+		case eDarwineEngineWrapperType_Unknown:
+		break;
+	default:
+		;
 	}
+
+	this->updateGUIToReflectChanges();
 }
 //---------------------------------------------------------------------------
 

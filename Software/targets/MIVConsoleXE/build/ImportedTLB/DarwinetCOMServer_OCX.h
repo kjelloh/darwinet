@@ -10,7 +10,7 @@
 // ************************************************************************ //
 
 // $Rev: 46046 $
-// File generated on 2013-05-09 11:22:18 from Type Library described below.
+// File generated on 2013-05-09 17:09:48 from Type Library described below.
 
 // ************************************************************************  //
 // Type Lib: C:\subversion\darwinet\trunk\Software\targets\DarwinetCOMServerXE\build\.\Win32\Debug\DarwinetCOMServerXE.exe (1)
@@ -118,6 +118,39 @@ public:
   void __fastcall Disconnect();
   void __fastcall BeforeDestruction();
   void __fastcall ConnectTo(IDarwinetDomainPtr intf);
+
+  virtual void __fastcall InvokeEvent(int DispID, Vcl::Oleserver::TVariantArray& params);
+
+  Darwinetcomserver_tlb::IDarwinetDomainView* __fastcall getView(void);
+private:
+__published:
+};
+
+
+// *********************************************************************//
+// COM Component Proxy Class Declaration
+// Component Name   : TDarwinetDomainView
+// Help String      : DarwinetDomainView Object
+// Default Interface: IDarwinetDomainView
+// Def. Intf. Object: IDarwinetDomainViewPtr
+// Def. Intf. DISP? : No
+// Event   Interface: IDarwinetDomainViewEvents
+// TypeFlags        : (2) CanCreate
+// *********************************************************************//
+class PACKAGE TDarwinetDomainView : public Vcl::Oleserver::TOleServer
+{
+  IDarwinetDomainViewPtr m_DefaultIntf;
+  _di_IUnknown __fastcall GetDunk();
+public:
+  __fastcall TDarwinetDomainView(System::Classes::TComponent* owner) : Vcl::Oleserver::TOleServer(owner)
+  {}
+
+  IDarwinetDomainViewPtr& GetDefaultInterface();
+  void __fastcall InitServerData();
+  void __fastcall Connect();
+  void __fastcall Disconnect();
+  void __fastcall BeforeDestruction();
+  void __fastcall ConnectTo(IDarwinetDomainViewPtr intf);
 
   virtual void __fastcall InvokeEvent(int DispID, Vcl::Oleserver::TVariantArray& params);
 

@@ -7,6 +7,11 @@
 //---------------------------------------------------------------------------
 #include "DarwinetEngineImpl.h"
 #include "DarwinetDomainImpl.h"
+
+#include "DarwinetDomainViewImpl.h"
+
+
+
 USEFORM("MainFormUnit.cpp", MainForm);
 //---------------------------------------------------------------------------
 #pragma link "ComServ.obj"

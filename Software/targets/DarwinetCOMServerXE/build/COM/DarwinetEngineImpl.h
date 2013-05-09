@@ -26,11 +26,18 @@ public:
   __fastcall TDarwinetEngineImpl(const System::_di_IInterface Controller);
   __fastcall TDarwinetEngineImpl(Comobj::TComObjectFactory* Factory, const System::_di_IInterface Controller);
   void __fastcall EventSinkChanged(const System::_di_IInterface EventSink);
-  
+
 
   // IDarwinetEngine
 protected:
   IDarwinetDomain* STDMETHODCALLTYPE getDomain();
+
+private:
+	/**
+	  * Private storage of our smart interface to a Darwinet COM object instance
+	  * TODO 130509: Make into list of domains to handle creation and magaing of multipple Domains
+	  */
+	TCOMIDarwinetDomain m_COMIDarwinetDomain;
 };
 
 

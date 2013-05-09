@@ -51,9 +51,23 @@ __published:	// IDE-managed Components
 	TGroupBox *DomainGroupBox;
 	TButton *DomainConnectButton;
 	TButton *EngineConnectButton;
+	TGroupBox *View;
+	TButton *ViewConnectButton;
 	void __fastcall EngineConnectButtonClick(TObject *Sender);
 	void __fastcall DomainConnectButtonClick(TObject *Sender);
+	void __fastcall ViewConnectButtonClick(TObject *Sender);
 private:	// User declarations
+
+	enum e_DarwineEngineWrapperType {
+		 eDarwineEngineWrapperType_Undefined
+		,eDarwineEngineWrapperType_Proxy
+		,eDarwineEngineWrapperType_OCX
+		,eDarwineEngineWrapperType_TLB
+		,eDarwineEngineWrapperType_Unknown
+	};
+
+	e_DarwineEngineWrapperType m_DarwineEngineWrapperType;
+	// Use Darwinet Engine Proxies
 
 	/**
 	  * Private storage of our Darwinet Engine
@@ -64,6 +78,11 @@ private:	// User declarations
 	  * Private storage of our darwinet Domain
 	  */
 	c_DarwinetDomainProxy::shared_ptr m_pDarwinetDomain;
+
+	// Use COM TLB Objects
+	TCOMIDarwinetEngine m_pCOMIDarwinetEngine; // The COM Interface "smart pointer"
+	TCOMIDarwinetDomain m_pCOMIDarwinetDomain; // The COM Interface "smart pointer"
+	TCOMIDarwinetDomainView m_pCOMIDarwinetDomainView; // // The COM Interface "smart pointer"
 
 	/**
 	  * Updates the GUI to reflect any chages that shall be reflected

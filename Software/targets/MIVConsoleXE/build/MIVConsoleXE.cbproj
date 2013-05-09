@@ -58,6 +58,7 @@
 			<Base>true</Base>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Base)'!=''">
+			<BCC_Defines>USING_DAX;$(BCC_Defines)</BCC_Defines>
 			<VerInfo_Keys>CompanyName=;FileDescription=;FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
 			<Manifest_File>None</Manifest_File>
 			<VerInfo_Locale>1053</VerInfo_Locale>
@@ -154,7 +155,7 @@
 			</CppCompile>
 			<CppCompile Include="ImportedTLB\DarwinetCOMServer_TLB.cpp">
 				<DependentOn>ImportedTLB\DarwinetCOMServer_TLB.h</DependentOn>
-				<BuildOrder>5</BuildOrder>
+				<BuildOrder>6</BuildOrder>
 			</CppCompile>
 			<CppCompile Include="MIVConsoleXE.cpp">
 				<BuildOrder>0</BuildOrder>
@@ -232,6 +233,9 @@
 					<Platform value="Win32">True</Platform>
 				</Platforms>
 				<ModelSupport>False</ModelSupport>
+				<ActiveXProjectInfo>
+					<version>1</version>
+				</ActiveXProjectInfo>
 			</BorlandProject>
 			<ProjectFileVersion>12</ProjectFileVersion>
 		</ProjectExtensions>

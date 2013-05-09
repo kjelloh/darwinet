@@ -143,6 +143,11 @@
 				<DependentOn>COM\DarwinetDomainImpl.h</DependentOn>
 				<BuildOrder>5</BuildOrder>
 			</CppCompile>
+			<CppCompile Include="COM\DarwinetDomainViewImpl.cpp">
+				<CoClasses>DarwinetDomainView</CoClasses>
+				<DependentOn>COM\DarwinetDomainViewImpl.h</DependentOn>
+				<BuildOrder>6</BuildOrder>
+			</CppCompile>
 			<CppCompile Include="COM\DarwinetEngineImpl.cpp">
 				<CoClasses>DarwinetEngine</CoClasses>
 				<DependentOn>COM\DarwinetEngineImpl.h</DependentOn>

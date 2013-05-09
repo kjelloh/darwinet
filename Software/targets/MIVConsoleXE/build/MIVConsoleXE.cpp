@@ -8,66 +8,16 @@
 
 #include <vcl.h>
 #pragma hdrstop
+#include <ComServ.hpp>
 #include <tchar.h>
 //---------------------------------------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-USEFORM("frames\DarwinetEngineFrameUnit.cpp", DarwinetEngineFrame); /* TFrame: File Type */
 USEFORM("Forms\MainFormUnit.cpp", MainForm);
+USEFORM("frames\DarwinetEngineFrameUnit.cpp", DarwinetEngineFrame); /* TFrame: File Type */
 //---------------------------------------------------------------------------
+#pragma link "ComServ.obj"
+
+static Comserv::TCppActiveXModule _ax_module(true);
+
 WINAPI _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int)
 {
 	try

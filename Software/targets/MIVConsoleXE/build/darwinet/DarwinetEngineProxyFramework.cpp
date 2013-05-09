@@ -16,12 +16,12 @@
 /**
   * Implements a proxy to a Darwinet Domain COM object
   */
-class c_DarwinetDomainCOMWrapperProxyImpl : public c_DarwinetDomainProxy {
+class c_DarwinetDomainOCXProxyImpl : public c_DarwinetDomainProxy {
 public:
 	/**
 	  * Constructor
 	  */
-	c_DarwinetDomainCOMWrapperProxyImpl(TDarwinetDomain* pDarwinetDomain)
+	c_DarwinetDomainOCXProxyImpl(TDarwinetDomain* pDarwinetDomain)
 		: m_pDarwinetDomain(pDarwinetDomain)
 	{
 		try {
@@ -33,7 +33,7 @@ public:
 	/**
 	  * Virtual destructor
 	  */
-	virtual ~c_DarwinetDomainCOMWrapperProxyImpl() {
+	virtual ~c_DarwinetDomainOCXProxyImpl() {
 		try {
 			m_pDarwinetDomain->Disconnect();
 		}
@@ -52,20 +52,20 @@ private:
   * Implements a Proxy using the Darwinet Engine COM Interface
   * through RAD Studio XE Automation COM Object wrappers
   */
-class c_AutomationCOMWrapperProxyImpl : public c_DarwinetEngineProxy {
+class c_DarwinetEngineOCXProxy : public c_DarwinetEngineProxy {
 public:
 
 	/**
 	  * Constructor
 	  */
-	c_AutomationCOMWrapperProxyImpl()
-		: m_pDarwinetEngine(new TDarwinetEngine(Application))
+	c_DarwinetEngineOCXProxy()
+		: m_pDarwinetEngineOCX(new TDarwinetEngine(Application))
 	{
-		m_pDarwinetEngine->Connect();
+		m_pDarwinetEngineOCX->Connect();
 	}
 
-	~c_AutomationCOMWrapperProxyImpl() {
-		m_pDarwinetEngine->Disconnect();
+	~c_DarwinetEngineOCXProxy() {
+		m_pDarwinetEngineOCX->Disconnect();
 	}
 
 	// begin c_DarwinetEngineProxy
@@ -75,9 +75,9 @@ public:
 	  */
 	c_DarwinetDomainProxy::shared_ptr getDomain(/* TODO: Provide path of the domain to return */) {
 		if (!m_pDarwinetDomainProxy) {
-			TDarwinetDomain* pDarwinetDomainCOMWrapper(new TDarwinetDomain(Application));
-			pDarwinetDomainCOMWrapper->ConnectTo(m_pDarwinetEngine->getDomain());
-			m_pDarwinetDomainProxy.reset(new c_DarwinetDomainCOMWrapperProxyImpl(pDarwinetDomainCOMWrapper));
+			TDarwinetDomain* pDarwinetDomainOCX(new TDarwinetDomain(Application));
+			pDarwinetDomainOCX->ConnectTo(m_pDarwinetEngineOCX->getDomain());
+			m_pDarwinetDomainProxy.reset(new c_DarwinetDomainOCXProxyImpl(pDarwinetDomainOCX));
 		}
 		return m_pDarwinetDomainProxy;
 	};
@@ -89,7 +89,7 @@ private:
 	/**
 	  * Private storage of our Darwinet Engine Component
 	  */
-	TDarwinetEngine* m_pDarwinetEngine;
+	TDarwinetEngine* m_pDarwinetEngineOCX;
 
 	/**
 	  * Private storage of our cashed Domain proxy
@@ -102,8 +102,8 @@ private:
   * Returns a shared pointer to a Proxy using the Darwinet Engine COM Interface
   * through RAD Studio XE Automation COM Object wrappers
   */
-c_DarwinetEngineProxy::shared_ptr createAutomationCOMWrapperProxy() {
-	c_DarwinetEngineProxy::shared_ptr result(new c_AutomationCOMWrapperProxyImpl());
+c_DarwinetEngineProxy::shared_ptr createDarwinetEngineOCXProxy() {
+	c_DarwinetEngineProxy::shared_ptr result(new c_DarwinetEngineOCXProxy());
 	return result;
 }
 
@@ -113,6 +113,6 @@ c_DarwinetEngineProxy::shared_ptr createAutomationCOMWrapperProxy() {
   * Factory Method that creates the Darwinet Engine to be used by the Client.
   */
 c_DarwinetEngineProxy::shared_ptr c_DarwinetEngineFactory::createDarwinetEngine() {
-	// Deafult to use COM interface
-	return createAutomationCOMWrapperProxy();
+	// Deafult to use OCX Wrapper
+	return createDarwinetEngineOCXProxy();
 }

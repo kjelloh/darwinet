@@ -10,7 +10,7 @@
 // ************************************************************************ //
 
 // $Rev: 46046 $
-// File generated on 2013-05-09 11:10:18 from Type Library described below.
+// File generated on 2013-05-09 17:09:16 from Type Library described below.
 
 // ************************************************************************  //
 // Type Lib: C:\subversion\darwinet\trunk\Software\targets\DarwinetCOMServerXE\build\COM\DarwinetCOMServer (1)
@@ -76,6 +76,9 @@ extern __declspec (package) const GUID CLSID_DarwinetEngine;
 extern __declspec (package) const GUID IID_IDarwinetDomain;
 extern __declspec (package) const GUID DIID_IDarwinetDomainEvents;
 extern __declspec (package) const GUID CLSID_DarwinetDomain;
+extern __declspec (package) const GUID IID_IDarwinetDomainView;
+extern __declspec (package) const GUID DIID_IDarwinetDomainViewEvents;
+extern __declspec (package) const GUID CLSID_DarwinetDomainView;
 
 // *********************************************************************//
 // Forward declaration of types defined in TypeLibrary
@@ -92,6 +95,12 @@ typedef TComInterface<IDarwinetDomain, &IID_IDarwinetDomain> IDarwinetDomainPtr;
 interface DECLSPEC_UUID("{2F2CF59F-3D77-4538-AC4E-33BB0BEC9DDD}") IDarwinetDomainEvents;
 typedef TComInterface<IDarwinetDomainEvents, &DIID_IDarwinetDomainEvents> IDarwinetDomainEventsPtr;
 
+interface DECLSPEC_UUID("{72253533-B3BB-4AAD-97F6-860708780020}") IDarwinetDomainView;
+typedef TComInterface<IDarwinetDomainView, &IID_IDarwinetDomainView> IDarwinetDomainViewPtr;
+
+interface DECLSPEC_UUID("{E204DB64-CEAF-4E98-BC76-A45BA16A24A6}") IDarwinetDomainViewEvents;
+typedef TComInterface<IDarwinetDomainViewEvents, &DIID_IDarwinetDomainViewEvents> IDarwinetDomainViewEventsPtr;
+
 
 // *********************************************************************//
 // Declaration of CoClasses defined in Type Library
@@ -105,9 +114,12 @@ typedef IDarwinetEngine DarwinetEngine;
 typedef IDarwinetEnginePtr DarwinetEnginePtr;
 typedef IDarwinetDomain DarwinetDomain;
 typedef IDarwinetDomainPtr DarwinetDomainPtr;
+typedef IDarwinetDomainView DarwinetDomainView;
+typedef IDarwinetDomainViewPtr DarwinetDomainViewPtr;
 
 #define LIBID_OF_DarwinetEngine (&LIBID_DarwinetCOMServer)
 #define LIBID_OF_DarwinetDomain (&LIBID_DarwinetCOMServer)
+#define LIBID_OF_DarwinetDomainView (&LIBID_DarwinetCOMServer)
 // *********************************************************************//
 // Interface: IDarwinetEngine
 // Flags:     (4416) Dual OleAutomation Dispatchable
@@ -150,6 +162,7 @@ interface IDarwinetEngineEvents : public TDispWrapper<IDispatch>
 interface IDarwinetDomain  : public IDispatch
 {
 public:
+  virtual Darwinetcomserver_tlb::IDarwinetDomainView* STDMETHODCALLTYPE getView(void) = 0; // [201]
 
 #if !defined(__TLB_NO_INTERFACE_WRAPPERS)
 
@@ -165,6 +178,32 @@ public:
 // GUID:      {2F2CF59F-3D77-4538-AC4E-33BB0BEC9DDD}
 // *********************************************************************//
 interface IDarwinetDomainEvents : public TDispWrapper<IDispatch>
+{
+
+};
+// *********************************************************************//
+// Interface: IDarwinetDomainView
+// Flags:     (4416) Dual OleAutomation Dispatchable
+// GUID:      {72253533-B3BB-4AAD-97F6-860708780020}
+// *********************************************************************//
+interface IDarwinetDomainView  : public IDispatch
+{
+public:
+
+#if !defined(__TLB_NO_INTERFACE_WRAPPERS)
+
+
+
+#endif //   __TLB_NO_INTERFACE_WRAPPERS
+
+};
+
+// *********************************************************************//
+// Interface: IDarwinetDomainViewEvents
+// Flags:     (0)
+// GUID:      {E204DB64-CEAF-4E98-BC76-A45BA16A24A6}
+// *********************************************************************//
+interface IDarwinetDomainViewEvents : public TDispWrapper<IDispatch>
 {
 
 };
@@ -267,6 +306,7 @@ public:
   TCOMIDarwinetDomainT(const TCOMIDarwinetDomainT& src) : TComInterface<IDarwinetDomain>(src) {}
   TCOMIDarwinetDomainT& operator=(const TCOMIDarwinetDomainT& src) { Bind(src, true); return *this;}
 
+  Darwinetcomserver_tlb::IDarwinetDomainView* __fastcall getView(void);
 
 };
 typedef TCOMIDarwinetDomainT<IDarwinetDomain> TCOMIDarwinetDomain;
@@ -314,6 +354,7 @@ public:
     return BindToActive(CLSID_DarwinetDomain);
   }
 
+  Darwinetcomserver_tlb::IDarwinetDomainView* __fastcall getView();
 
 };
 typedef IDarwinetDomainDispT<IDarwinetDomain> IDarwinetDomainDisp;
@@ -335,6 +376,88 @@ public:
 
 };
 typedef IDarwinetDomainEventsDispT<IDarwinetDomainEvents> IDarwinetDomainEventsDisp;
+
+// *********************************************************************//
+// SmartIntf: TCOMIDarwinetDomainView
+// Interface: IDarwinetDomainView
+// *********************************************************************//
+template <class T /* IDarwinetDomainView */ >
+class TCOMIDarwinetDomainViewT : public TComInterface<IDarwinetDomainView>, public TComInterfaceBase<IUnknown>
+{
+public:
+  TCOMIDarwinetDomainViewT() {}
+  TCOMIDarwinetDomainViewT(IDarwinetDomainView *intf, bool addRef = false) : TComInterface<IDarwinetDomainView>(intf, addRef) {}
+  TCOMIDarwinetDomainViewT(const TCOMIDarwinetDomainViewT& src) : TComInterface<IDarwinetDomainView>(src) {}
+  TCOMIDarwinetDomainViewT& operator=(const TCOMIDarwinetDomainViewT& src) { Bind(src, true); return *this;}
+
+
+};
+typedef TCOMIDarwinetDomainViewT<IDarwinetDomainView> TCOMIDarwinetDomainView;
+
+// *********************************************************************//
+// DispIntf:  IDarwinetDomainView
+// Flags:     (4416) Dual OleAutomation Dispatchable
+// GUID:      {72253533-B3BB-4AAD-97F6-860708780020}
+// *********************************************************************//
+template<class T>
+class IDarwinetDomainViewDispT : public TAutoDriver<IDarwinetDomainView>
+{
+public:
+  IDarwinetDomainViewDispT(){}
+
+  IDarwinetDomainViewDispT(IDarwinetDomainView *pintf)
+  {
+    TAutoDriver<IDarwinetDomainView>::Bind(pintf, false);
+  }
+
+  IDarwinetDomainViewDispT(IDarwinetDomainViewPtr pintf)
+  {
+    TAutoDriver<IDarwinetDomainView>::Bind(pintf, true);
+  }
+
+  IDarwinetDomainViewDispT& operator=(IDarwinetDomainView *pintf)
+  {
+    TAutoDriver<IDarwinetDomainView>::Bind(pintf, false);
+    return *this;
+  }
+
+  IDarwinetDomainViewDispT& operator=(IDarwinetDomainViewPtr pintf)
+  {
+    TAutoDriver<IDarwinetDomainView>::Bind(pintf, true);
+    return *this;
+  }
+
+  HRESULT BindDefault()
+  {
+    return OLECHECK(Bind(CLSID_DarwinetDomainView));
+  }
+
+  HRESULT BindRunning()
+  {
+    return BindToActive(CLSID_DarwinetDomainView);
+  }
+
+
+};
+typedef IDarwinetDomainViewDispT<IDarwinetDomainView> IDarwinetDomainViewDisp;
+
+// *********************************************************************//
+// DispIntf:  IDarwinetDomainViewEvents
+// Flags:     (0)
+// GUID:      {E204DB64-CEAF-4E98-BC76-A45BA16A24A6}
+// *********************************************************************//
+template <class T>
+class IDarwinetDomainViewEventsDispT : public TAutoDriver<IDarwinetDomainViewEvents>
+{
+public:
+  IDarwinetDomainViewEventsDispT(){}
+
+  void Attach(LPUNKNOWN punk)
+  { m_Dispatch = static_cast<T*>(punk); }
+
+
+};
+typedef IDarwinetDomainViewEventsDispT<IDarwinetDomainViewEvents> IDarwinetDomainViewEventsDisp;
 
 // *********************************************************************//
 // SmartIntf: TCOMIDarwinetEngine
@@ -376,15 +499,44 @@ IDarwinetEngineEventsDispT<T>::onCreated()
 // SmartIntf: TCOMIDarwinetDomain
 // Interface: IDarwinetDomain
 // *********************************************************************//
+template <class T> Darwinetcomserver_tlb::IDarwinetDomainView* __fastcall
+TCOMIDarwinetDomainT<T>::getView(void)
+{
+  return (*this)->getView();
+}
+
 // *********************************************************************//
 // DispIntf:  IDarwinetDomain
 // Flags:     (4416) Dual OleAutomation Dispatchable
 // GUID:      {80F91A0A-11F2-4711-A5ED-59345387133B}
 // *********************************************************************//
+template <class T> Darwinetcomserver_tlb::IDarwinetDomainView* __fastcall
+IDarwinetDomainDispT<T>::getView()
+{
+  _TDispID _dispid(*this, OLETEXT("getView"), DISPID(201));
+  TAutoArgs<0> _args;
+  OleFunction(_dispid, _args);
+  return (Darwinetcomserver_tlb::IDarwinetDomainView* /*[C1]*/)(LPDISPATCH) /*[VT_DISPATCH:1]*/_args.GetRetVariant();
+}
+
 // *********************************************************************//
 // DispIntf:  IDarwinetDomainEvents
 // Flags:     (0)
 // GUID:      {2F2CF59F-3D77-4538-AC4E-33BB0BEC9DDD}
+// *********************************************************************//
+// *********************************************************************//
+// SmartIntf: TCOMIDarwinetDomainView
+// Interface: IDarwinetDomainView
+// *********************************************************************//
+// *********************************************************************//
+// DispIntf:  IDarwinetDomainView
+// Flags:     (4416) Dual OleAutomation Dispatchable
+// GUID:      {72253533-B3BB-4AAD-97F6-860708780020}
+// *********************************************************************//
+// *********************************************************************//
+// DispIntf:  IDarwinetDomainViewEvents
+// Flags:     (0)
+// GUID:      {E204DB64-CEAF-4E98-BC76-A45BA16A24A6}
 // *********************************************************************//
 // *********************************************************************//
 // The following typedefs expose classes (named CoCoClassName) that
@@ -407,6 +559,13 @@ typedef TCoClassCreatorT<TCOMIDarwinetEngine, IDarwinetEngine, &CLSID_DarwinetEn
 // Interface: TCOMIDarwinetDomain
 // *********************************************************************//
 typedef TCoClassCreatorT<TCOMIDarwinetDomain, IDarwinetDomain, &CLSID_DarwinetDomain, &IID_IDarwinetDomain> CoDarwinetDomain;
+
+// *********************************************************************//
+// COCLASS DEFAULT INTERFACE CREATOR
+// CoClass  : DarwinetDomainView
+// Interface: TCOMIDarwinetDomainView
+// *********************************************************************//
+typedef TCoClassCreatorT<TCOMIDarwinetDomainView, IDarwinetDomainView, &CLSID_DarwinetDomainView, &IID_IDarwinetDomainView> CoDarwinetDomainView;
 #endif  //   __TLB_NO_INTERFACE_WRAPPERS
 
 
@@ -470,6 +629,25 @@ protected:
   IDarwinetDomainEventsDisp m_EventIntfObj;
 };
 
+// *********************************************************************//
+// CONNECTIONPOINT/EVENT PROXY
+// CoClass         : DarwinetDomainView
+// Event Interface : IDarwinetDomainViewEvents
+// *********************************************************************//
+template <class T>
+class TEvents_DarwinetDomainView : public IConnectionPointImpl<T,
+                                                 &DIID_IDarwinetDomainViewEvents,
+#if !defined(_TLB_DYNAMIC_CONNECTIONPOINT_ARRAY)
+                                                 CComUnkArray<CONNECTIONPOINT_ARRAY_SIZE> >
+#else
+                                                 CComDynamicArray>
+#endif
+{
+public:
+protected:
+  IDarwinetDomainViewEventsDisp m_EventIntfObj;
+};
+
 #endif    //   __TLB_NO_EVENT_WRAPPERS
 
 #if !defined(__TLB_NO_EVENT_WRAPPERS) && defined(USING_DAX)
@@ -506,6 +684,17 @@ public:
 // *********************************************************************//
 template <typename T>
 class IDarwinetDomain_EventsDispatcher : public IUnknown
+{
+public:
+};
+
+// *********************************************************************//
+// CONNECTIONPOINT/EVENT PROXY
+// CoClass         : DarwinetDomainView
+// Event Interface : IDarwinetDomainViewEvents
+// *********************************************************************//
+template <typename T>
+class IDarwinetDomainView_EventsDispatcher : public IUnknown
 {
 public:
 };

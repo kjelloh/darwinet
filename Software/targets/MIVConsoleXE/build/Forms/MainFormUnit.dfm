@@ -38,7 +38,7 @@ object MainForm: TMainForm
     Width = 804
     Height = 88
     Align = alTop
-    Caption = 'Domain'
+    Caption = 'Darwinet Domain'
     TabOrder = 1
     object DomainConnectButton: TButton
       Left = 16
@@ -48,6 +48,24 @@ object MainForm: TMainForm
       Caption = 'Connect'
       TabOrder = 0
       OnClick = DomainConnectButtonClick
+    end
+  end
+  object View: TGroupBox
+    Left = 0
+    Top = 177
+    Width = 804
+    Height = 80
+    Align = alTop
+    Caption = 'Domain View'
+    TabOrder = 2
+    object ViewConnectButton: TButton
+      Left = 16
+      Top = 32
+      Width = 75
+      Height = 25
+      Caption = 'Connect'
+      TabOrder = 0
+      OnClick = ViewConnectButtonClick
     end
   end
   object MainMenu1: TMainMenu

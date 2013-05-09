@@ -30,6 +30,15 @@ public:
 
   // IDarwinetDomain
 protected:
+  IDarwinetDomainView* STDMETHODCALLTYPE getView();
+
+private:
+	/**
+	  * Private storage of our smart interface to a Darwinet COM object instance
+	  * TODO 130509: Make into list of domains to handle creation and magaing of multipple Domains
+	  */
+	TCOMIDarwinetDomainView m_COMIDarwinetDomainView;
+
 };
 
 
