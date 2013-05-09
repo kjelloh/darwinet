@@ -146,7 +146,7 @@ public:
 	  * arrays of specified representation.
 	  */
 
-	#if defined(__BCPLUSPLUS__) or defined(__CYGWIN32__)
+	#if defined(__BCPLUSPLUS__) || defined(__CYGWIN32__)
 	TYPE_WRAPPED_CHAR(char32_t,UCF4c); // To compile; be sure to pass --std=c++0x or --std=c++11 to g++ compiler (depending on compiler version)
 	#endif
 	TYPE_WRAPPED_CHAR(char,Latin1c);
@@ -821,7 +821,7 @@ public:
   * wrap an anonymous char, char array into a strong typed char or array
   * that defines representation.
   */
-#if defined(__BCPLUSPLUS__) or defined(__CYGWIN32__)
+#if defined(__BCPLUSPLUS__) || defined(__CYGWIN32__)
 typedef c_DataRepresentationFramework::UCF4c _UCF4c;
 #endif
 typedef c_DataRepresentationFramework::Latin1c _Latin1c;
