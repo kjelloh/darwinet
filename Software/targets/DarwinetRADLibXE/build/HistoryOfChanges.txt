@@ -1,0 +1,10 @@
+<SwedbankRADLib>
+
+History of changes (Latest change on top)
+Date   Id  Ver 	       Change
+-----------------------------------------
+130115 KoH 1.0.0w    + Renamed PathsFramework to keypath (cpp and h-files)
+                     + ApplicationProperties now deafults to exe-file name without exe extension
+
+130115 KoH 1.0.0w    Created this History
+
