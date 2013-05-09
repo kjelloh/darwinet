@@ -30,18 +30,3 @@ __fastcall TApplicationForm::TApplicationForm(TComponent* Owner)
 {
 }
 //---------------------------------------------------------------------------
-void __fastcall TApplicationForm::SpinEdit1Change(TObject *Sender)
-{
-	this->m_pMIV->setValue(this->SpinEdit1->Value);
-}
-//---------------------------------------------------------------------------
-void __fastcall TApplicationForm::FormCreate(TObject *Sender)
-{
-	// Get the Domain to use
-	this->m_pDomain = darwinet::getDefaultDarwinetDomain();
-	// Get a view to the Domain
-	this->m_pView = this->m_pDomain->getView();
-	// Get the view MIV
-	this->m_pMIV = m_pView->getMIV();
-}
-//---------------------------------------------------------------------------

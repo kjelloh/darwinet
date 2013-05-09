@@ -46,6 +46,32 @@
 
 //---------------------------------------------------------------------------
 //---------------------------------------------------------------------------
+
+/**
+ * Define a string that matches the target OS interface.
+ * Windows defaults to using UTF16 strings.
+ * Cygwin 4.7 provides char* Windows interface.
+ * Add precompiler switches for your target if needed.
+ */
+#ifdef __BCPLUSPLUS__
+        /**
+         * RAD Studio XE complies for windows that uses UTF16 strings as default.
+         */
+        typedef c_DataRepresentationFramework::c_UTF16String c_ApplicationString;
+        typedef wchar_t t_AppChar;
+        #define APP_SZ_LITERAL(S) u ## S
+        #define APPsz(S) _UTF16sz(APP_SZ_LITERAL(S))
+#else
+        /**
+         * Assume GNU compiler for Linux.
+         * UTF8 is a good pick that will cover plain ASCII as well as extended code page defined strings that may reside in std::string<char>.
+         */
+        typedef c_DataRepresentationFramework::c_UTF8String c_ApplicationString;
+        typedef char t_AppChar;
+        #define APP_SZ_LITERAL(S) u8 ## S
+        #define _APPsz(S) _UTF8sz(APP_SZ_LITERAL(S))
+#endif
+
 /**
   * Models a base class of an application project.
   */
@@ -54,13 +80,12 @@ public:
 	/**
 	  * Constructs a project using provided project root folder
 	  */
-//	c_ApplicationProject(const c_FilePath& project_root_folder, const c_DataRepresentationFramework::c_UTF16String& sCaption);
 	c_ApplicationProject(const c_FilePath& project_root_folder, const c_FileName& sCaption);
 
 	/**
 	  * Returns the root folder path of this workspace
 	  */
-	c_FilePath& getRootPath();
+	const c_FilePath& getRootPath();
 
 	/**
 	  * Returns this project properties, creating it from file
@@ -89,7 +114,6 @@ private:
 	/**
 	  * private storage of the name of this project
 	  */
-//	c_DataRepresentationFramework::c_UTF16String m_sCaption;
 	c_FileName m_sCaption;
 
 };
@@ -105,18 +129,17 @@ public:
 	  * Creates a workspace using the provided root path
 	  * as the root folder defining the work space.
 	  */
-	c_ApplicationWorkSpace(c_FilePath workspace_root_path);
+	c_ApplicationWorkSpace(const c_FilePath& workspace_root_path);
 
 	/**
 	  * Returns the root folder path of this workspace
 	  */
-	c_FilePath& getRootPath();
+	const c_FilePath& getRootPath();
 
 	/**
 	  * Sets Application to use within current workspace.
 	  * Will use a default work space if none has been set.
 	  */
-//	void setCurrentProject(const c_DataRepresentationFramework::c_UTF16String& sApplicationRootFolderName);
 	void setCurrentProject(const c_FileName& sApplicationRootFolderName);
 
 	/**
@@ -156,12 +179,12 @@ public:
 	  * As of 071025 the exe run time folder.
 	  * TODO: Considder to merge run time environment class and this class!
 	  */
-	c_ApplicationFrameWork(c_FilePath framework_root_path);
+	c_ApplicationFrameWork(const c_FilePath& framework_root_path);
 
 	/**
 	  * Returns the root path to this frame work.
 	  */
-	c_FilePath getRootPath();
+	const c_FilePath& getRootPath();
 
 	/**
 	  * Saves all data to persistent storage. Will call
@@ -188,7 +211,7 @@ private:
 class c_ApplicationRunTimeEnvironent {
 public:
 	/**
-	  * Returns signleton instance, creating it if it not yet done.
+	  * Returns singleton instance, creating it if it not yet done.
 	  */
 	static c_ApplicationRunTimeEnvironent* instance();
 
@@ -278,7 +301,6 @@ private:
 	  */
 	static c_ApplicationRunTimeEnvironent* m_pInstance;
 
-
 };
 
 //---------------------------------------------------------------------------
@@ -301,26 +323,26 @@ public:
 	/**
 	  * Returns this application version info product name field contents
 	  */
-	static const c_DataRepresentationFramework::c_UTF16String getVersionInfoProductName();
+	static const c_ApplicationString getVersionInfoProductName();
 
 	/**
 	  * Returns this application version info Version field contents
 	  */
-	static const c_DataRepresentationFramework::c_UTF16String getVersionInfoVersion();
+	static const c_ApplicationString getVersionInfoVersion();
 
 	/**
 	  * Returns this application version info Copyright field contents
 	  */
-	static const c_DataRepresentationFramework::c_UTF16String getVersionInfoCopyRight();
+	static const c_ApplicationString getVersionInfoCopyRight();
 	/**
 	  * Returns this application version info Comments field contents
 	  */
-	static const c_DataRepresentationFramework::c_UTF16String getVersionInfoComments();
+	static const c_ApplicationString getVersionInfoComments();
 
 	/**
 	  * returns the Version and Date and time when this application was built
 	  */
-	static c_DataRepresentationFramework::c_UTF16String getBuildVersionAndDateAndTimeString();
+	static c_ApplicationString getBuildVersionAndDateAndTimeString();
 
 };
 #endif

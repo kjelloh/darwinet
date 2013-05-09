@@ -30,26 +30,29 @@
 # pragma warn +8072 // Enable again. See above
 #endif
 
+
+#ifdef __BCPLUSPLUS__
 // Defined way of including boost utf8 codecvt
-#define BOOST_UTF8_BEGIN_NAMESPACE namespace boost {namespace utf8 {
-#define BOOST_UTF8_END_NAMESPACE } }
+// #define BOOST_UTF8_BEGIN_NAMESPACE namespace boost {namespace utf8 {
+// #define BOOST_UTF8_END_NAMESPACE } }
 #define BOOST_UTF8_DECL
 
 // Note on Warning W8068 in utf8_codecvt_facet.hpp
 // note the following code will generate on some platforms where
 // wchar_t is defined as UCS2.  The warnings are superfluous as
 // the specialization is never instantitiated with such compilers.
-#ifdef __BCPLUSPLUS__
-# pragma warn -8068 // See note above 101112/KoH
-#endif
-// #include <libs/detail/utf8_codecvt_facet.cpp>
-#include "boost/detail/utf8_codecvt_facet.hpp"
-#ifdef __BCPLUSPLUS__
-# pragma warn .8068 // See note above 101112/KoH
-#endif
+
+#pragma warn -8068 // See note above 101112/KoH
+#include <libs/detail/utf8_codecvt_facet.cpp>
+#pragma warn .8068 // See note above 101112/KoH
 
 #include "utf8/source/utf8.h" // From http://sourceforge.net/projects/utfcpp/
 // #include "common/unicode/unistr.h" // C++ UnicodeString from icu4c
+
+#else
+// Unicode support not defined for this environment
+#endif
+
 
 #ifdef __BCPLUSPLUS__
 #pragma package(smart_init)
@@ -644,7 +647,7 @@ bool c_DataRepresentationFramework::doTests() {
 
 	// Assign to wrapped literal char
 	{
-		char source('Ö');
+                char source ('Ö');
 		typedef _Literalc t_Wrapper;
 
 		// Copy construct
@@ -840,7 +843,7 @@ c_DataRepresentationFramework::c_UTF8String c_DataRepresentationFramework::toUTF
 	try {
 		std::locale loc(std::locale::classic(),new boost::utf8::utf8_codecvt_facet());	// Create a locale using utf8 facet
 		sTargetUTF8Stream.imbue(loc);								// Set stream to use locale with utf8 facet
-		sTargetUTF8Stream << sUCF4String.c_str(); // Stream the UCF-4 string to the Ascii string using UTF-8 facet
+		sTargetUTF8Stream << sUCF4String.c_str(); // Stream the UCF-4 string to the result string using UTF-8 facet
 	}
 	catch (std::exception& e) {
 		c_LogString sMessage("c_DataRepresentationFramework::toAsciiString failed to convert UCF4String");

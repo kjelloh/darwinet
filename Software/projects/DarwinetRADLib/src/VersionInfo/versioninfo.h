@@ -3,7 +3,10 @@
 #ifndef VERSINFOH
 #define VERSINFOH
 
-#include "DataRepresentationFrameWork.h"
+// #include "DataRepresentationFrameWork.h"
+#include "FilePathFramework.h"
+#include "windows.h" // WORD
+#include "ApplicationEnvironment.h" // c_ApplicationStrimg
 
 //---------------------------------------------------------------------------
 
@@ -25,7 +28,7 @@
 
 /*
 ===============================================================================
-Changes by ITfied(R) AB
+Changes by ITfied AB
 
 101111 KoH This file has been changed. Introduced application specific logging
 		   use of std::strings and converted to whar_t usage.
@@ -33,13 +36,15 @@ Changes by ITfied(R) AB
 ===============================================================================
 */
 
-#include <string>
+// #include <string>
+
+typedef c_ApplicationString c_VersionInfoString;
 
 class VersionInfo
 {
 public:
 
-   VersionInfo (const c_DataRepresentationFramework::c_UTF16String& sFilename);
+   VersionInfo (const c_FileName& sFilename);
    ~VersionInfo();
 
    bool hasInfo () const
@@ -65,20 +70,20 @@ public:
 	 * returns the Comments as set
 	 * in our version info
 	 */
-   c_DataRepresentationFramework::c_UTF16String Comments() ;
+   c_VersionInfoString Comments() ;
 
    /**
 	 * returns the Product name as set
 	 * in our version info
 	 */
-   c_DataRepresentationFramework::c_UTF16String ProductName() ;
+   c_VersionInfoString ProductName() ;
 
 
    /**
 	 * returns the LegalCopyright as set
 	 * in our version info
 	 */
-   c_DataRepresentationFramework::c_UTF16String LegalCopyright() ;
+   c_VersionInfoString LegalCopyright() ;
 
 	/*
 	Comments
@@ -99,9 +104,9 @@ public:
 protected:
 private:
 
-	c_DataRepresentationFramework::c_UTF16String m_sFilename;
+	c_FileName m_sFilename;
 
-	void * m_pTheVersionInfo;
+	t_AppChar* m_pTheVersionInfo;
 	unsigned long m_VersionInfoSize;
 
 	void * m_pTheFixedInfo;
@@ -109,7 +114,7 @@ private:
 	/**
 	 * Returns File Version Info memory block of current application exe file
 	 */
-	void* getCurrentExeFileVersionInfo() ;
+	t_AppChar* getCurrentExeFileVersionInfo() ;
 
 	/**
 	 * Returns Size of File Version Info memory block of current application exe file
@@ -144,13 +149,13 @@ private:
 	  * Returns the version info of provided index.
 	  * Index <0 will return the fixed version info
 	  */
-	c_DataRepresentationFramework::c_UTF16String readStringValueOfFileInfoOfIndex(const c_DataRepresentationFramework::c_UTF16String& sValueName,unsigned int index);
+	c_VersionInfoString readStringValueOfFileInfoOfIndex(const c_VersionInfoString& sValueName,unsigned int index);
 
 	/**
 	 * returns the value defined by provided name as
 	 * set by our version info
 	 */
-	c_DataRepresentationFramework::c_UTF16String readStringValue(const c_DataRepresentationFramework::c_UTF16String& sValueName) ;
+	c_VersionInfoString readStringValue(const c_VersionInfoString& sValueName) ;
 
 }; // end VersionInfo class declaration
 

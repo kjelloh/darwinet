@@ -1,19 +1,26 @@
 //---------------------------------------------------------------------------
 
 
+#ifdef __BCPLUSPLUS__
 #pragma hdrstop
+#endif
 
-#include "VERSINFO.h"
+#include "versioninfo.h"
 #include "BusinessLogUnit.h" // DESIGN_INSUFFICIENCY_LOG(...)
 
+#ifdef __BCPLUSPLUS__
 # pragma warn -8072 // Seems to be a known Issue for  boost in Borland CPP 101112/KoH
+#endif
 #include <boost/format.hpp>
+#ifdef __BCPLUSPLUS__
 # pragma warn +8072 // Enable again. See above
+#endif
 
+#ifdef __BCPLUSPLUS__
 #include <mbctype.h> // Get multibyte code page method
 //---------------------------------------------------------------------------
-
 #pragma package(smart_init)
+#endif
 
 //=============================================================================
 //  General component library for WIN32
@@ -43,7 +50,7 @@
 using namespace std;
 
 //--------------------------------------------------------------------------------
-VersionInfo::VersionInfo (const c_DataRepresentationFramework::c_UTF16String& sFilename)
+VersionInfo::VersionInfo (const c_FileName& sFilename)
    :  m_pTheVersionInfo (NULL)
 	 ,m_VersionInfoSize(0)
 	 ,m_pVersionInfoCodePageAndLanguageArray(NULL)
@@ -64,7 +71,7 @@ VersionInfo::VersionInfo (const c_DataRepresentationFramework::c_UTF16String& sF
 	   } // endif
 	   unsigned int aSize = 0;
 	   if (!VerQueryValue( m_pTheVersionInfo
-						 , L"\\"
+						 , APP_SZ_LITERAL("\\")
 						 , &m_pTheFixedInfo
 						 , &aSize)) {
 	//	  throw runtime_error ("VersionInfo: can not retrieve version information");
@@ -147,8 +154,8 @@ return (aInfo -> dwProductVersionLS);
  * returns the Comments as set
  * in our version info
  */
-c_DataRepresentationFramework::c_UTF16String VersionInfo::Comments() {
-	c_DataRepresentationFramework::c_UTF16String result = this->readStringValue(u"Comments");
+c_VersionInfoString VersionInfo::Comments() {
+	c_VersionInfoString result = this->readStringValue(_APPsz("Comments"));
 	return result;
 }
 
@@ -156,8 +163,8 @@ c_DataRepresentationFramework::c_UTF16String VersionInfo::Comments() {
  * returns the Product name as set
  * in our version info
  */
-c_DataRepresentationFramework::c_UTF16String VersionInfo::ProductName() {
-	c_DataRepresentationFramework::c_UTF16String result = this->readStringValue(u"ProductName");
+c_VersionInfoString VersionInfo::ProductName() {
+	c_VersionInfoString result = this->readStringValue(_APPsz("ProductName"));
 	return result;
 }
 
@@ -165,8 +172,8 @@ c_DataRepresentationFramework::c_UTF16String VersionInfo::ProductName() {
  * returns the LegalCopyright as set
  * in our version info
  */
-c_DataRepresentationFramework::c_UTF16String VersionInfo::LegalCopyright() {
-	c_DataRepresentationFramework::c_UTF16String result = this->readStringValue(u"LegalCopyright");
+c_VersionInfoString VersionInfo::LegalCopyright() {
+	c_VersionInfoString result = this->readStringValue(_APPsz("LegalCopyright"));
 	return result;
 }
 
@@ -191,10 +198,10 @@ int VersionInfo::getCurrentExeFileVersionInfoSize() {
 /**
  * Returns File Version Info of current application exe file
  */
-void* VersionInfo::getCurrentExeFileVersionInfo() {
+t_AppChar* VersionInfo::getCurrentExeFileVersionInfo() {
 	if (this->m_pTheVersionInfo == NULL) {
 		// allocate memopry block and fill it with version information
-		this->m_pTheVersionInfo = new char [this->getCurrentExeFileVersionInfoSize()];
+		this->m_pTheVersionInfo = new t_AppChar [this->getCurrentExeFileVersionInfoSize()];
 		if (!GetFileVersionInfo ( this->m_sFilename.c_str()
 							   , 0
 							   , this->getCurrentExeFileVersionInfoSize()
@@ -251,24 +258,33 @@ unsigned int VersionInfo::getVersionInfoCodePageAndLanguageArraySize() {
   * Returns the version info of provided index.
   * Index <0 will return the fixed version info
   */
-c_DataRepresentationFramework::c_UTF16String VersionInfo::readStringValueOfFileInfoOfIndex(const c_DataRepresentationFramework::c_UTF16String& sValueName,unsigned int index) {
-	c_DataRepresentationFramework::c_UTF16String result((boost::wformat(L"#??%1%??#") % sValueName).str());
+c_VersionInfoString VersionInfo::readStringValueOfFileInfoOfIndex(const c_VersionInfoString& sValueName,unsigned int index) {
+#ifdef __BCPLUSPLUS__
+	c_VersionInfoString result((boost::wformat(APP_SZ_LITERAL("#??%1%??#")) % sValueName).str());
+#else
+	c_VersionInfoString result((boost::format(APP_SZ_LITERAL("#??%1%??#")) % sValueName).str());
+#endif
 
 	unsigned int aSize = 0;
 	if (index < (this->getVersionInfoCodePageAndLanguageArraySize()/sizeof(struct LANGANDCODEPAGE))) {
 		LANGANDCODEPAGE* lpTranslate = this->getVersionInfoCodePageAndLanguageArray();
 
 		// return part with provided index
-		wchar_t* szValue;
+		t_AppChar * szValue;
 		unsigned int length;
-		c_DataRepresentationFramework::c_UTF16String sSubBlock((boost::wformat(L"\\StringFileInfo\\%04x%04x\\%s") % lpTranslate[index].wLanguage % lpTranslate[index].wCodePage % sValueName.c_str()).str());
-	   if (!VerQueryValue( this->getCurrentExeFileVersionInfo()
-						 , /* szSubBlock */ sSubBlock.c_str()
-						 , reinterpret_cast<void**>(&szValue)
-						 , &length)) {
+#ifdef __BCPLUSPLUS__
+		c_VersionInfoString sSubBlock((boost::wformat(APP_SZ_LITERAL("\\StringFileInfo\\%04x%04x\\%s")) % lpTranslate[index].wLanguage % lpTranslate[index].wCodePage % sValueName.c_str()).str());
+#else
+		c_VersionInfoString sSubBlock((boost::format(APP_SZ_LITERAL("\\StringFileInfo\\%04x%04x\\%s")) % lpTranslate[index].wLanguage % lpTranslate[index].wCodePage % sValueName.c_str()).str());
+#endif                
+                if (!VerQueryValue( 
+                        this->getCurrentExeFileVersionInfo()
+                        , /* szSubBlock */ sSubBlock.c_str()
+                        , reinterpret_cast<void**>(&szValue)
+                        , &length)) {
 			// Failed
-			c_DataRepresentationFramework::c_UTF8String sMessage("VersionInfo::readStringValue failed to retreive value with name ");
-			sMessage += c_DataRepresentationFramework::toUTF8String(sValueName);
+			c_LogString sMessage("VersionInfo::readStringValue failed to retreive value with name ");
+			sMessage += toLogString(sValueName);
 			LOG_DESIGN_INSUFFICIENCY(sMessage);
 	   }
 	   else {
@@ -289,7 +305,7 @@ c_DataRepresentationFramework::c_UTF16String VersionInfo::readStringValueOfFileI
  * returns the value defined by provided name as
  * set by our version info
  */
-c_DataRepresentationFramework::c_UTF16String VersionInfo::readStringValue(const c_DataRepresentationFramework::c_UTF16String& sValueName) {
+c_VersionInfoString VersionInfo::readStringValue(const c_VersionInfoString& sValueName) {
 	// From URL: http://msdn.microsoft.com/en-us/library/ms647464(v=vs.85).aspx
 	/*
 	// Structure used to store enumerated languages and code pages.
@@ -329,27 +345,36 @@ c_DataRepresentationFramework::c_UTF16String VersionInfo::readStringValue(const 
 	}
 	*/
 
-	c_DataRepresentationFramework::c_UTF16String result((boost::wformat(L"#%1%??#") % sValueName).str());
-
-	WORD wLanguage = GetUserDefaultUILanguage(); // Use language set by current user
+#ifdef __BCPLUSPLUS__
+	c_VersionInfoString result((boost::wformat(APP_SZ_LITERAL("#%1%??#")) % sValueName).str());
 
 	WORD wCodePage = _getmbcp(); // Try to use current set multibyte code page
 	if (wCodePage == 0) {
-		wCodePage = 1252; // Code page used in sweden and western contries
-		LOG_BUSINESS(_UTF8sz("No mutlibyte codepage is set. Will use default Code page 1252"));
+		wCodePage = _MB_CP_SBCS; // Use single byte code page
+		LOG_BUSINESS(_UTF8sz("No mutlibyte codepage is set. Will use single byte code page"));
 	}
+#else
+	c_VersionInfoString result((boost::format(APP_SZ_LITERAL("#%1%??#")) % sValueName).str());
+	WORD wCodePage = 0; // Use single byte code page (_MB_CP_SBCS is not defined for Cygwin g++)
+#endif        
 
-	wchar_t* szValue;
+
+	WORD wLanguage = GetUserDefaultUILanguage(); // Use language set by current user
+	t_AppChar* szValue;
 	unsigned int length;
 //	sprintf(szSubBlock,"\\StringFileInfo\\%04x%04x\\%s",wLanguage,wCodePage,sValueName.c_str());
-	c_DataRepresentationFramework::c_UTF16String sSubBlock((boost::wformat(L"\\StringFileInfo\\%04x%04x\\%s") % wLanguage % wCodePage % sValueName.c_str()).str());
+#ifdef __BCPLUSPLUS__
+	c_VersionInfoString sSubBlock((boost::wformat(APP_SZ_LITERAL("\\StringFileInfo\\%04x%04x\\%s")) % wLanguage % wCodePage % sValueName.c_str()).str());
+#else
+	c_VersionInfoString sSubBlock((boost::format(APP_SZ_LITERAL("\\StringFileInfo\\%04x%04x\\%s")) % wLanguage % wCodePage % sValueName.c_str()).str());
+#endif        
    if (!VerQueryValue( this->getCurrentExeFileVersionInfo()
 					 , /* szSubBlock */ sSubBlock.c_str()
 					 , reinterpret_cast<void**>(&szValue)
 					 , &length)) {
 		// Failed
-		c_DataRepresentationFramework::c_UTF8String sMessage("VersionInfo::readStringValue failed to retreive value with name ");
-		sMessage += c_DataRepresentationFramework::toUTF8String(sValueName);
+		c_LogString sMessage("VersionInfo::readStringValue failed to retreive value with name ");
+		sMessage += toLogString(sValueName);
 		LOG_DESIGN_INSUFFICIENCY(sMessage);
 
 		// Try to read information from first found indexed information
@@ -360,10 +385,10 @@ c_DataRepresentationFramework::c_UTF16String VersionInfo::readStringValue(const 
 	   result.anonymous() = szValue;
    }
 
-	c_DataRepresentationFramework::c_UTF8String sMessage("VersionInfo::readStringValue for name ");
-	sMessage += c_DataRepresentationFramework::toUTF8String(sValueName);
+	c_LogString sMessage("VersionInfo::readStringValue for name ");
+	sMessage += toLogString(sValueName);
 	sMessage.anonymous() += " returns ";
-	sMessage += c_DataRepresentationFramework::toUTF8String(result);
+	sMessage += toLogString(result);
 	LOG_DEVELOPMENT_TRACE(sMessage);
 	return result;
 }

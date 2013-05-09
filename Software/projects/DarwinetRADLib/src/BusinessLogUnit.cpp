@@ -372,7 +372,7 @@ c_LogString logStringOfWinApiErrorCode(DWORD api_error_code) {
 }
 #endif
 
-#ifdef __BCPLUSPLUS__ // RAD Studio XE compilation
+#if defined(__BCPLUSPLUS__) || defined (__CYGWIN32__) // RAD Studio XE compilation
 /**
   * Returns provided Windows HRESULKT code as a descriptive Log string
   */

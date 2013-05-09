@@ -15,6 +15,7 @@ int main() {
 		LOG_FUNCTION_SCOPE;
 		c_LogString sMessage("Hello!");
 		LOG_DEVELOPMENT_TRACE(sMessage);
+                LOG_BUSINESS(_Literalsz("Started!"));
 		std::cout  << std::endl << ">";
 		std::cin >> sCommandLine;
 		loop_again = commandLineProcessor.execute(sCommandLine);

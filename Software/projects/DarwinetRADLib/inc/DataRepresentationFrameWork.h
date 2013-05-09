@@ -28,7 +28,8 @@
 	2. Encoding of the string (e.g. encoded in ASCII, UTF8, UTF16 etc)
 
 	The string classes are designed to require the programmer to be aware of both storage and encoding aspects when
-	using strings. Storagae or encoding transforms must show up in code (not happen implicitly and uncontrolled)
+	using strings. Storagae or encoding transforms must show up in code (not happen implicitly and uncontrolled).
+        This design choice ensures that storage or encoding transforms are not hidden from the programmer.  
 
 	The classes c_XXXString defines strong typed strings that inherits std::basic string.
 
@@ -45,12 +46,24 @@
 
 	None of these performs any encodings!! The programmer must use these constructs
 	when knowing that the anonymous source string is in compatible representation!
-	This may seen as the "inut" point where a string enters the representation aware string domian.
+	This may seen as the "input" point where a string enters the representation aware string domain.
 
 	All string representation change is made with explicit call to toXXXString() methods.
 	This ensure that all representation domain crossing show up in the code.
-	toXXXString handles both stioareg and encoding trasnforms.
-
+	toXXXString handles both storage and encoding transforms.
+ 
+        Literal constants poses a special problem. Take for example:
+        SomeString sSomeString = "Hello!";
+        What encoding and size does the string provided to SomeString construct? Well, the size is guaranteed to be const char*. 
+        But the provided string may be e.g., Latin1 or UTF8 depending in the compiler and the formatting of the source code file.
+        This framework provides the wrapper _Literalsz(). But that wrapper does not handle size conversion. If the target string requires char16_t
+        but provided string contact is char* this will not work. C++ provides pre-fixes 'L' and 'u' to define a string literal to be wchar_t and char16_t.
+        
+        C++11 offers these encode defining prefixes. 
+        u8"I'm a UTF-8 string.". The type is const char*
+        u"This is a UTF-16 string.". The type is const char16_t*
+        U"This is a UTF-32 string.". The type is const char32_t*
+        
 	Good link on code pages: http://en.wikipedia.org/wiki/Code_page
 	Unicde orgnaisation home at: http://www.unicode.org
 	The CLDR - Unicode Common Locale Data Repository project at http://cldr.unicode.org/index
@@ -146,7 +159,7 @@ public:
 	  * arrays of specified representation.
 	  */
 
-	#if defined(__BCPLUSPLUS__) or defined(__CYGWIN32__)
+	#if defined(__BCPLUSPLUS__) || defined(__CYGWIN32__)
 	TYPE_WRAPPED_CHAR(char32_t,UCF4c); // To compile; be sure to pass --std=c++0x or --std=c++11 to g++ compiler (depending on compiler version)
 	#endif
 	TYPE_WRAPPED_CHAR(char,Latin1c);
@@ -154,8 +167,6 @@ public:
 	TYPE_WRAPPED_CHAR(char,Asciic);
 	TYPE_WRAPPED_CHAR(char,UTF8c);
 
-//	TYPE_WRAPPED_CHAR_ARRAY(wchar_t,UTF16sz); // Or use u"bla bla" for UTF-16 literals
-//	TYPE_WRAPPED_CHAR_ARRAY(wchar_t,WideAsciisz); // whar_t array containing Ascii chars only
 	TYPE_WRAPPED_CHAR_ARRAY(wchar_t,UTF16sz); // Or use u"bla bla" for UTF-16 literals
 	TYPE_WRAPPED_CHAR_ARRAY(wchar_t,WideAsciisz); // whar_t array containing Ascii chars only
 	TYPE_WRAPPED_CHAR_ARRAY(char,UTF8sz);
@@ -423,7 +434,7 @@ public:
 	private:
 
 		/**
-		  * Do NOT Allow substr() on UTF16 string. May contain multibyte chars.
+		  * Do NOT Allow substr() on UTF8 string. May contain multibyte chars.
 		  * Use s.anonymous().substr() if you are sure there are no multibytes in the string
 		  */
 		D substr(size_type off = 0,size_type count = npos) const {throw std::runtime_error("call to c_UTF8String::substr() not allowed!");}

@@ -28,9 +28,47 @@ typedef String c_PropertyString; // Use IDE String
 typedef TStringList c_PropertyList;
 typedef TStringList* c_PropertyListPtr; // Use Ide TStringList
 #else
+
+// Models a string used for property key and values.
 typedef c_DataRepresentationFramework::c_UTF8String c_PropertyString; // Use UTF8 string
-typedef std::vector<std::map<c_PropertyString,c_PropertyString>  > c_PropertyList;
-typedef c_PropertyList* c_PropertyListPtr;
+
+/**
+ * Models a list of properties.
+ * Each property has a name (key) and a value.
+ * Modeled to some extent after  Borland VCL TStringList to enable refactoring into STL based impl.
+ */
+class c_PropertyList : public std::map<c_PropertyString,c_PropertyString> {
+public:
+    
+    typedef c_PropertyList* shared_ptr;
+    typedef std::map<c_PropertyString,c_PropertyString>::iterator iterator;
+    typedef std::map<c_PropertyString,c_PropertyString>::const_iterator const_iterator;
+    
+    /**
+     * Constructor
+     */
+    c_PropertyList();
+    
+    // Begin c_PropertyList
+        
+    /**
+     * Loads contents from file.
+     * @param file_path, path to file to load properties from.
+     */
+    void LoadFromFile(const c_FilePath& file_path);
+    
+    /**
+     * Saves our contents to file.
+     * @param file_path, path to file to save to. Will create file if it does not exist.
+     */
+    void SaveToFile(const c_FilePath& file_path);
+    
+    // End c_PropertyList
+private:
+    
+};
+
+typedef c_PropertyList::shared_ptr c_PropertyListPtr;
 #endif
 
 /**

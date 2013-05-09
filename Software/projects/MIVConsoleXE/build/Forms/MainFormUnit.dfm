@@ -2,8 +2,8 @@ object MainForm: TMainForm
   Left = 0
   Top = 0
   Caption = 'Darwinet MIV Console'
-  ClientHeight = 118
-  ClientWidth = 337
+  ClientHeight = 534
+  ClientWidth = 804
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -14,6 +14,42 @@ object MainForm: TMainForm
   OldCreateOrder = False
   PixelsPerInch = 96
   TextHeight = 13
+  object EngineGroupBox: TGroupBox
+    Left = 0
+    Top = 0
+    Width = 804
+    Height = 89
+    Align = alTop
+    Caption = 'Darwinet Engine'
+    TabOrder = 0
+    object EngineConnectButton: TButton
+      Left = 16
+      Top = 32
+      Width = 75
+      Height = 25
+      Caption = 'Connect'
+      TabOrder = 0
+      OnClick = EngineConnectButtonClick
+    end
+  end
+  object DomainGroupBox: TGroupBox
+    Left = 0
+    Top = 89
+    Width = 804
+    Height = 88
+    Align = alTop
+    Caption = 'Domain'
+    TabOrder = 1
+    object DomainConnectButton: TButton
+      Left = 16
+      Top = 32
+      Width = 75
+      Height = 25
+      Caption = 'Connect'
+      TabOrder = 0
+      OnClick = DomainConnectButtonClick
+    end
+  end
   object MainMenu1: TMainMenu
     Left = 280
     Top = 8

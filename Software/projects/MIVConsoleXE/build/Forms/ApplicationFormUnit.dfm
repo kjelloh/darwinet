@@ -11,7 +11,6 @@ object ApplicationForm: TApplicationForm
   Font.Name = 'Tahoma'
   Font.Style = []
   OldCreateOrder = False
-  OnCreate = FormCreate
   PixelsPerInch = 96
   TextHeight = 13
   object SpinEdit1: TSpinEdit
@@ -23,6 +22,5 @@ object ApplicationForm: TApplicationForm
     MinValue = 0
     TabOrder = 0
     Value = 0
-    OnChange = SpinEdit1Change
   end
 end

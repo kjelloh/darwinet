@@ -19,7 +19,7 @@
 #ifdef __BCPLUSPLUS__
 #include "Forms.hpp" // Application instance
 #endif
-#include "VersionInfo/versinfo.h"
+#include "VersionInfo/versioninfo.h"
 
 //---------------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ c_ApplicationProject::c_ApplicationProject(const c_FilePath& project_root_folder
 /**
   * Returns the root folder path of this workspace
   */
-c_FilePath& c_ApplicationProject::getRootPath() {
+const c_FilePath& c_ApplicationProject::getRootPath() {
 	return this->m_project_root_folder;
 }
 
@@ -91,7 +91,7 @@ void c_ApplicationProject::saveEnvironment() {
   * Creates a workspace using the provided root path
   * as the root folder defining the work space.
   */
-c_ApplicationWorkSpace::c_ApplicationWorkSpace(c_FilePath workspace_root_path)
+c_ApplicationWorkSpace::c_ApplicationWorkSpace(const c_FilePath& workspace_root_path)
     :  m_workspace_root_path(workspace_root_path)
       ,m_pCurrentProject(NULL)
 {
@@ -101,7 +101,7 @@ c_ApplicationWorkSpace::c_ApplicationWorkSpace(c_FilePath workspace_root_path)
 /**
   * Returns the root folder path of this workspace
   */
-c_FilePath& c_ApplicationWorkSpace::getRootPath() {
+const c_FilePath& c_ApplicationWorkSpace::getRootPath() {
 	return this->m_workspace_root_path;
 }
 
@@ -157,7 +157,7 @@ void c_ApplicationWorkSpace::saveEnvironment() {
 /**
   * Returns the root path to this frame work.
   */
-c_FilePath c_ApplicationFrameWork::getRootPath() {
+const c_FilePath& c_ApplicationFrameWork::getRootPath() {
 	return this->m_framework_root_path;
 }
 
@@ -174,7 +174,7 @@ void c_ApplicationFrameWork::saveEnvironment() {
   * As of 071025 the exe run time folder.
   * TODO: Considder to merge run time environment class and this class!
   */
-c_ApplicationFrameWork::c_ApplicationFrameWork(c_FilePath framework_root_path)
+c_ApplicationFrameWork::c_ApplicationFrameWork(const c_FilePath& framework_root_path)
 	: m_framework_root_path(framework_root_path)
 {
 
@@ -331,7 +331,7 @@ private:
 	  * Private constructor of this singleton
 	  */
 	c_VersionInfo()
-		: VersionInfo(c_DataRepresentationFramework::toUTF16String(c_Application::ExeName()))
+		: VersionInfo(c_FileName(c_Application::ExeName()))
 	{
 		if (!this->hasInfo()) {
 			// Failed to retrieve version info
@@ -357,7 +357,7 @@ c_VersionInfo* c_VersionInfo::m_pInstance = NULL;
   */
 c_FilePath c_Application::getExeRootPath() {
 	#ifdef __BCPLUSPLUS__ // RAD Studio XE compilation
-	c_FilePath result(c_DataRepresentationFramework::c_UTF16String(ExtractFileDir(Application->ExeName).c_str()));
+	c_FilePath result(c_ApplicationString(ExtractFileDir(Application->ExeName).c_str()));
 	#else
 	#warning c_Application::getExeRootPath() not yet implemented for this build environment
 	c_FilePath result;
@@ -369,7 +369,7 @@ c_FilePath c_Application::getExeRootPath() {
   * Returns the name of this exe file.
   */
 const c_FileName c_Application::ExeName() {
-//	c_DataRepresentationFramework::c_UTF16String result(ExtractFileName(Application->ExeName).c_str());
+//	c_ApplicationString result(ExtractFileName(Application->ExeName).c_str());
 //	return result;
 	return c_Application::getExeRootPath().back().NameWithoutExtension();
 }
@@ -377,8 +377,8 @@ const c_FileName c_Application::ExeName() {
 /**
   * Returns this application version info product name field contents
   */
-const c_DataRepresentationFramework::c_UTF16String c_Application::getVersionInfoProductName() {
-	c_DataRepresentationFramework::c_UTF16String result(u"??");
+const c_ApplicationString c_Application::getVersionInfoProductName() {
+	c_ApplicationString result(APP_SZ_LITERAL("??"));
 
 	if (c_VersionInfo::instance()->hasInfo()) {
 		result = c_VersionInfo::instance()->ProductName();
@@ -389,16 +389,16 @@ const c_DataRepresentationFramework::c_UTF16String c_Application::getVersionInfo
 /**
   * Returns this application version info Version field contents
   */
-const c_DataRepresentationFramework::c_UTF16String c_Application::getVersionInfoVersion() {
-	c_DataRepresentationFramework::c_UTF16String result(u"??");
+const c_ApplicationString c_Application::getVersionInfoVersion() {
+	c_ApplicationString result(APP_SZ_LITERAL("??"));
 
 	if (c_VersionInfo::instance()->hasInfo()) {
 		result = c_DataRepresentationFramework::intToDecimalString(c_VersionInfo::instance()->majorVersion());
-		result += u".";
+		result += _UTF8sz(".");
 		result += c_DataRepresentationFramework::intToDecimalString(c_VersionInfo::instance()->minorVersion());
-		result += u".";
+		result += APPsz(".");
 		result += c_DataRepresentationFramework::intToDecimalString(c_VersionInfo::instance()->build());
-		result += u".";
+		result += APPsz(".");
 		result += c_DataRepresentationFramework::intToDecimalString(c_VersionInfo::instance()->subBuild());
 	}
 	return result;
@@ -407,8 +407,8 @@ const c_DataRepresentationFramework::c_UTF16String c_Application::getVersionInfo
 /**
   * Returns this application version info Copyright field contents
   */
-const c_DataRepresentationFramework::c_UTF16String c_Application::getVersionInfoCopyRight() {
-	c_DataRepresentationFramework::c_UTF16String result(u"??");
+const c_ApplicationString c_Application::getVersionInfoCopyRight() {
+	c_ApplicationString result(APP_SZ_LITERAL("??"));
 
 	if (c_VersionInfo::instance()->hasInfo()) {
 		result = c_VersionInfo::instance()->LegalCopyright();
@@ -418,8 +418,8 @@ const c_DataRepresentationFramework::c_UTF16String c_Application::getVersionInfo
 /**
   * Returns this application version info Comments field contents
   */
-const c_DataRepresentationFramework::c_UTF16String c_Application::getVersionInfoComments() {
-	c_DataRepresentationFramework::c_UTF16String result(u"??");
+const c_ApplicationString c_Application::getVersionInfoComments() {
+	c_ApplicationString result(APP_SZ_LITERAL("??"));
 
 	if (c_VersionInfo::instance()->hasInfo()) {
 		result = c_VersionInfo::instance()->Comments();
@@ -430,9 +430,9 @@ const c_DataRepresentationFramework::c_UTF16String c_Application::getVersionInfo
 /**
   * returns the Date and time when this application was built
   */
-c_DataRepresentationFramework::c_UTF16String c_Application::getBuildVersionAndDateAndTimeString() {
-	static c_DataRepresentationFramework::c_UTF16String BUILD_DATE_AND_TIME_STRING(u" Build:" __DATE__ u"  " __TIME__);
-	c_DataRepresentationFramework::c_UTF16String result(c_Application::getVersionInfoVersion());
+c_ApplicationString c_Application::getBuildVersionAndDateAndTimeString() {
+	static c_ApplicationString BUILD_DATE_AND_TIME_STRING(APP_SZ_LITERAL(" Build:") __DATE__ APP_SZ_LITERAL("  ") __TIME__);
+	c_ApplicationString result(c_Application::getVersionInfoVersion());
 	result += BUILD_DATE_AND_TIME_STRING;
 	return result;
 }
