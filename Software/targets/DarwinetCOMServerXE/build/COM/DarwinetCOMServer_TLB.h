@@ -10,7 +10,7 @@
 // ************************************************************************ //
 
 // $Rev: 46046 $
-// File generated on 2013-05-09 17:09:16 from Type Library described below.
+// File generated on 2013-05-09 19:05:36 from Type Library described below.
 
 // ************************************************************************  //
 // Type Lib: C:\subversion\darwinet\trunk\Software\targets\DarwinetCOMServerXE\build\COM\DarwinetCOMServer (1)
@@ -79,6 +79,9 @@ extern __declspec (package) const GUID CLSID_DarwinetDomain;
 extern __declspec (package) const GUID IID_IDarwinetDomainView;
 extern __declspec (package) const GUID DIID_IDarwinetDomainViewEvents;
 extern __declspec (package) const GUID CLSID_DarwinetDomainView;
+extern __declspec (package) const GUID IID_IDarwinetMIV;
+extern __declspec (package) const GUID DIID_IDarwinetMIVEvents;
+extern __declspec (package) const GUID CLSID_DarwinetMIV;
 
 // *********************************************************************//
 // Forward declaration of types defined in TypeLibrary
@@ -101,6 +104,12 @@ typedef TComInterface<IDarwinetDomainView, &IID_IDarwinetDomainView> IDarwinetDo
 interface DECLSPEC_UUID("{E204DB64-CEAF-4E98-BC76-A45BA16A24A6}") IDarwinetDomainViewEvents;
 typedef TComInterface<IDarwinetDomainViewEvents, &DIID_IDarwinetDomainViewEvents> IDarwinetDomainViewEventsPtr;
 
+interface DECLSPEC_UUID("{D5019007-C26E-42BE-9601-500CEFD1C829}") IDarwinetMIV;
+typedef TComInterface<IDarwinetMIV, &IID_IDarwinetMIV> IDarwinetMIVPtr;
+
+interface DECLSPEC_UUID("{232B48D1-1251-4155-AF05-33F61012959E}") IDarwinetMIVEvents;
+typedef TComInterface<IDarwinetMIVEvents, &DIID_IDarwinetMIVEvents> IDarwinetMIVEventsPtr;
+
 
 // *********************************************************************//
 // Declaration of CoClasses defined in Type Library
@@ -116,10 +125,13 @@ typedef IDarwinetDomain DarwinetDomain;
 typedef IDarwinetDomainPtr DarwinetDomainPtr;
 typedef IDarwinetDomainView DarwinetDomainView;
 typedef IDarwinetDomainViewPtr DarwinetDomainViewPtr;
+typedef IDarwinetMIV DarwinetMIV;
+typedef IDarwinetMIVPtr DarwinetMIVPtr;
 
 #define LIBID_OF_DarwinetEngine (&LIBID_DarwinetCOMServer)
 #define LIBID_OF_DarwinetDomain (&LIBID_DarwinetCOMServer)
 #define LIBID_OF_DarwinetDomainView (&LIBID_DarwinetCOMServer)
+#define LIBID_OF_DarwinetMIV (&LIBID_DarwinetCOMServer)
 // *********************************************************************//
 // Interface: IDarwinetEngine
 // Flags:     (4416) Dual OleAutomation Dispatchable
@@ -189,6 +201,7 @@ interface IDarwinetDomainEvents : public TDispWrapper<IDispatch>
 interface IDarwinetDomainView  : public IDispatch
 {
 public:
+  virtual Darwinetcomserver_tlb::IDarwinetMIV* STDMETHODCALLTYPE getMIV(void) = 0; // [201]
 
 #if !defined(__TLB_NO_INTERFACE_WRAPPERS)
 
@@ -204,6 +217,33 @@ public:
 // GUID:      {E204DB64-CEAF-4E98-BC76-A45BA16A24A6}
 // *********************************************************************//
 interface IDarwinetDomainViewEvents : public TDispWrapper<IDispatch>
+{
+
+};
+// *********************************************************************//
+// Interface: IDarwinetMIV
+// Flags:     (4416) Dual OleAutomation Dispatchable
+// GUID:      {D5019007-C26E-42BE-9601-500CEFD1C829}
+// *********************************************************************//
+interface IDarwinetMIV  : public IDispatch
+{
+public:
+  virtual HRESULT STDMETHODCALLTYPE setValue(BSTR sInstancePath/*[in]*/, BSTR sValue/*[in]*/) = 0; // [201]
+
+#if !defined(__TLB_NO_INTERFACE_WRAPPERS)
+
+
+
+#endif //   __TLB_NO_INTERFACE_WRAPPERS
+
+};
+
+// *********************************************************************//
+// Interface: IDarwinetMIVEvents
+// Flags:     (0)
+// GUID:      {232B48D1-1251-4155-AF05-33F61012959E}
+// *********************************************************************//
+interface IDarwinetMIVEvents : public TDispWrapper<IDispatch>
 {
 
 };
@@ -390,6 +430,7 @@ public:
   TCOMIDarwinetDomainViewT(const TCOMIDarwinetDomainViewT& src) : TComInterface<IDarwinetDomainView>(src) {}
   TCOMIDarwinetDomainViewT& operator=(const TCOMIDarwinetDomainViewT& src) { Bind(src, true); return *this;}
 
+  Darwinetcomserver_tlb::IDarwinetMIV* __fastcall getMIV(void);
 
 };
 typedef TCOMIDarwinetDomainViewT<IDarwinetDomainView> TCOMIDarwinetDomainView;
@@ -437,6 +478,7 @@ public:
     return BindToActive(CLSID_DarwinetDomainView);
   }
 
+  Darwinetcomserver_tlb::IDarwinetMIV* __fastcall getMIV();
 
 };
 typedef IDarwinetDomainViewDispT<IDarwinetDomainView> IDarwinetDomainViewDisp;
@@ -458,6 +500,90 @@ public:
 
 };
 typedef IDarwinetDomainViewEventsDispT<IDarwinetDomainViewEvents> IDarwinetDomainViewEventsDisp;
+
+// *********************************************************************//
+// SmartIntf: TCOMIDarwinetMIV
+// Interface: IDarwinetMIV
+// *********************************************************************//
+template <class T /* IDarwinetMIV */ >
+class TCOMIDarwinetMIVT : public TComInterface<IDarwinetMIV>, public TComInterfaceBase<IUnknown>
+{
+public:
+  TCOMIDarwinetMIVT() {}
+  TCOMIDarwinetMIVT(IDarwinetMIV *intf, bool addRef = false) : TComInterface<IDarwinetMIV>(intf, addRef) {}
+  TCOMIDarwinetMIVT(const TCOMIDarwinetMIVT& src) : TComInterface<IDarwinetMIV>(src) {}
+  TCOMIDarwinetMIVT& operator=(const TCOMIDarwinetMIVT& src) { Bind(src, true); return *this;}
+
+  HRESULT         __fastcall setValue(BSTR sInstancePath/*[in]*/, BSTR sValue/*[in]*/);
+
+};
+typedef TCOMIDarwinetMIVT<IDarwinetMIV> TCOMIDarwinetMIV;
+
+// *********************************************************************//
+// DispIntf:  IDarwinetMIV
+// Flags:     (4416) Dual OleAutomation Dispatchable
+// GUID:      {D5019007-C26E-42BE-9601-500CEFD1C829}
+// *********************************************************************//
+template<class T>
+class IDarwinetMIVDispT : public TAutoDriver<IDarwinetMIV>
+{
+public:
+  IDarwinetMIVDispT(){}
+
+  IDarwinetMIVDispT(IDarwinetMIV *pintf)
+  {
+    TAutoDriver<IDarwinetMIV>::Bind(pintf, false);
+  }
+
+  IDarwinetMIVDispT(IDarwinetMIVPtr pintf)
+  {
+    TAutoDriver<IDarwinetMIV>::Bind(pintf, true);
+  }
+
+  IDarwinetMIVDispT& operator=(IDarwinetMIV *pintf)
+  {
+    TAutoDriver<IDarwinetMIV>::Bind(pintf, false);
+    return *this;
+  }
+
+  IDarwinetMIVDispT& operator=(IDarwinetMIVPtr pintf)
+  {
+    TAutoDriver<IDarwinetMIV>::Bind(pintf, true);
+    return *this;
+  }
+
+  HRESULT BindDefault()
+  {
+    return OLECHECK(Bind(CLSID_DarwinetMIV));
+  }
+
+  HRESULT BindRunning()
+  {
+    return BindToActive(CLSID_DarwinetMIV);
+  }
+
+  HRESULT         __fastcall setValue(BSTR sInstancePath/*[in]*/, BSTR sValue/*[in]*/);
+
+};
+typedef IDarwinetMIVDispT<IDarwinetMIV> IDarwinetMIVDisp;
+
+// *********************************************************************//
+// DispIntf:  IDarwinetMIVEvents
+// Flags:     (0)
+// GUID:      {232B48D1-1251-4155-AF05-33F61012959E}
+// *********************************************************************//
+template <class T>
+class IDarwinetMIVEventsDispT : public TAutoDriver<IDarwinetMIVEvents>
+{
+public:
+  IDarwinetMIVEventsDispT(){}
+
+  void Attach(LPUNKNOWN punk)
+  { m_Dispatch = static_cast<T*>(punk); }
+
+
+};
+typedef IDarwinetMIVEventsDispT<IDarwinetMIVEvents> IDarwinetMIVEventsDisp;
 
 // *********************************************************************//
 // SmartIntf: TCOMIDarwinetEngine
@@ -528,15 +654,60 @@ IDarwinetDomainDispT<T>::getView()
 // SmartIntf: TCOMIDarwinetDomainView
 // Interface: IDarwinetDomainView
 // *********************************************************************//
+template <class T> Darwinetcomserver_tlb::IDarwinetMIV* __fastcall
+TCOMIDarwinetDomainViewT<T>::getMIV(void)
+{
+  return (*this)->getMIV();
+}
+
 // *********************************************************************//
 // DispIntf:  IDarwinetDomainView
 // Flags:     (4416) Dual OleAutomation Dispatchable
 // GUID:      {72253533-B3BB-4AAD-97F6-860708780020}
 // *********************************************************************//
+template <class T> Darwinetcomserver_tlb::IDarwinetMIV* __fastcall
+IDarwinetDomainViewDispT<T>::getMIV()
+{
+  _TDispID _dispid(*this, OLETEXT("getMIV"), DISPID(201));
+  TAutoArgs<0> _args;
+  OleFunction(_dispid, _args);
+  return (Darwinetcomserver_tlb::IDarwinetMIV* /*[C1]*/)(LPDISPATCH) /*[VT_DISPATCH:1]*/_args.GetRetVariant();
+}
+
 // *********************************************************************//
 // DispIntf:  IDarwinetDomainViewEvents
 // Flags:     (0)
 // GUID:      {E204DB64-CEAF-4E98-BC76-A45BA16A24A6}
+// *********************************************************************//
+// *********************************************************************//
+// SmartIntf: TCOMIDarwinetMIV
+// Interface: IDarwinetMIV
+// *********************************************************************//
+template <class T> HRESULT __fastcall
+TCOMIDarwinetMIVT<T>::setValue(BSTR sInstancePath/*[in]*/, BSTR sValue/*[in]*/)
+{
+  return (*this)->setValue(sInstancePath, sValue);
+}
+
+// *********************************************************************//
+// DispIntf:  IDarwinetMIV
+// Flags:     (4416) Dual OleAutomation Dispatchable
+// GUID:      {D5019007-C26E-42BE-9601-500CEFD1C829}
+// *********************************************************************//
+template <class T> HRESULT __fastcall
+IDarwinetMIVDispT<T>::setValue(BSTR sInstancePath/*[in]*/, BSTR sValue/*[in]*/)
+{
+  _TDispID _dispid(*this, OLETEXT("setValue"), DISPID(201));
+  TAutoArgs<2> _args;
+  _args[1] = sInstancePath /*[VT_BSTR:0]*/;
+  _args[2] = sValue /*[VT_BSTR:0]*/;
+  return OleFunction(_dispid, _args);
+}
+
+// *********************************************************************//
+// DispIntf:  IDarwinetMIVEvents
+// Flags:     (0)
+// GUID:      {232B48D1-1251-4155-AF05-33F61012959E}
 // *********************************************************************//
 // *********************************************************************//
 // The following typedefs expose classes (named CoCoClassName) that
@@ -566,6 +737,13 @@ typedef TCoClassCreatorT<TCOMIDarwinetDomain, IDarwinetDomain, &CLSID_DarwinetDo
 // Interface: TCOMIDarwinetDomainView
 // *********************************************************************//
 typedef TCoClassCreatorT<TCOMIDarwinetDomainView, IDarwinetDomainView, &CLSID_DarwinetDomainView, &IID_IDarwinetDomainView> CoDarwinetDomainView;
+
+// *********************************************************************//
+// COCLASS DEFAULT INTERFACE CREATOR
+// CoClass  : DarwinetMIV
+// Interface: TCOMIDarwinetMIV
+// *********************************************************************//
+typedef TCoClassCreatorT<TCOMIDarwinetMIV, IDarwinetMIV, &CLSID_DarwinetMIV, &IID_IDarwinetMIV> CoDarwinetMIV;
 #endif  //   __TLB_NO_INTERFACE_WRAPPERS
 
 
@@ -648,6 +826,25 @@ protected:
   IDarwinetDomainViewEventsDisp m_EventIntfObj;
 };
 
+// *********************************************************************//
+// CONNECTIONPOINT/EVENT PROXY
+// CoClass         : DarwinetMIV
+// Event Interface : IDarwinetMIVEvents
+// *********************************************************************//
+template <class T>
+class TEvents_DarwinetMIV : public IConnectionPointImpl<T,
+                                                 &DIID_IDarwinetMIVEvents,
+#if !defined(_TLB_DYNAMIC_CONNECTIONPOINT_ARRAY)
+                                                 CComUnkArray<CONNECTIONPOINT_ARRAY_SIZE> >
+#else
+                                                 CComDynamicArray>
+#endif
+{
+public:
+protected:
+  IDarwinetMIVEventsDisp m_EventIntfObj;
+};
+
 #endif    //   __TLB_NO_EVENT_WRAPPERS
 
 #if !defined(__TLB_NO_EVENT_WRAPPERS) && defined(USING_DAX)
@@ -695,6 +892,17 @@ public:
 // *********************************************************************//
 template <typename T>
 class IDarwinetDomainView_EventsDispatcher : public IUnknown
+{
+public:
+};
+
+// *********************************************************************//
+// CONNECTIONPOINT/EVENT PROXY
+// CoClass         : DarwinetMIV
+// Event Interface : IDarwinetMIVEvents
+// *********************************************************************//
+template <typename T>
+class IDarwinetMIV_EventsDispatcher : public IUnknown
 {
 public:
 };

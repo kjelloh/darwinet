@@ -10,7 +10,7 @@
 // ************************************************************************ //
 
 // $Rev: 46046 $
-// File generated on 2013-05-09 17:09:48 from Type Library described below.
+// File generated on 2013-05-09 19:06:35 from Type Library described below.
 
 // ************************************************************************  //
 // Type Lib: C:\subversion\darwinet\trunk\Software\targets\DarwinetCOMServerXE\build\.\Win32\Debug\DarwinetCOMServerXE.exe (1)
@@ -154,6 +154,40 @@ public:
 
   virtual void __fastcall InvokeEvent(int DispID, Vcl::Oleserver::TVariantArray& params);
 
+  Darwinetcomserver_tlb::IDarwinetMIV* __fastcall getMIV(void);
+private:
+__published:
+};
+
+
+// *********************************************************************//
+// COM Component Proxy Class Declaration
+// Component Name   : TDarwinetMIV
+// Help String      : DarwinetMIV Object
+// Default Interface: IDarwinetMIV
+// Def. Intf. Object: IDarwinetMIVPtr
+// Def. Intf. DISP? : No
+// Event   Interface: IDarwinetMIVEvents
+// TypeFlags        : (2) CanCreate
+// *********************************************************************//
+class PACKAGE TDarwinetMIV : public Vcl::Oleserver::TOleServer
+{
+  IDarwinetMIVPtr m_DefaultIntf;
+  _di_IUnknown __fastcall GetDunk();
+public:
+  __fastcall TDarwinetMIV(System::Classes::TComponent* owner) : Vcl::Oleserver::TOleServer(owner)
+  {}
+
+  IDarwinetMIVPtr& GetDefaultInterface();
+  void __fastcall InitServerData();
+  void __fastcall Connect();
+  void __fastcall Disconnect();
+  void __fastcall BeforeDestruction();
+  void __fastcall ConnectTo(IDarwinetMIVPtr intf);
+
+  virtual void __fastcall InvokeEvent(int DispID, Vcl::Oleserver::TVariantArray& params);
+
+  void            __fastcall setValue(BSTR sInstancePath/*[in]*/, BSTR sValue/*[in]*/);
 private:
 __published:
 };

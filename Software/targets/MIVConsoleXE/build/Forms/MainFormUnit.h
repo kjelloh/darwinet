@@ -53,9 +53,16 @@ __published:	// IDE-managed Components
 	TButton *EngineConnectButton;
 	TGroupBox *View;
 	TButton *ViewConnectButton;
+	TGroupBox *MIVGroupBox;
+	TButton *MIVConnectButton;
+	TGroupBox *ValuesEditGroupBox;
+	TEdit *ValueEdit;
+	TLabel *ValuePathLabel;
 	void __fastcall EngineConnectButtonClick(TObject *Sender);
 	void __fastcall DomainConnectButtonClick(TObject *Sender);
 	void __fastcall ViewConnectButtonClick(TObject *Sender);
+	void __fastcall MIVConnectButtonClick(TObject *Sender);
+	void __fastcall ValueEditChange(TObject *Sender);
 private:	// User declarations
 
 	enum e_DarwineEngineWrapperType {
@@ -82,7 +89,8 @@ private:	// User declarations
 	// Use COM TLB Objects
 	TCOMIDarwinetEngine m_pCOMIDarwinetEngine; // The COM Interface "smart pointer"
 	TCOMIDarwinetDomain m_pCOMIDarwinetDomain; // The COM Interface "smart pointer"
-	TCOMIDarwinetDomainView m_pCOMIDarwinetDomainView; // // The COM Interface "smart pointer"
+	TCOMIDarwinetDomainView m_pCOMIDarwinetDomainView; // The COM Interface "smart pointer"
+	TCOMIDarwinetMIV m_pCOMIDarwinetMIV; // The COM Interface "smart pointer"
 
 	/**
 	  * Updates the GUI to reflect any chages that shall be reflected

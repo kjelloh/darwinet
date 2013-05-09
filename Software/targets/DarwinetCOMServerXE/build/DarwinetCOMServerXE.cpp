@@ -12,6 +12,11 @@
 
 
 
+
+#include "DarwinetMIVImpl.h"
+
+
+
 USEFORM("MainFormUnit.cpp", MainForm);
 //---------------------------------------------------------------------------
 #pragma link "ComServ.obj"

@@ -6,7 +6,7 @@
 // However, when applying changes via the Editor this file will be regenerated
 // and comments or formatting changes will be lost.
 // ************************************************************************ //
-// File generated on 2013-05-09 17:09:48 (- $Rev: 12980 $, 8124421).
+// File generated on 2013-05-09 19:06:35 (- $Rev: 12980 $, 15134640).
 
 [
   uuid(C10A9DE6-1B79-4C29-8CD8-B621544D80F2),
@@ -27,6 +27,9 @@ library DarwinetCOMServer
   interface IDarwinetDomainView;
   dispinterface IDarwinetDomainViewEvents;
   coclass DarwinetDomainView;
+  interface IDarwinetMIV;
+  dispinterface IDarwinetMIVEvents;
+  coclass DarwinetMIV;
 
 
   [
@@ -61,6 +64,20 @@ library DarwinetCOMServer
   ]
   interface IDarwinetDomainView: IDispatch
   {
+    [id(0x000000C9)]
+    IDarwinetMIV* _stdcall getMIV(void);
+  };
+
+  [
+    uuid(D5019007-C26E-42BE-9601-500CEFD1C829),
+    helpstring("Dispatch interface for DarwinetMIV Object"),
+    dual,
+    oleautomation
+  ]
+  interface IDarwinetMIV: IDispatch
+  {
+    [id(0x000000C9)]
+    HRESULT _stdcall setValue([in] BSTR sInstancePath, [in] BSTR sValue);
   };
 
   [
@@ -96,6 +113,16 @@ library DarwinetCOMServer
   };
 
   [
+    uuid(232B48D1-1251-4155-AF05-33F61012959E),
+    helpstring("Events interface for DarwinetMIV Object")
+  ]
+  dispinterface IDarwinetMIVEvents
+  {
+    properties:
+    methods:
+  };
+
+  [
     uuid(E76CCCFC-165A-41B8-AD5A-4840DD885BAB),
     helpstring("DarwinetEngine Object")
   ]
@@ -123,6 +150,16 @@ library DarwinetCOMServer
   {
     [default] interface IDarwinetDomainView;
     [default, source] dispinterface IDarwinetDomainViewEvents;
+  };
+
+  [
+    uuid(F1935855-391D-4C4C-8E2A-647586F9DF8C),
+    helpstring("DarwinetMIV Object")
+  ]
+  coclass DarwinetMIV
+  {
+    [default] interface IDarwinetMIV;
+    [default, source] dispinterface IDarwinetMIVEvents;
   };
 
 };

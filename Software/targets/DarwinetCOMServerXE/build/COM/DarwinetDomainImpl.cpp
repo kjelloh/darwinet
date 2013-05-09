@@ -5,6 +5,7 @@
 #pragma hdrstop
 
 #include "DarwinetDomainImpl.h"
+#include "BusinessLogUnit.h"
 
 
 // ---------------------------------------------------------------------------
@@ -12,6 +13,7 @@
 // ---------------------------------------------------------------------------
 __fastcall TDarwinetDomainImpl::TDarwinetDomainImpl()
 {
+	LOG_METHOD_SCOPE;
 }
 
 
@@ -19,8 +21,9 @@ __fastcall TDarwinetDomainImpl::TDarwinetDomainImpl()
 // TDarwinetDomainImpl
 // ---------------------------------------------------------------------------
 __fastcall TDarwinetDomainImpl::TDarwinetDomainImpl(const System::_di_IInterface Controller)
-                              : inherited(Controller)
+							  : inherited(Controller)
 {
+	LOG_METHOD_SCOPE;
 }
 
 
@@ -28,9 +31,10 @@ __fastcall TDarwinetDomainImpl::TDarwinetDomainImpl(const System::_di_IInterface
 // TDarwinetDomainImpl
 // ---------------------------------------------------------------------------
 __fastcall TDarwinetDomainImpl::TDarwinetDomainImpl(Comobj::TComObjectFactory* Factory,
-                                      const System::_di_IInterface Controller)
-                              : inherited(Factory, Controller)
+									  const System::_di_IInterface Controller)
+							  : inherited(Factory, Controller)
 {
+	LOG_METHOD_SCOPE;
 }
 
 void __fastcall TDarwinetDomainImpl::EventSinkChanged(const System::_di_IInterface EventSink)
@@ -43,11 +47,12 @@ void __fastcall TDarwinetDomainImpl::EventSinkChanged(const System::_di_IInterfa
 // ---------------------------------------------------------------------------
 static void createFactory()
 {
+	LOG_FUNCTION_SCOPE;
   new TCppAutoObjectFactory<TDarwinetDomainImpl>(Comserv::GetComServer(),
-                           __classid(TDarwinetDomainImpl),
-                           CLSID_DarwinetDomain,
-                           Comobj::ciMultiInstance,
-                           Comobj::tmApartment);
+						   __classid(TDarwinetDomainImpl),
+						   CLSID_DarwinetDomain,
+						   Comobj::ciMultiInstance,
+						   Comobj::tmApartment);
 }
 #pragma startup createFactory 32
 
@@ -55,6 +60,7 @@ static void createFactory()
 
 IDarwinetDomainView* STDMETHODCALLTYPE TDarwinetDomainImpl::getView()
 {
+	LOG_METHOD_SCOPE;
 	// Create the Domain COM object and return the interface to it
 	if (!this->m_COMIDarwinetDomainView) {
 		m_COMIDarwinetDomainView = CoDarwinetDomainView::Create();

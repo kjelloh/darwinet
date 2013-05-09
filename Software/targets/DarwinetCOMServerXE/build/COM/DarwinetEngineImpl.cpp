@@ -5,12 +5,14 @@
 #pragma hdrstop
 
 #include "DarwinetEngineImpl.h"
+#include "BusinessLogUnit.h"
 
 // ---------------------------------------------------------------------------
 // TDarwinetEngineImpl
 // ---------------------------------------------------------------------------
 __fastcall TDarwinetEngineImpl::TDarwinetEngineImpl()
 {
+	LOG_METHOD_SCOPE;
 }
 
 
@@ -20,8 +22,8 @@ __fastcall TDarwinetEngineImpl::TDarwinetEngineImpl()
 __fastcall TDarwinetEngineImpl::TDarwinetEngineImpl(const System::_di_IInterface Controller)
 							  : inherited(Controller)
 {
+	LOG_METHOD_SCOPE;
 }
-
 
 // ---------------------------------------------------------------------------
 // TDarwinetEngineImpl
@@ -30,10 +32,12 @@ __fastcall TDarwinetEngineImpl::TDarwinetEngineImpl(Comobj::TComObjectFactory* F
 									  const System::_di_IInterface Controller)
 							  : inherited(Factory, Controller)
 {
+	LOG_METHOD_SCOPE;
 }
 
 void __fastcall TDarwinetEngineImpl::EventSinkChanged(const System::_di_IInterface EventSink)
 {
+	LOG_METHOD_SCOPE;
 	/**
 	  * Bug fix of generated code.
 	  * Original code was
@@ -57,6 +61,7 @@ void __fastcall TDarwinetEngineImpl::EventSinkChanged(const System::_di_IInterfa
 // ---------------------------------------------------------------------------
 static void createFactory()
 {
+  LOG_FUNCTION_SCOPE;
   new TCppAutoObjectFactory<TDarwinetEngineImpl>(Comserv::GetComServer(),
 						   __classid(TDarwinetEngineImpl),
 						   CLSID_DarwinetEngine,
@@ -68,6 +73,7 @@ static void createFactory()
 
 IDarwinetDomain* STDMETHODCALLTYPE TDarwinetEngineImpl::getDomain()
 {
+	LOG_METHOD_SCOPE;
 	// Create the Domain COM object and return the interface to it
 	if (!this->m_COMIDarwinetDomain) {
 		m_COMIDarwinetDomain = CoDarwinetDomain::Create();

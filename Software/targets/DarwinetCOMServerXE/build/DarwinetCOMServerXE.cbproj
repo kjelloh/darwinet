@@ -153,6 +153,11 @@
 				<DependentOn>COM\DarwinetEngineImpl.h</DependentOn>
 				<BuildOrder>4</BuildOrder>
 			</CppCompile>
+			<CppCompile Include="COM\DarwinetMIVImpl.cpp">
+				<CoClasses>DarwinetMIV</CoClasses>
+				<DependentOn>COM\DarwinetMIVImpl.h</DependentOn>
+				<BuildOrder>7</BuildOrder>
+			</CppCompile>
 			<CppCompile Include="DarwinetCOMServerXE.cpp">
 				<BuildOrder>0</BuildOrder>
 			</CppCompile>

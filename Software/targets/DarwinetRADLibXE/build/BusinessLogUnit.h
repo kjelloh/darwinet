@@ -21,7 +21,7 @@ typedef c_DataRepresentationFramework::c_UTF8String c_LogString;
   * Converts same type to LogString. Provided to enable
   * Macros to work with all string types
   */
-c_LogString toLogString(const c_LogString& sEntry);
+c_LogString PACKAGE toLogString(const c_LogString& sEntry);
 
 /**
   * Converts provided UTF16 string to Log string representation
@@ -395,7 +395,7 @@ private:
 //	#define LOG_SCOPE_ENTRY(S) c_BussinessLoggerIfc::instance()->LogScopeEntry(S)
 
 	#define LOG_FUNCTION_SCOPE\
-		sFunctionEntryString += _UTF8sz(__FUNCTION__);\
+		c_LogString sFunctionEntryString("::"__FUNCTION__);\
 		c_DevelopmentLogTraceIndentator DevelopmentLogTraceIndentator(sFunctionEntryString);
 	#define LOG_METHOD_SCOPE \
 		c_LogString sFunctionEntryString(c_DataRepresentationFramework::intToHexString(reinterpret_cast<unsigned int>(this))); \
@@ -404,7 +404,7 @@ private:
 
 	#define LOG_SCOPE_S(S) c_DevelopmentLogTraceIndentator DevelopmentLogTraceIndentator(S);
 	#define LOG_FUNCTION_SCOPE_S(S) \
-		sFunctionEntryString += _UTF8sz("::"__FUNCTION__"(");\
+		c_LogString sFunctionEntryString("::"__FUNCTION__"(");\
 		sFunctionEntryString += toLogString(S); \
 		sFunctionEntryString += _UTF8sz(")"); \
 		c_DevelopmentLogTraceIndentator DevelopmentLogTraceIndentator(sFunctionEntryString);

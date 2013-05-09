@@ -11,6 +11,7 @@
 
 #include "MainFormUnit.h"
 #include "DarwinetEngineFrameUnit.h"
+#include "BusinessLogUnit.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma link "DarwinetCOMServer_OCX"
@@ -28,6 +29,7 @@ void TMainForm::updateGUIToReflectChanges() {
 	bool DarwinetEngineCreated = false;
 	bool DarwinetDomainCreated = false;
 	bool ViewDomainCreated = false;
+	bool MIVCreated = false;
 	switch (m_DarwineEngineWrapperType) {
 		case eDarwineEngineWrapperType_Undefined:
 			DarwinetEngineCreated = (this->m_pDarwinetEngine); // Enable if the smart pointer referes to an instance
@@ -40,6 +42,7 @@ void TMainForm::updateGUIToReflectChanges() {
 			DarwinetEngineCreated = (this->m_pCOMIDarwinetEngine); // Enable if the smart pointer refers to an instance
 			DarwinetDomainCreated = (this->m_pCOMIDarwinetDomain); // Enable if the smart pointer refers to an instance
 			ViewDomainCreated = (this->m_pCOMIDarwinetDomainView); // Enable if the smart pointer refers to an instance
+			MIVCreated = (this->m_pCOMIDarwinetMIV); // Enable if the smart pointer refers to an instance
 		break;
 		case eDarwineEngineWrapperType_Unknown:
 		break;
@@ -51,6 +54,10 @@ void TMainForm::updateGUIToReflectChanges() {
 	this->DomainConnectButton->Caption = (DarwinetDomainCreated?"Close":"Open");
 	this->ViewConnectButton->Enabled = DarwinetDomainCreated;
 	this->ViewConnectButton->Caption = (ViewDomainCreated?"Close":"Open");
+	this->MIVConnectButton->Enabled = ViewDomainCreated;
+	this->MIVConnectButton->Caption = (MIVCreated?"Close":"Open");
+	this->ValuePathLabel->Enabled = MIVCreated;
+	this->ValueEdit->Enabled = MIVCreated;
 }
 
 //---------------------------------------------------------------------------
@@ -188,6 +195,45 @@ void __fastcall TMainForm::ViewConnectButtonClick(TObject *Sender)
 	}
 
 	this->updateGUIToReflectChanges();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TMainForm::MIVConnectButtonClick(TObject *Sender)
+{
+	switch (m_DarwineEngineWrapperType) {
+		case eDarwineEngineWrapperType_Undefined:
+		break;
+		case eDarwineEngineWrapperType_Proxy:
+		break;
+		case eDarwineEngineWrapperType_OCX:
+		break;
+		case eDarwineEngineWrapperType_TLB:
+			// Use Darwinet Engine TLB
+			if (!m_pCOMIDarwinetMIV) {
+				m_pCOMIDarwinetMIV = CoDarwinetMIV::Create();
+			}
+			else {
+				m_pCOMIDarwinetMIV.Release();
+			}
+		break;
+		case eDarwineEngineWrapperType_Unknown:
+		break;
+	default:
+		;
+	}
+	this->updateGUIToReflectChanges();
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TMainForm::ValueEditChange(TObject *Sender)
+{
+	// Set the MIV value to the new one!
+	if (m_pCOMIDarwinetMIV) {
+		// We have a MIV instance to talk to!
+		String sValuePath = this->ValuePathLabel->Caption;
+		String sValue = this->ValueEdit->Text;
+		m_pCOMIDarwinetMIV->setValue(sValuePath.c_str(),sValue.c_str());
+	}
 }
 //---------------------------------------------------------------------------
 

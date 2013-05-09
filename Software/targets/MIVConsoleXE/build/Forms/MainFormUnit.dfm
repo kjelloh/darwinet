@@ -20,7 +20,7 @@ object MainForm: TMainForm
     Width = 804
     Height = 89
     Align = alTop
-    Caption = 'Darwinet Engine'
+    Caption = 'Engine'
     TabOrder = 0
     object EngineConnectButton: TButton
       Left = 16
@@ -38,7 +38,7 @@ object MainForm: TMainForm
     Width = 804
     Height = 88
     Align = alTop
-    Caption = 'Darwinet Domain'
+    Caption = 'Engine -> Domain'
     TabOrder = 1
     object DomainConnectButton: TButton
       Left = 16
@@ -56,7 +56,7 @@ object MainForm: TMainForm
     Width = 804
     Height = 80
     Align = alTop
-    Caption = 'Domain View'
+    Caption = 'Engine -> Domain -> View'
     TabOrder = 2
     object ViewConnectButton: TButton
       Left = 16
@@ -66,6 +66,52 @@ object MainForm: TMainForm
       Caption = 'Connect'
       TabOrder = 0
       OnClick = ViewConnectButtonClick
+    end
+  end
+  object MIVGroupBox: TGroupBox
+    Left = 0
+    Top = 257
+    Width = 804
+    Height = 105
+    Align = alTop
+    Caption = 'Engine -> Domain -> View -> MIV'
+    TabOrder = 3
+    ExplicitLeft = 280
+    ExplicitTop = 336
+    ExplicitWidth = 185
+    object MIVConnectButton: TButton
+      Left = 16
+      Top = 32
+      Width = 75
+      Height = 25
+      Caption = 'Connect'
+      TabOrder = 0
+      OnClick = MIVConnectButtonClick
+    end
+  end
+  object ValuesEditGroupBox: TGroupBox
+    Left = 0
+    Top = 362
+    Width = 804
+    Height = 87
+    Align = alTop
+    Caption = 'Engine -> Domain -> View -> MIV -> Values'
+    TabOrder = 4
+    object ValuePathLabel: TLabel
+      Left = 16
+      Top = 40
+      Width = 108
+      Height = 13
+      Caption = 'darwinet.hell_world = '
+    end
+    object ValueEdit: TEdit
+      Left = 130
+      Top = 40
+      Width = 121
+      Height = 21
+      TabOrder = 0
+      Text = 'Hello!'
+      OnChange = ValueEditChange
     end
   end
   object MainMenu1: TMainMenu
