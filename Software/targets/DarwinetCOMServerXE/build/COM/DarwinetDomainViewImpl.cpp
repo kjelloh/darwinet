@@ -13,7 +13,7 @@
 // ---------------------------------------------------------------------------
 __fastcall TDarwinetDomainViewImpl::TDarwinetDomainViewImpl()
 {
-	LOG_METHOD_SCOPE;
+	LOG_METHOD_SCOPE_S(_UTF8sz("()"));
 }
 
 
@@ -23,7 +23,7 @@ __fastcall TDarwinetDomainViewImpl::TDarwinetDomainViewImpl()
 __fastcall TDarwinetDomainViewImpl::TDarwinetDomainViewImpl(const System::_di_IInterface Controller)
 							  : inherited(Controller)
 {
-	LOG_METHOD_SCOPE;
+	LOG_METHOD_SCOPE_S(_UTF8sz("(const System::_di_IInterface Controller)"));
 }
 
 
@@ -34,7 +34,7 @@ __fastcall TDarwinetDomainViewImpl::TDarwinetDomainViewImpl(Comobj::TComObjectFa
 									  const System::_di_IInterface Controller)
 							  : inherited(Factory, Controller)
 {
-	LOG_METHOD_SCOPE;
+	LOG_METHOD_SCOPE_S(_UTF8sz("(Comobj::TComObjectFactory* Factory,const System::_di_IInterface Controller)"));
 }
 
 void __fastcall TDarwinetDomainViewImpl::EventSinkChanged(const System::_di_IInterface EventSink)
@@ -60,6 +60,7 @@ static void createFactory()
 
 IDarwinetMIV* STDMETHODCALLTYPE TDarwinetDomainViewImpl::getMIV()
 {
+	LOG_METHOD_SCOPE;
 	// Create the Domain COM object and return the interface to it
 	if (!this->m_COMIDarwinetMIV) {
 		m_COMIDarwinetMIV = CoDarwinetMIV::Create();

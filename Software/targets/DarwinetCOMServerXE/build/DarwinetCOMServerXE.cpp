@@ -17,6 +17,8 @@
 
 
 
+
+
 USEFORM("MainFormUnit.cpp", MainForm);
 //---------------------------------------------------------------------------
 #pragma link "ComServ.obj"
@@ -35,6 +37,31 @@ USEFORM("MainFormUnit.cpp", MainForm);
   *     * Check the <Generate Component Wrappers>
   *     * In the next Dialog, select <Add unit to _your_project_>. In this way
   *       the wrappres generated will be compiled as part of your project.
+  */
+
+/**
+  * When a darwinet Application uses COM to connect to the Darwinet Engine the design
+  * looks like this.
+  *
+  * Darwinet Application <-> Darwinet Server COM Proxy <-> ... COM ... <-> Darwinet Client Proxy <-> Darwinet Engine
+  *
+  * The general design pattern is:
+  *
+  * Darwinet Application <-> Darwinet Engine Proxy <-> Protocol <-> Darwinet Client PRoxy <-> Darwinet Engine
+  *
+  * Should the client use an in process Darwinet Engine this redices to
+  * Darwinet Application <-> Darwinet Engine
+  *
+  * Signalling is asynchronous by default menaing the application calls the server without requesting a result in return
+  * Instead the Server calls the Application at some later time when a result is available.
+  *
+  * When using COM as connection protocol in RAD Studio one of the folowing layering may be used.
+  *
+  * <-> Darwinet TLB Server Proxy <-> TLB Object <-> ...COM... <-> TLB Object <-> Darwinet TLB Client Proxy <->
+  *
+  *
+  *
+  *
   */
 static Comserv::TCppActiveXModule _ax_module(true);
 

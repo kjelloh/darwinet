@@ -13,7 +13,7 @@
 // ---------------------------------------------------------------------------
 __fastcall TDarwinetDomainImpl::TDarwinetDomainImpl()
 {
-	LOG_METHOD_SCOPE;
+	LOG_METHOD_SCOPE_S(_UTF8sz("()"));
 }
 
 
@@ -23,7 +23,7 @@ __fastcall TDarwinetDomainImpl::TDarwinetDomainImpl()
 __fastcall TDarwinetDomainImpl::TDarwinetDomainImpl(const System::_di_IInterface Controller)
 							  : inherited(Controller)
 {
-	LOG_METHOD_SCOPE;
+	LOG_METHOD_SCOPE_S(_UTF8sz("(const System::_di_IInterface Controller)"));
 }
 
 
@@ -34,11 +34,12 @@ __fastcall TDarwinetDomainImpl::TDarwinetDomainImpl(Comobj::TComObjectFactory* F
 									  const System::_di_IInterface Controller)
 							  : inherited(Factory, Controller)
 {
-	LOG_METHOD_SCOPE;
+	LOG_METHOD_SCOPE_S(_UTF8sz("(Comobj::TComObjectFactory* Factory,const System::_di_IInterface Controller)"));
 }
 
 void __fastcall TDarwinetDomainImpl::EventSinkChanged(const System::_di_IInterface EventSink)
 {
+  LOG_METHOD_SCOPE;
   FEvents.Bind(EventSink);
 }
 

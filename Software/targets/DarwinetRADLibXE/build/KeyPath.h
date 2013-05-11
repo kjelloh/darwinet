@@ -1204,21 +1204,21 @@ namespace oprime {
 		}
 		catch (std::exception& e) {
 			c_LogString sMessage(__FUNCTION__"  failed. sPath = ");
-			sMessage += sPath;
+			sMessage += toLogString(sPath);
 			sMessage += _UTF8sz(". Exception=");
 			sMessage += _UTF8sz(e.what());
 			LOG_DESIGN_INSUFFICIENCY(sMessage);
 		}
 		catch (Exception& e) {
 			c_LogString sMessage(__FUNCTION__"  failed. sPath = ");
-			sMessage += sPath;
+			sMessage += toLogString(sPath);
 			sMessage += _UTF8sz(". Exception=");
 			sMessage += toLogString(e.Message.c_str());
 			LOG_DESIGN_INSUFFICIENCY(sMessage);
 		}
 		catch (...) {
 			c_LogString sMessage(__FUNCTION__"  failed. sPath = ");
-			sMessage += sPath;
+			sMessage += toLogString(sPath);
 			sMessage += _UTF8sz(". Anonymous excpetion cought.");
 			LOG_DESIGN_INSUFFICIENCY(sMessage);
 		}
