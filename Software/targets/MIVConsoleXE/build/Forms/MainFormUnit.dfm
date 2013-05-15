@@ -68,25 +68,22 @@ object MainForm: TMainForm
       OnClick = ViewConnectButtonClick
     end
   end
-  object MIVGroupBox: TGroupBox
+  object MIVsGroupBox: TGroupBox
     Left = 0
     Top = 257
     Width = 804
     Height = 105
     Align = alTop
-    Caption = 'Engine -> Domain -> View -> MIV'
+    Caption = 'Engine -> Domain -> View -> MIVs'
     TabOrder = 3
-    ExplicitLeft = 280
-    ExplicitTop = 336
-    ExplicitWidth = 185
-    object MIVConnectButton: TButton
+    object MIVsConnectButton: TButton
       Left = 16
       Top = 32
       Width = 75
       Height = 25
       Caption = 'Connect'
       TabOrder = 0
-      OnClick = MIVConnectButtonClick
+      OnClick = MIVsConnectButtonClick
     end
   end
   object ValuesEditGroupBox: TGroupBox
@@ -125,15 +122,6 @@ object MainForm: TMainForm
     end
     object View1: TMenuItem
       Caption = 'View'
-      object ViewApplication1: TMenuItem
-        Caption = 'View Application'
-      end
-      object ViewMIV1: TMenuItem
-        Caption = 'View MIV'
-      end
-      object ViewMessaging1: TMenuItem
-        Caption = 'View Messaging'
-      end
     end
     object Help1: TMenuItem
       Caption = 'Help'

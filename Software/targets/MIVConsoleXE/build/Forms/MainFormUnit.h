@@ -44,24 +44,21 @@ __published:	// IDE-managed Components
 	TMenuItem *Help1;
 	TActionManager *ActionManager1;
 	TMenuItem *View1;
-	TMenuItem *ViewApplication1;
-	TMenuItem *ViewMIV1;
-	TMenuItem *ViewMessaging1;
 	TGroupBox *EngineGroupBox;
 	TGroupBox *DomainGroupBox;
 	TButton *DomainConnectButton;
 	TButton *EngineConnectButton;
 	TGroupBox *View;
 	TButton *ViewConnectButton;
-	TGroupBox *MIVGroupBox;
-	TButton *MIVConnectButton;
+	TGroupBox *MIVsGroupBox;
+	TButton *MIVsConnectButton;
 	TGroupBox *ValuesEditGroupBox;
 	TEdit *ValueEdit;
 	TLabel *ValuePathLabel;
 	void __fastcall EngineConnectButtonClick(TObject *Sender);
 	void __fastcall DomainConnectButtonClick(TObject *Sender);
 	void __fastcall ViewConnectButtonClick(TObject *Sender);
-	void __fastcall MIVConnectButtonClick(TObject *Sender);
+	void __fastcall MIVsConnectButtonClick(TObject *Sender);
 	void __fastcall ValueEditChange(TObject *Sender);
 private:	// User declarations
 
@@ -90,7 +87,7 @@ private:	// User declarations
 	TCOMIDarwinetEngine m_pCOMIDarwinetEngine; // The COM Interface "smart pointer"
 	TCOMIDarwinetDomain m_pCOMIDarwinetDomain; // The COM Interface "smart pointer"
 	TCOMIDarwinetDomainView m_pCOMIDarwinetDomainView; // The COM Interface "smart pointer"
-	TCOMIDarwinetMIV m_pCOMIDarwinetMIV; // The COM Interface "smart pointer"
+	TCOMIDarwinetMIVs m_pCOMIDarwinetMIVs; // The COM Interface "smart pointer"
 
 	/**
 	  * Updates the GUI to reflect any chages that shall be reflected

@@ -30,13 +30,12 @@ public:
 
   // IDarwinetDomainView
 protected:
-  IDarwinetMIV* STDMETHODCALLTYPE getMIV();
-
+  IDarwinetMIVs* STDMETHODCALLTYPE getMIVs();
 private:
 	/**
 	  * Private storage of a smart pointer to our MIV instance
 	  */
-	TCOMIDarwinetMIV m_COMIDarwinetMIV;
+	TCOMIDarwinetMIVs m_COMIDarwinetMIVs;
 };
 
 

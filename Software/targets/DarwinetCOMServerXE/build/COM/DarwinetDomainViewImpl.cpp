@@ -58,14 +58,12 @@ static void createFactory()
 #pragma startup createFactory 32
 
 
-IDarwinetMIV* STDMETHODCALLTYPE TDarwinetDomainViewImpl::getMIV()
+IDarwinetMIVs* STDMETHODCALLTYPE TDarwinetDomainViewImpl::getMIVs()
 {
 	LOG_METHOD_SCOPE;
 	// Create the Domain COM object and return the interface to it
-	if (!this->m_COMIDarwinetMIV) {
-		m_COMIDarwinetMIV = CoDarwinetMIV::Create();
+	if (!this->m_COMIDarwinetMIVs) {
+		m_COMIDarwinetMIVs = CoDarwinetMIVs::Create();
 	}
-	return m_COMIDarwinetMIV;
+	return m_COMIDarwinetMIVs;
 }
-
-
