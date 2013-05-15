@@ -10,7 +10,7 @@
 // ************************************************************************ //
 
 // $Rev: 46046 $
-// File generated on 2013-05-15 14:11:49 from Type Library described below.
+// File generated on 2013-05-15 17:52:01 from Type Library described below.
 
 // ************************************************************************  //
 // Type Lib: C:\subversion\darwinet\trunk\Software\targets\DarwinetCOMServerXE\build\.\Win32\Debug\DarwinetCOMServerXE.exe (1)
@@ -263,19 +263,19 @@ void __fastcall TDarwinetDomainView::InvokeEvent(int id, Vcl::Oleserver::TVarian
   }
 }
 
-Darwinetcomserver_tlb::IDarwinetMIVs* __fastcall TDarwinetDomainView::getMIVs(void)
+Darwinetcomserver_tlb::IDarwinetSEPSI* __fastcall TDarwinetDomainView::getSEPSI(void)
 {
-  return  GetDefaultInterface()->getMIVs();
+  return  GetDefaultInterface()->getSEPSI();
 }
 
-IDarwinetMIVsPtr& TDarwinetMIVs::GetDefaultInterface()
+IDarwinetSEPSIPtr& TDarwinetSEPSI::GetDefaultInterface()
 {
   if (!m_DefaultIntf)
     Connect();
   return m_DefaultIntf;
 }
 
-_di_IUnknown __fastcall TDarwinetMIVs::GetDunk()
+_di_IUnknown __fastcall TDarwinetSEPSI::GetDunk()
 {
   _di_IUnknown diUnk;
   if (m_DefaultIntf) {
@@ -285,7 +285,7 @@ _di_IUnknown __fastcall TDarwinetMIVs::GetDunk()
   return diUnk;
 }
 
-void __fastcall TDarwinetMIVs::Connect()
+void __fastcall TDarwinetSEPSI::Connect()
 {
   if (!m_DefaultIntf) {
     _di_IUnknown punk = GetServer();
@@ -295,7 +295,7 @@ void __fastcall TDarwinetMIVs::Connect()
   }
 }
 
-void __fastcall TDarwinetMIVs::Disconnect()
+void __fastcall TDarwinetSEPSI::Disconnect()
 {
   if (m_DefaultIntf) {
 
@@ -305,12 +305,12 @@ void __fastcall TDarwinetMIVs::Disconnect()
   }
 }
 
-void __fastcall TDarwinetMIVs::BeforeDestruction()
+void __fastcall TDarwinetSEPSI::BeforeDestruction()
 {
   Disconnect();
 }
 
-void __fastcall TDarwinetMIVs::ConnectTo(IDarwinetMIVsPtr intf)
+void __fastcall TDarwinetSEPSI::ConnectTo(IDarwinetSEPSIPtr intf)
 {
   Disconnect();
   m_DefaultIntf = intf;
@@ -318,16 +318,16 @@ void __fastcall TDarwinetMIVs::ConnectTo(IDarwinetMIVsPtr intf)
     ConnectEvents(GetDunk());
 }
 
-void __fastcall TDarwinetMIVs::InitServerData()
+void __fastcall TDarwinetSEPSI::InitServerData()
 {
   static Vcl::Oleserver::TServerData sd;
-  sd.ClassID = CLSID_DarwinetMIVs;
-  sd.IntfIID = __uuidof(IDarwinetMIVs);
-  sd.EventIID= __uuidof(IDarwinetMIVsEvents);
+  sd.ClassID = CLSID_DarwinetSEPSI;
+  sd.IntfIID = __uuidof(IDarwinetSEPSI);
+  sd.EventIID= __uuidof(IDarwinetSEPSIEvents);
   ServerData = &sd;
 }
 
-void __fastcall TDarwinetMIVs::InvokeEvent(int id, Vcl::Oleserver::TVariantArray& params)
+void __fastcall TDarwinetSEPSI::InvokeEvent(int id, Vcl::Oleserver::TVariantArray& params)
 {
   switch(id)
   {
@@ -336,7 +336,7 @@ void __fastcall TDarwinetMIVs::InvokeEvent(int id, Vcl::Oleserver::TVariantArray
   }
 }
 
-void __fastcall TDarwinetMIVs::setValue(BSTR sInstancePath/*[in]*/, BSTR sValue/*[in]*/)
+void __fastcall TDarwinetSEPSI::setValue(BSTR sInstancePath/*[in]*/, BSTR sValue/*[in]*/)
 {
   GetDefaultInterface()->setValue(sInstancePath/*[in]*/, sValue/*[in]*/);
 }
@@ -361,7 +361,7 @@ void __fastcall PACKAGE Register()
                               __classid(Darwinetcomserver_tlb::TDarwinetEngine), 
                               __classid(Darwinetcomserver_tlb::TDarwinetDomain), 
                               __classid(Darwinetcomserver_tlb::TDarwinetDomainView), 
-                              __classid(Darwinetcomserver_tlb::TDarwinetMIVs)
+                              __classid(Darwinetcomserver_tlb::TDarwinetSEPSI)
                            };
   System::Classes::RegisterComponents("ActiveX", cls_svr,
                      sizeof(cls_svr)/sizeof(cls_svr[0])-1);

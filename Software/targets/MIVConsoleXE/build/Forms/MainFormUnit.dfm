@@ -68,22 +68,22 @@ object MainForm: TMainForm
       OnClick = ViewConnectButtonClick
     end
   end
-  object MIVsGroupBox: TGroupBox
+  object SEPSIGroupBox: TGroupBox
     Left = 0
     Top = 257
     Width = 804
     Height = 105
     Align = alTop
-    Caption = 'Engine -> Domain -> View -> MIVs'
+    Caption = 'Engine -> Domain -> View -> SEPSI'
     TabOrder = 3
-    object MIVsConnectButton: TButton
+    object SEPSIConnectButton: TButton
       Left = 16
       Top = 32
       Width = 75
       Height = 25
       Caption = 'Connect'
       TabOrder = 0
-      OnClick = MIVsConnectButtonClick
+      OnClick = SEPSIConnectButtonClick
     end
   end
   object ValuesEditGroupBox: TGroupBox
@@ -92,7 +92,7 @@ object MainForm: TMainForm
     Width = 804
     Height = 87
     Align = alTop
-    Caption = 'Engine -> Domain -> View -> MIV -> Values'
+    Caption = 'Engine -> Domain -> View -> SEPSI -> Values'
     TabOrder = 4
     object ValuePathLabel: TLabel
       Left = 16

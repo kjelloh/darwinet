@@ -1,25 +1,25 @@
 // ---------------------------------------------------------------------------
-// DARWINETMIVIMPL : Implementation of TDarwinetMIVsImpl (CoClass: DarwinetMIVs, Interface: IDarwinetMIVs)
+// DARWINETMIVIMPL : Implementation of TDarwinetSEPSIImpl (CoClass: DarwinetSEPSI, Interface: IDarwinetSEPSI)
 // ---------------------------------------------------------------------------
 #include <vcl.h>
 #pragma hdrstop
 
-#include "DarwinetMIVsImpl.h"
+#include "DarwinetSEPSIImpl.h"
 #include "BusinessLogUnit.h"
 
 // ---------------------------------------------------------------------------
-// TDarwinetMIVsImpl
+// TDarwinetSEPSIImpl
 // ---------------------------------------------------------------------------
-__fastcall TDarwinetMIVsImpl::TDarwinetMIVsImpl()
+__fastcall TDarwinetSEPSIImpl::TDarwinetSEPSIImpl()
 {
 	LOG_METHOD_SCOPE;
 }
 
 
 // ---------------------------------------------------------------------------
-// TDarwinetMIVsImpl
+// TDarwinetSEPSIImpl
 // ---------------------------------------------------------------------------
-__fastcall TDarwinetMIVsImpl::TDarwinetMIVsImpl(const System::_di_IInterface Controller)
+__fastcall TDarwinetSEPSIImpl::TDarwinetSEPSIImpl(const System::_di_IInterface Controller)
 							  : inherited(Controller)
 {
 	LOG_METHOD_SCOPE_S(_UTF8sz("const System::_di_IInterface Controller"));
@@ -27,38 +27,38 @@ __fastcall TDarwinetMIVsImpl::TDarwinetMIVsImpl(const System::_di_IInterface Con
 
 
 // ---------------------------------------------------------------------------
-// TDarwinetMIVsImpl
+// TDarwinetSEPSIImpl
 // ---------------------------------------------------------------------------
-__fastcall TDarwinetMIVsImpl::TDarwinetMIVsImpl(Comobj::TComObjectFactory* Factory,
+__fastcall TDarwinetSEPSIImpl::TDarwinetSEPSIImpl(Comobj::TComObjectFactory* Factory,
 									  const System::_di_IInterface Controller)
 							  : inherited(Factory, Controller)
 {
 	LOG_METHOD_SCOPE_S(_UTF8sz("Comobj::TComObjectFactory* Factory,const System::_di_IInterface Controller"));
 	// Bind us to the Engine
-	this->m_pMIVs = darwinet::engine()->getClientProxyInterface()->getMIVs(Controller,this);
+	this->m_pSEPSI = darwinet::engine()->getClientProxyInterface()->getSEPSI(Controller,this);
 }
 
-void __fastcall TDarwinetMIVsImpl::EventSinkChanged(const System::_di_IInterface EventSink)
+void __fastcall TDarwinetSEPSIImpl::EventSinkChanged(const System::_di_IInterface EventSink)
 {
 	LOG_METHOD_SCOPE;
   FEvents.Bind(EventSink);
 }
 
 // ---------------------------------------------------------------------------
-// TDarwinetMIVsImpl - Class Factory
+// TDarwinetSEPSIImpl - Class Factory
 // ---------------------------------------------------------------------------
 static void createFactory()
 {
-  new TCppAutoObjectFactory<TDarwinetMIVsImpl>(Comserv::GetComServer(),
-						   __classid(TDarwinetMIVsImpl),
-						   CLSID_DarwinetMIVs,
+  new TCppAutoObjectFactory<TDarwinetSEPSIImpl>(Comserv::GetComServer(),
+						   __classid(TDarwinetSEPSIImpl),
+						   CLSID_DarwinetSEPSI,
 						   Comobj::ciMultiInstance,
 						   Comobj::tmApartment);
 }
 #pragma startup createFactory 32
 
 
-STDMETHODIMP TDarwinetMIVsImpl::setValue(BSTR sInstancePath, BSTR sValue)
+STDMETHODIMP TDarwinetSEPSIImpl::setValue(BSTR sInstancePath, BSTR sValue)
 {
 	// Set the value with provided path to provided value
 	LOG_METHOD_SCOPE;
@@ -66,10 +66,10 @@ STDMETHODIMP TDarwinetMIVsImpl::setValue(BSTR sInstancePath, BSTR sValue)
 	String sValueString(sValue);
 	LOG_NOT_IMPLEMENTED;
 
-	if (this->m_pMIVs) {
+	if (this->m_pSEPSI) {
 		darwinet::c_DarwinetString sDarwinetInstancePath = c_DataRepresentationFramework::toUTF8String(_UTF16sz(sInstancePathString.c_str()));
 		darwinet::c_DarwinetString sDarwinetValue = c_DataRepresentationFramework::toUTF8String(_UTF16sz(sValueString.c_str()));
-		this->m_pMIVs->setValue(sDarwinetInstancePath,sDarwinetValue);
+		this->m_pSEPSI->setValue(sDarwinetInstancePath,sDarwinetValue);
 	}
 
 	return S_OK;

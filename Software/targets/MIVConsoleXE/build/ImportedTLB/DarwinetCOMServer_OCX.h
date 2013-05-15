@@ -10,7 +10,7 @@
 // ************************************************************************ //
 
 // $Rev: 46046 $
-// File generated on 2013-05-15 14:11:49 from Type Library described below.
+// File generated on 2013-05-15 17:52:01 from Type Library described below.
 
 // ************************************************************************  //
 // Type Lib: C:\subversion\darwinet\trunk\Software\targets\DarwinetCOMServerXE\build\.\Win32\Debug\DarwinetCOMServerXE.exe (1)
@@ -154,7 +154,7 @@ public:
 
   virtual void __fastcall InvokeEvent(int DispID, Vcl::Oleserver::TVariantArray& params);
 
-  Darwinetcomserver_tlb::IDarwinetMIVs* __fastcall getMIVs(void);
+  Darwinetcomserver_tlb::IDarwinetSEPSI* __fastcall getSEPSI(void);
 private:
 __published:
 };
@@ -162,28 +162,28 @@ __published:
 
 // *********************************************************************//
 // COM Component Proxy Class Declaration
-// Component Name   : TDarwinetMIVs
-// Help String      : DarwinetMIV Object
-// Default Interface: IDarwinetMIVs
-// Def. Intf. Object: IDarwinetMIVsPtr
+// Component Name   : TDarwinetSEPSI
+// Help String      : Darwinet SEPSI (Shared Evolving Privately Stored) Object
+// Default Interface: IDarwinetSEPSI
+// Def. Intf. Object: IDarwinetSEPSIPtr
 // Def. Intf. DISP? : No
-// Event   Interface: IDarwinetMIVsEvents
+// Event   Interface: IDarwinetSEPSIEvents
 // TypeFlags        : (2) CanCreate
 // *********************************************************************//
-class PACKAGE TDarwinetMIVs : public Vcl::Oleserver::TOleServer
+class PACKAGE TDarwinetSEPSI : public Vcl::Oleserver::TOleServer
 {
-  IDarwinetMIVsPtr m_DefaultIntf;
+  IDarwinetSEPSIPtr m_DefaultIntf;
   _di_IUnknown __fastcall GetDunk();
 public:
-  __fastcall TDarwinetMIVs(System::Classes::TComponent* owner) : Vcl::Oleserver::TOleServer(owner)
+  __fastcall TDarwinetSEPSI(System::Classes::TComponent* owner) : Vcl::Oleserver::TOleServer(owner)
   {}
 
-  IDarwinetMIVsPtr& GetDefaultInterface();
+  IDarwinetSEPSIPtr& GetDefaultInterface();
   void __fastcall InitServerData();
   void __fastcall Connect();
   void __fastcall Disconnect();
   void __fastcall BeforeDestruction();
-  void __fastcall ConnectTo(IDarwinetMIVsPtr intf);
+  void __fastcall ConnectTo(IDarwinetSEPSIPtr intf);
 
   virtual void __fastcall InvokeEvent(int DispID, Vcl::Oleserver::TVariantArray& params);
 

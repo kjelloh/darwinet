@@ -29,7 +29,7 @@ void TMainForm::updateGUIToReflectChanges() {
 	bool DarwinetEngineCreated = false;
 	bool DarwinetDomainCreated = false;
 	bool ViewDomainCreated = false;
-	bool MIVsCreated = false;
+	bool SEPSICreated = false;
 	switch (m_DarwineEngineWrapperType) {
 		case eDarwineEngineWrapperType_Undefined:
 			DarwinetEngineCreated = (this->m_pDarwinetEngine); // Enable if the smart pointer referes to an instance
@@ -42,7 +42,7 @@ void TMainForm::updateGUIToReflectChanges() {
 			DarwinetEngineCreated = (this->m_pCOMIDarwinetEngine); // Enable if the smart pointer refers to an instance
 			DarwinetDomainCreated = (this->m_pCOMIDarwinetDomain); // Enable if the smart pointer refers to an instance
 			ViewDomainCreated = (this->m_pCOMIDarwinetDomainView); // Enable if the smart pointer refers to an instance
-			MIVsCreated = (this->m_pCOMIDarwinetMIVs); // Enable if the smart pointer refers to an instance
+			SEPSICreated = (this->m_pCOMIDarwinetSEPSI); // Enable if the smart pointer refers to an instance
 		break;
 		case eDarwineEngineWrapperType_Unknown:
 		break;
@@ -54,10 +54,10 @@ void TMainForm::updateGUIToReflectChanges() {
 	this->DomainConnectButton->Caption = (DarwinetDomainCreated?"Close":"Open");
 	this->ViewConnectButton->Enabled = DarwinetDomainCreated;
 	this->ViewConnectButton->Caption = (ViewDomainCreated?"Close":"Open");
-	this->MIVsConnectButton->Enabled = ViewDomainCreated;
-	this->MIVsConnectButton->Caption = (MIVsCreated?"Close":"Open");
-	this->ValuePathLabel->Enabled = MIVsCreated;
-	this->ValueEdit->Enabled = MIVsCreated;
+	this->SEPSIConnectButton->Enabled = ViewDomainCreated;
+	this->SEPSIConnectButton->Caption = (SEPSICreated?"Close":"Open");
+	this->ValuePathLabel->Enabled = SEPSICreated;
+	this->ValueEdit->Enabled = SEPSICreated;
 }
 
 //---------------------------------------------------------------------------
@@ -198,7 +198,7 @@ void __fastcall TMainForm::ViewConnectButtonClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
-void __fastcall TMainForm::MIVsConnectButtonClick(TObject *Sender)
+void __fastcall TMainForm::SEPSIConnectButtonClick(TObject *Sender)
 {
 	switch (m_DarwineEngineWrapperType) {
 		case eDarwineEngineWrapperType_Undefined:
@@ -209,11 +209,11 @@ void __fastcall TMainForm::MIVsConnectButtonClick(TObject *Sender)
 		break;
 		case eDarwineEngineWrapperType_TLB:
 			// Use Darwinet Engine TLB
-			if (!m_pCOMIDarwinetMIVs) {
-				m_pCOMIDarwinetMIVs = CoDarwinetMIVs::Create();
+			if (!m_pCOMIDarwinetSEPSI) {
+				m_pCOMIDarwinetSEPSI = CoDarwinetSEPSI::Create();
 			}
 			else {
-				m_pCOMIDarwinetMIVs.Release();
+				m_pCOMIDarwinetSEPSI.Release();
 			}
 		break;
 		case eDarwineEngineWrapperType_Unknown:
@@ -227,12 +227,12 @@ void __fastcall TMainForm::MIVsConnectButtonClick(TObject *Sender)
 
 void __fastcall TMainForm::ValueEditChange(TObject *Sender)
 {
-	// Set the MIVs value to the new one!
-	if (m_pCOMIDarwinetMIVs) {
-		// We have a MIVs instance to talk to!
+	// Set the SEPSI value to the new one!
+	if (m_pCOMIDarwinetSEPSI) {
+		// We have a SEPSI instance to talk to!
 		String sValuePath = this->ValuePathLabel->Caption;
 		String sValue = this->ValueEdit->Text;
-		m_pCOMIDarwinetMIVs->setValue(sValuePath.c_str(),sValue.c_str());
+		m_pCOMIDarwinetSEPSI->setValue(sValuePath.c_str(),sValue.c_str());
 	}
 }
 //---------------------------------------------------------------------------

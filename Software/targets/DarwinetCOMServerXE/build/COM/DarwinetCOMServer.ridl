@@ -6,7 +6,7 @@
 // However, when applying changes via the Editor this file will be regenerated
 // and comments or formatting changes will be lost.
 // ************************************************************************ //
-// File generated on 2013-05-15 14:13:12 (- $Rev: 12980 $, 98084578).
+// File generated on 2013-05-15 17:52:01 (- $Rev: 12980 $, 101103828).
 
 [
   uuid(C10A9DE6-1B79-4C29-8CD8-B621544D80F2),
@@ -27,9 +27,9 @@ library DarwinetCOMServer
   interface IDarwinetDomainView;
   dispinterface IDarwinetDomainViewEvents;
   coclass DarwinetDomainView;
-  interface IDarwinetMIVs;
-  dispinterface IDarwinetMIVsEvents;
-  coclass DarwinetMIVs;
+  interface IDarwinetSEPSI;
+  dispinterface IDarwinetSEPSIEvents;
+  coclass DarwinetSEPSI;
 
 
   [
@@ -64,17 +64,17 @@ library DarwinetCOMServer
   ]
   interface IDarwinetDomainView: IDispatch
   {
-    [id(0x000000C9), helpstring("Returns the interface to the View MIVs object")]
-    IDarwinetMIVs* _stdcall getMIVs(void);
+    [id(0x000000C9), helpstring("Returns the interface to the View SEPSI object")]
+    IDarwinetSEPSI* _stdcall getSEPSI(void);
   };
 
   [
     uuid(D5019007-C26E-42BE-9601-500CEFD1C829),
-    helpstring("Dispatch interface for DarwinetMIVs Object"),
+    helpstring("Dispatch interface for Darwinet SEPSI (Shared Evolving Privately Stored) Object"),
     dual,
     oleautomation
   ]
-  interface IDarwinetMIVs: IDispatch
+  interface IDarwinetSEPSI: IDispatch
   {
     [id(0x000000C9)]
     HRESULT _stdcall setValue([in] BSTR sInstancePath, [in] BSTR sValue);
@@ -114,9 +114,9 @@ library DarwinetCOMServer
 
   [
     uuid(232B48D1-1251-4155-AF05-33F61012959E),
-    helpstring("Events interface for DarwinetMIVs Object")
+    helpstring("Events interface for SEPSI (Shared Evolving Privately Stored) Object")
   ]
-  dispinterface IDarwinetMIVsEvents
+  dispinterface IDarwinetSEPSIEvents
   {
     properties:
     methods:
@@ -154,12 +154,12 @@ library DarwinetCOMServer
 
   [
     uuid(F1935855-391D-4C4C-8E2A-647586F9DF8C),
-    helpstring("DarwinetMIVs Object")
+    helpstring("Darwinet SEPSI (Shared Evolving Privately Stored) Object")
   ]
-  coclass DarwinetMIVs
+  coclass DarwinetSEPSI
   {
-    [default] interface IDarwinetMIVs;
-    [default, source] dispinterface IDarwinetMIVsEvents;
+    [default] interface IDarwinetSEPSI;
+    [default, source] dispinterface IDarwinetSEPSIEvents;
   };
 
 };

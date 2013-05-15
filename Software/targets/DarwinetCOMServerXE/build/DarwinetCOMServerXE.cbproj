@@ -153,9 +153,9 @@
 				<DependentOn>COM\DarwinetEngineImpl.h</DependentOn>
 				<BuildOrder>4</BuildOrder>
 			</CppCompile>
-			<CppCompile Include="COM\DarwinetMIVsImpl.cpp">
+			<CppCompile Include="COM\DarwinetSEPSIImpl.cpp">
 				<CoClasses>DarwinetMIV</CoClasses>
-				<DependentOn>COM\DarwinetMIVsImpl.h</DependentOn>
+				<DependentOn>COM\DarwinetSEPSIImpl.h</DependentOn>
 				<BuildOrder>7</BuildOrder>
 			</CppCompile>
 			<CppCompile Include="DarwinetCOMServerXE.cpp">
@@ -165,8 +165,8 @@
 				<DependentOn>darwinet\InProcDarwinetEngineFramework.h</DependentOn>
 				<BuildOrder>8</BuildOrder>
 			</CppCompile>
-			<CppCompile Include="darwinet\MIVsImplementationUnit.cpp">
-				<DependentOn>darwinet\MIVsImplementationUnit.h</DependentOn>
+			<CppCompile Include="darwinet\SEPSIImplementationUnit.cpp">
+				<DependentOn>darwinet\SEPSIImplementationUnit.h</DependentOn>
 				<BuildOrder>9</BuildOrder>
 			</CppCompile>
 			<CppCompile Include="MainFormUnit.cpp">
