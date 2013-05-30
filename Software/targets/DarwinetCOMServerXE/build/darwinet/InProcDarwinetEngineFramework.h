@@ -19,8 +19,34 @@ namespace darwinet {
 	typedef c_DarwinetString c_CaptionNode;
 
 	typedef oprime::c_KeyPath<c_CaptionNode> c_DomainPath;
+	typedef oprime::c_KeyPath<c_CaptionNode> c_ViewPath;
 	typedef oprime::c_KeyPath<c_CaptionNode> c_ModelPath;
 	typedef oprime::c_KeyPath<oprime::c_IndexedKeyNode<c_CaptionNode> > c_InstancePath;
+
+	typedef oprime::c_KeyPath<c_CaptionNode> c_DeltaIndex; // Models the index of a Delta
+
+	/**
+	  * Models the interface of an MIV Instance.
+	  */
+	class c_MIVValueInstance {
+	public:
+		// shared pointer type to an instance of this interface
+		typedef boost::shared_ptr<c_MIVValueInstance> shared_ptr;
+
+		// Begin c_MIVValueInstance
+
+		/**
+		  * Sets this Instance Value to the provided Value represented as a string
+		  */
+		virtual void setValue(const c_DarwinetString& sValue) = 0;
+
+		/**
+		  * Returns the index of the last Delta applied to get our current Value.
+		  */
+		virtual c_DeltaIndex::shared_ptr getCurrentDeltaIndex() = 0;
+
+		// End c_MIVValueInstance
+	};
 
 	/**
 	  * Darwinet Engine Core
@@ -34,15 +60,20 @@ namespace darwinet {
 		// begin c_SEPSI
 
 		/**
-		  * Creates a new value instance of model type with provided model path
-		  * setting it to provided initial value.
+		  * Returns access to the Value Instance in the SEPSI with provided path.
 		  */
-		virtual void createInstance(c_ModelPath::shared_ptr pModelPath,const c_DarwinetString& sInitialValue) = 0;
+		virtual c_MIVValueInstance::shared_ptr getInstance(const c_InstancePath::shared_ptr& pInstancePath) = 0;
 
-		/**
-		  * Sets the value instance with provided path to the provided value
-		  */
-		virtual void setValue(const c_DarwinetString& instance_path,const c_DarwinetString& sValue) = 0;
+//		/**
+//		  * Creates a new value instance of model type with provided model path
+//		  * setting it to provided initial value.
+//		  */
+//		virtual void createInstance(c_ModelPath::shared_ptr pModelPath,const c_DarwinetString& sInitialValue) = 0;
+
+//		/**
+//		  * Sets the value instance with provided path to the provided value
+//		  */
+//		virtual void setValue(const c_DarwinetString& instance_path,const c_DarwinetString& sValue) = 0;
 
 		// End c_SEPSI
 
@@ -79,7 +110,7 @@ namespace darwinet {
 		/**
 		  * Returns required view
 		  */
-		virtual c_DomainView::shared_ptr getView() = 0;
+		virtual c_DomainView::shared_ptr getView(const c_ViewPath::shared_ptr& pViewPath = c_ViewPath::shared_ptr()) = 0;
 
 		// End c_DarwinetDomain
 
@@ -130,7 +161,7 @@ namespace darwinet {
 		/**
 		  * Returns the domain with provided path
 		  */
-		virtual c_DarwinetDomain::shared_ptr get_domain(c_DomainPath::shared_ptr pDomainPath = c_DomainPath::shared_ptr()) = 0;
+		virtual c_DarwinetDomain::shared_ptr getDomain(const c_DomainPath::shared_ptr& pDomainPath = c_DomainPath::shared_ptr()) = 0;
 
 		/**
 		  * Returns our Client Proxy interface used by proxies

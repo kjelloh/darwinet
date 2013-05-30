@@ -7,26 +7,9 @@
 //---------------------------------------------------------------------------
 #include "DarwinetEngineImpl.h"
 #include "DarwinetDomainImpl.h"
-
 #include "DarwinetDomainViewImpl.h"
-
-
-
-
 #include "DarwinetSEPSIImpl.h"
-
-
-
-
-
-
-
-
-
-
-
-
-
+#include "DarwinetSEPSIValueImpl.h"
 
 
 USEFORM("MainFormUnit.cpp", MainForm);
@@ -34,6 +17,7 @@ USEFORM("MainFormUnit.cpp", MainForm);
 #pragma link "ComServ.obj"
 /**
   * notes on Using RAD Studio to build and use COM servers
+  * http://docwiki.embarcadero.com/RADStudio/XE4/en/Class_Hierarchy_in_an_ActiveX_Control_(DAX)
   *
   * Import COM Object and COM Components wrappers to a client using <Component>/<Import Component>
   *		* Select <Import a type library>

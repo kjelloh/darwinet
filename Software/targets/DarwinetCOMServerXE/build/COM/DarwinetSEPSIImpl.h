@@ -23,20 +23,34 @@ class DAX_COM_CLASS TDarwinetSEPSIImpl : public TCppAutoObjectEvent<IDarwinetSEP
   IDarwinetSEPSIEventsDisp FEvents;
 
   /**
-	* Private storage to our actual SEPSI instance
+	* Private storage to our actual SEPSI instance of the Darwinet Engine
 	*/
-  darwinet::c_SEPSI::shared_ptr m_pSEPSI;
+  darwinet::c_SEPSI::shared_ptr m_pDarwinetEngineSEPSI;
 
 public:
   __fastcall TDarwinetSEPSIImpl();
   __fastcall TDarwinetSEPSIImpl(const System::_di_IInterface Controller);
   __fastcall TDarwinetSEPSIImpl(Comobj::TComObjectFactory* Factory, const System::_di_IInterface Controller);
   void __fastcall EventSinkChanged(const System::_di_IInterface EventSink);
-  
 
   // IDarwinetSEPSI
 protected:
-  STDMETHOD(setValue(BSTR sInstancePath, BSTR sValue));
+  STDMETHOD(getValue(BSTR sInstancePath, DarwinetSEPSIValue** pValue));
+
+
+private:
+
+  /**
+	* Destructor added to track destruction of this instance
+	*/
+  virtual __fastcall ~TDarwinetSEPSIImpl();
+
+	/**
+	  * Dummy instance of the value we return in getValue() method.
+	  * TODO: Replace by mechanism that really finds an existing instance
+	  * bound to the actual instance in our Darwinet Engine.
+	  */
+	TCOMIDarwinetSEPSIValue m_COMIDarwinetSEPSIValue;
 };
 
 

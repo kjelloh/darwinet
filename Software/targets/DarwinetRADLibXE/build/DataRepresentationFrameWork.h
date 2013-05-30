@@ -738,6 +738,7 @@ public:
 	  */
 	static unsigned long intValueOfDecimalString(const std::string& sDecimalString);
 	static unsigned long intValueOfDecimalString(const c_DataRepresentationFramework::c_AsciiString& sDecimalString);
+	static unsigned long intValueOfDecimalString(const c_DataRepresentationFramework::c_UTF16String& sDecimalString);
 
 	/**
 	  * Returns provided char with parity bit set to even parity

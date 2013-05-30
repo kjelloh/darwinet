@@ -158,16 +158,17 @@
 				<DependentOn>COM\DarwinetSEPSIImpl.h</DependentOn>
 				<BuildOrder>7</BuildOrder>
 			</CppCompile>
+			<CppCompile Include="COM\DarwinetSEPSIValueImpl.cpp">
+				<CoClasses>DarwinetSEPSIValue</CoClasses>
+				<DependentOn>COM\DarwinetSEPSIValueImpl.h</DependentOn>
+				<BuildOrder>10</BuildOrder>
+			</CppCompile>
 			<CppCompile Include="DarwinetCOMServerXE.cpp">
 				<BuildOrder>0</BuildOrder>
 			</CppCompile>
 			<CppCompile Include="darwinet\InProcDarwinetEngineFramework.cpp">
 				<DependentOn>darwinet\InProcDarwinetEngineFramework.h</DependentOn>
 				<BuildOrder>8</BuildOrder>
-			</CppCompile>
-			<CppCompile Include="darwinet\SEPSIImplementationUnit.cpp">
-				<DependentOn>darwinet\SEPSIImplementationUnit.h</DependentOn>
-				<BuildOrder>9</BuildOrder>
 			</CppCompile>
 			<CppCompile Include="MainFormUnit.cpp">
 				<Form>MainForm</Form>

@@ -97,18 +97,17 @@ object MainForm: TMainForm
     object ValuePathLabel: TLabel
       Left = 16
       Top = 40
-      Width = 108
+      Width = 100
       Height = 13
-      Caption = 'darwinet.hell_world = '
+      Caption = 'darwinet.hello_world'
     end
-    object ValueEdit: TEdit
-      Left = 130
+    object IntValueEdit: TCSpinEdit
+      Left = 122
       Top = 40
       Width = 121
-      Height = 21
+      Height = 22
       TabOrder = 0
-      Text = 'Hello!'
-      OnChange = ValueEditChange
+      OnChange = IntValueEditChange
     end
   end
   object MainMenu1: TMainMenu

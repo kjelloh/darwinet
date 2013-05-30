@@ -3,12 +3,340 @@
 #pragma hdrstop
 
 #include "InProcDarwinetEngineFramework.h"
-#include "SEPSIImplementationUnit.h"
 #include <map>
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 
 namespace darwinet {
+
+	/**
+	  * MIV name space header
+	  */
+	namespace miv {
+
+
+		/**
+		  * Base interface of all SEPSI deltas.
+		  */
+		class c_DeltaSEPSI {
+		public:
+			// shared pointer to a c_DeltaSEPSI
+			typedef boost::shared_ptr<c_DeltaSEPSI> shared_ptr;
+
+			// Begin c_DeltaSEPSI
+
+			/**
+			  * Returns the index of the target Delta to which we apply
+			  */
+			virtual c_DeltaIndex::shared_ptr getTargetIndex() = 0;
+
+			// End c_DeltaSEPSI
+
+		};
+
+	};
+
+
+	/**
+	  * Implementation of the miv namespace
+	  */
+	namespace miv {
+
+
+		/**
+		  * Base class of all Delta implementations
+		  */
+		class c_DeltaImpl : public c_DeltaSEPSI {
+		public:
+
+			/**
+			  * Constructor
+			  */
+			c_DeltaImpl(const c_DeltaIndex::shared_ptr& pTargetIndex);
+
+			// Begin c_DeltaSEPSI
+
+			/**
+			  * Returns the index of the target Delta to which we apply
+			  */
+			virtual c_DeltaIndex::shared_ptr getTargetIndex();
+
+			// End c_DeltaSEPSI
+
+		private:
+
+			/**
+			  * Private storage of the index of the target delta
+			  * to which this delta applies.
+			  */
+			c_DeltaIndex::shared_ptr m_pTargetIndex;
+
+		};
+
+		/**
+		  * Implements an Integer Delta
+		  */
+		class c_IntDeltaImpl : public c_DeltaImpl {
+		public:
+
+			/**
+			  * Creates and integer delta
+			  */
+			c_IntDeltaImpl(const c_DeltaIndex::shared_ptr& pTargetIndex,int int_diff);
+
+		private:
+
+			/**
+			  * Private storage of the ingerer diff we represent.
+			  */
+			int m_int_diff;
+		};
+
+		//-----------------------------------------------------------------------
+
+		/**
+		  * Models an implementation of the c_MIVValueInstance interface
+		  */
+		class c_MIVValueInstanceImpl : public c_MIVValueInstance {
+		public:
+
+			/**
+			  * Constructor
+			  */
+			c_MIVValueInstanceImpl(const c_DeltaIndex::shared_ptr& pCurrentDeltaIndex);
+
+			/**
+			  * Virtual destructor
+			  */
+			virtual ~c_MIVValueInstanceImpl();
+
+			// Begin c_MIVValueInstance
+
+			/**
+			  * Sets this Instance Value to the provided Value represented as a string
+			  */
+			virtual void setValue(const c_DarwinetString& sValue);
+
+			/**
+			  * Returns the index of the last Delta applied to get our current Value.
+			  */
+			virtual c_DeltaIndex::shared_ptr getCurrentDeltaIndex();
+
+
+			// End c_MIVValueInstance
+
+		private:
+
+			/**
+			  * Returns the difference between provided value and the value
+			  * we actually have
+			  */
+			c_DeltaSEPSI::shared_ptr diff(const c_DarwinetString& sValue);
+
+			/**
+			  * Private storage of the index of the last delta applied to us.
+			  */
+			c_DeltaIndex::shared_ptr m_pCurrentDeltaIndex;
+
+			/**
+			  * Private storage of our Integer Value
+			  */
+			int m_value;
+
+
+		};
+
+		//-----------------------------------------------------------------------
+		/**
+		  * Models an implementation of the c_SEPSI interface
+		  */
+		class c_SEPSIImpl : public  c_SEPSI {
+		public:
+
+			/**
+			  * Constructor
+			  */
+			c_SEPSIImpl();
+
+			/**
+			  * Virtual Destructor
+			  */
+			virtual ~c_SEPSIImpl();
+
+			// begin c_SEPSI
+
+			/**
+			  * Returns access to the Value Instance in the SEPSI with provided path.
+			  */
+			virtual c_MIVValueInstance::shared_ptr getInstance(const c_InstancePath::shared_ptr& pInstancePath);
+
+			// End c_SEPSI
+
+		private:
+
+			/**
+			  * Models a value instance
+			  */
+			typedef std::pair<c_ModelPath::shared_ptr,c_DarwinetString> c_Instance;
+
+			/**
+			  * Private storage of current value instances
+			  */
+			std::vector<c_Instance> m_Instances;
+
+		};
+	} // namespace miv
+
+	/**
+	  * MIV namespace implementation
+	  */
+	namespace miv {
+
+		//-----------------------------------------------------------------------
+		//-----------------------------------------------------------------------
+		/**
+		  * Constructor
+		  */
+		c_DeltaImpl::c_DeltaImpl(const c_DeltaIndex::shared_ptr& pTargetIndex)
+			: m_pTargetIndex(pTargetIndex)
+		{
+			LOG_METHOD_SCOPE;
+		}
+
+		// Begin c_DeltaSEPSI
+
+		/**
+		  * Returns the index of the target Delta to which we apply
+		  */
+		c_DeltaIndex::shared_ptr c_DeltaImpl::getTargetIndex() {
+			return this->m_pTargetIndex;
+		}
+
+		// End c_DeltaSEPSI
+
+
+		//-----------------------------------------------------------------------
+		//-----------------------------------------------------------------------
+		/**
+		  * Creates and integer delta
+		  */
+		c_IntDeltaImpl::c_IntDeltaImpl(const c_DeltaIndex::shared_ptr& pTargetIndex,int int_diff)
+			:  c_DeltaImpl(pTargetIndex)
+			  ,m_int_diff(int_diff)
+		{
+			LOG_METHOD_SCOPE;
+		}
+
+		//-----------------------------------------------------------------------
+		//-----------------------------------------------------------------------
+		/**
+		  * Constructor
+		  */
+		c_MIVValueInstanceImpl::c_MIVValueInstanceImpl(const c_DeltaIndex::shared_ptr& pCurrentDeltaIndex)
+			: m_pCurrentDeltaIndex(pCurrentDeltaIndex)
+			  ,m_value(0)
+		{
+			LOG_METHOD_SCOPE;
+		}
+
+		/**
+		  * Virtual destructor
+		  */
+		c_MIVValueInstanceImpl::~c_MIVValueInstanceImpl() {
+			LOG_METHOD_SCOPE;
+		}
+
+		// Begin c_MIVValueInstance
+
+		/**
+		  * Sets this Instance Value to the provided Value represented as a string
+		  */
+		void c_MIVValueInstanceImpl::setValue(const c_DarwinetString& sValue) {
+			LOG_NOT_IMPLEMENTED;
+			c_DeltaSEPSI::shared_ptr pDelta = this->diff(sValue);
+			if (pDelta) {
+				// We are to change!
+
+			}
+		}
+
+		/**
+		  * Returns the index of the last Delta applied to get our current Value.
+		  */
+		c_DeltaIndex::shared_ptr c_MIVValueInstanceImpl::getCurrentDeltaIndex() {
+			return this->m_pCurrentDeltaIndex;
+		}
+
+		// End c_MIVValueInstance
+
+		/**
+		  * Returns the difference between provided value and the value
+		  * we actually have
+		  */
+		c_DeltaSEPSI::shared_ptr c_MIVValueInstanceImpl::diff(const c_DarwinetString& sValue) {
+			c_DeltaSEPSI::shared_ptr result;
+			LOG_NOT_IMPLEMENTED;
+			// TODO: Implement the real diff mechanism.
+			//       For now, simply asume we are an integer and calculate the int difference
+			try {
+				int other_int_value = c_DataRepresentationFramework::intValueOfDecimalString(sValue);
+				int int_diff = this->m_value - other_int_value;
+				if (int_diff != 0) {
+					// Yes, We have changed!
+					c_DeltaSEPSI::shared_ptr pDelta(new c_IntDeltaImpl(this->getCurrentDeltaIndex(),int_diff));
+					result = pDelta;
+				}
+			}
+			catch (...) {
+				c_LogString sMessage(__FUNCTION__" failed. ");
+				sMessage += _UTF8sz(" Integer Diff calculation throwed an excpetion!");
+				LOG_DESIGN_INSUFFICIENCY(sMessage);
+			}
+
+			return result;
+		}
+
+		//-----------------------------------------------------------------------
+		//-----------------------------------------------------------------------
+
+		//-----------------------------------------------------------------------
+		//-----------------------------------------------------------------------
+		/**
+		  * Constructor
+		  */
+		c_SEPSIImpl::c_SEPSIImpl()
+		{
+			LOG_METHOD_SCOPE;
+		}
+
+		//-----------------------------------------------------------------------
+		/**
+		  * Virtual Destructor
+		  */
+		c_SEPSIImpl::~c_SEPSIImpl() {
+			LOG_METHOD_SCOPE;
+		}
+
+		// begin c_SEPSI
+		//-----------------------------------------------------------------------
+
+		/**
+		  * Returns access to the Value Instance in the SEPSI with provided path.
+		  */
+		c_MIVValueInstance::shared_ptr c_SEPSIImpl::getInstance(const c_InstancePath::shared_ptr& pInstancePath) {
+			// TODO: Implement retruning the actual instance in our storage.
+			//       For now, simply return a lpocal static instance
+			static c_MIVValueInstance::shared_ptr static_value_instance;
+			if (!static_value_instance) {
+				c_DeltaIndex::shared_ptr pDummyIndex(new c_DeltaIndex()); // Dummy
+				static_value_instance.reset(new c_MIVValueInstanceImpl(pDummyIndex));
+			}
+			return static_value_instance;
+		}
+
+		// End c_SEPSI
+
+	} // namespace miv
 
 	class c_DomainViewImpl : public c_DomainView {
 	public:
@@ -48,7 +376,7 @@ namespace darwinet {
 		/**
 		  * Returns required view
 		  */
-		virtual c_DomainView::shared_ptr getView();
+		virtual c_DomainView::shared_ptr getView(const c_ViewPath::shared_ptr& pViewPath);
 
 		// End c_DarwinetDomain
 
@@ -112,7 +440,7 @@ namespace darwinet {
 		/**
 		  * Returns the domain with provided path
 		  */
-		virtual c_DarwinetDomain::shared_ptr get_domain(c_DomainPath::shared_ptr pDomainPath);
+		virtual c_DarwinetDomain::shared_ptr getDomain(const c_DomainPath::shared_ptr& pDomainPath);
 
 		/**
 		  * Returns our Client Proxy interface used by proxies
@@ -171,7 +499,7 @@ namespace darwinet {
 	/**
 	  * Returns required view
 	  */
-	c_DomainView::shared_ptr c_DarwinetDomainImpl::getView() {
+	c_DomainView::shared_ptr c_DarwinetDomainImpl::getView(const c_ViewPath::shared_ptr& pViewPath) {
 		if (!this->m_pViewSingleton) {
 			this->m_pViewSingleton.reset(new c_DomainViewImpl());
 		}
@@ -208,7 +536,7 @@ namespace darwinet {
 			//       For now, just use a dummy/default one.
 			c_LogString sMessage("c_ClientProxyInterfaceImpl::getSEPSI, Mapped new SEPSI Proxy");
 			LOG_DEVELOPMENT_TRACE(sMessage);
-			result = engine()->get_domain()->getView()->getSEPSI();
+			result = engine()->getDomain()->getView()->getSEPSI();
 			this->m_SEPSIProxyMap[pProxy] = result;
 		}
 		return result;
@@ -232,7 +560,7 @@ namespace darwinet {
 	/**
 	  * Returns the domain with provided path
 	  */
-	c_DarwinetDomain::shared_ptr c_DarwinetEngineImpl::get_domain(c_DomainPath::shared_ptr pDomainPath) {
+	c_DarwinetDomain::shared_ptr c_DarwinetEngineImpl::getDomain(const c_DomainPath::shared_ptr& pDomainPath) {
 		LOG_NOT_IMPLEMENTED;
 		// TODO: Implement Domian handling.
 		// For now, just return a singleton (disregard provided domain path if singleton already exists)

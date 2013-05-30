@@ -34,6 +34,7 @@
 #include <Vcl.OleServer.hpp>
 #include "DarwinetEngineProxyFramework.h"
 #include "DarwinetCOMServer_OCX.h"
+#include "cspin.h"
 //---------------------------------------------------------------------------
 class TMainForm : public TForm
 {
@@ -53,13 +54,13 @@ __published:	// IDE-managed Components
 	TGroupBox *SEPSIGroupBox;
 	TButton *SEPSIConnectButton;
 	TGroupBox *ValuesEditGroupBox;
-	TEdit *ValueEdit;
 	TLabel *ValuePathLabel;
+	TCSpinEdit *IntValueEdit;
 	void __fastcall EngineConnectButtonClick(TObject *Sender);
 	void __fastcall DomainConnectButtonClick(TObject *Sender);
 	void __fastcall ViewConnectButtonClick(TObject *Sender);
 	void __fastcall SEPSIConnectButtonClick(TObject *Sender);
-	void __fastcall ValueEditChange(TObject *Sender);
+	void __fastcall IntValueEditChange(TObject *Sender);
 private:	// User declarations
 
 	enum e_DarwineEngineWrapperType {

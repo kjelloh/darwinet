@@ -10,7 +10,7 @@
 // ************************************************************************ //
 
 // $Rev: 46046 $
-// File generated on 2013-05-15 17:52:01 from Type Library described below.
+// File generated on 2013-05-30 11:33:08 from Type Library described below.
 
 // ************************************************************************  //
 // Type Lib: C:\subversion\darwinet\trunk\Software\targets\DarwinetCOMServerXE\build\.\Win32\Debug\DarwinetCOMServerXE.exe (1)
@@ -162,6 +162,39 @@ __published:
 
 // *********************************************************************//
 // COM Component Proxy Class Declaration
+// Component Name   : TDarwinetSEPSIValue
+// Help String      : DarwinetSEPSIValue Object
+// Default Interface: IDarwinetSEPSIValue
+// Def. Intf. Object: IDarwinetSEPSIValuePtr
+// Def. Intf. DISP? : No
+// Event   Interface: IDarwinetSEPSIValueEvents
+// TypeFlags        : (2) CanCreate
+// *********************************************************************//
+class PACKAGE TDarwinetSEPSIValue : public Vcl::Oleserver::TOleServer
+{
+  IDarwinetSEPSIValuePtr m_DefaultIntf;
+  _di_IUnknown __fastcall GetDunk();
+public:
+  __fastcall TDarwinetSEPSIValue(System::Classes::TComponent* owner) : Vcl::Oleserver::TOleServer(owner)
+  {}
+
+  IDarwinetSEPSIValuePtr& GetDefaultInterface();
+  void __fastcall InitServerData();
+  void __fastcall Connect();
+  void __fastcall Disconnect();
+  void __fastcall BeforeDestruction();
+  void __fastcall ConnectTo(IDarwinetSEPSIValuePtr intf);
+
+  virtual void __fastcall InvokeEvent(int DispID, Vcl::Oleserver::TVariantArray& params);
+
+  void            __fastcall setTo(BSTR sValue/*[in]*/);
+private:
+__published:
+};
+
+
+// *********************************************************************//
+// COM Component Proxy Class Declaration
 // Component Name   : TDarwinetSEPSI
 // Help String      : Darwinet SEPSI (Shared Evolving Privately Stored) Object
 // Default Interface: IDarwinetSEPSI
@@ -187,7 +220,7 @@ public:
 
   virtual void __fastcall InvokeEvent(int DispID, Vcl::Oleserver::TVariantArray& params);
 
-  void            __fastcall setValue(BSTR sInstancePath/*[in]*/, BSTR sValue/*[in]*/);
+  Darwinetcomserver_tlb::DarwinetSEPSIValue* __fastcall getValue(BSTR sInstancePath/*[in]*/);
 private:
 __published:
 };

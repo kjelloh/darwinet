@@ -16,6 +16,7 @@
 #pragma package(smart_init)
 #pragma link "DarwinetCOMServer_OCX"
 #pragma link "DarwinetCOMServer_OCX"
+#pragma link "cspin"
 #pragma resource "*.dfm"
 TMainForm *MainForm;
 
@@ -57,7 +58,7 @@ void TMainForm::updateGUIToReflectChanges() {
 	this->SEPSIConnectButton->Enabled = ViewDomainCreated;
 	this->SEPSIConnectButton->Caption = (SEPSICreated?"Close":"Open");
 	this->ValuePathLabel->Enabled = SEPSICreated;
-	this->ValueEdit->Enabled = SEPSICreated;
+	this->IntValueEdit->Enabled = SEPSICreated;
 }
 
 //---------------------------------------------------------------------------
@@ -225,14 +226,23 @@ void __fastcall TMainForm::SEPSIConnectButtonClick(TObject *Sender)
 }
 //---------------------------------------------------------------------------
 
-void __fastcall TMainForm::ValueEditChange(TObject *Sender)
+
+void __fastcall TMainForm::IntValueEditChange(TObject *Sender)
 {
 	// Set the SEPSI value to the new one!
 	if (m_pCOMIDarwinetSEPSI) {
 		// We have a SEPSI instance to talk to!
 		String sValuePath = this->ValuePathLabel->Caption;
-		String sValue = this->ValueEdit->Text;
-		m_pCOMIDarwinetSEPSI->setValue(sValuePath.c_str(),sValue.c_str());
+		String sValue = this->IntValueEdit->Text;
+// 130530, This does not yet work. The returned pCOMIDarwinetSEPSIValue is not available beacuse I have not figured out how to marshal it back from teh server.
+//		TCOMIDarwinetSEPSIValue pCOMIDarwinetSEPSIValue = m_pCOMIDarwinetSEPSI->getValue(sValuePath.c_str());
+//		if (pCOMIDarwinetSEPSIValue) {
+//			pCOMIDarwinetSEPSIValue->setTo(sValue.c_str());
+//		}
+		TCOMIDarwinetSEPSIValue pCOMIDarwinetSEPSIValue = CoDarwinetSEPSIValue::Create();
+		if (pCOMIDarwinetSEPSIValue) {
+			pCOMIDarwinetSEPSIValue->setTo(sValue.c_str());
+		}
 	}
 }
 //---------------------------------------------------------------------------

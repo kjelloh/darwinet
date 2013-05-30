@@ -1271,6 +1271,10 @@ unsigned long c_DataRepresentationFramework::intValueOfDecimalString(const std::
 unsigned long c_DataRepresentationFramework::intValueOfDecimalString(const c_DataRepresentationFramework::c_AsciiString& sDecimalString) {
 	return c_DataRepresentationFramework::intValueOfDecimalString(sDecimalString.anonymous());
 }
+unsigned long c_DataRepresentationFramework::intValueOfDecimalString(const c_DataRepresentationFramework::c_UTF16String& sDecimalString) {
+	c_DataRepresentationFramework::c_AsciiString sAsciiString(c_DataRepresentationFramework::toAsciiString(sDecimalString));
+	return c_DataRepresentationFramework::intValueOfDecimalString(sAsciiString);
+}
 
 /**
   * Create a 7 bit ascii buffer

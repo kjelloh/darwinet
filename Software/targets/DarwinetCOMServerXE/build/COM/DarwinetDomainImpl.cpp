@@ -64,6 +64,8 @@ IDarwinetDomainView* STDMETHODCALLTYPE TDarwinetDomainImpl::getView()
 	LOG_METHOD_SCOPE;
 	// Create the Domain COM object and return the interface to it
 	if (!this->m_COMIDarwinetDomainView) {
+		c_LogString sMessage(__FUNCTION__", called CoDarwinetDomainView::Create() to create m_COMIDarwinetDomainView");
+		LOG_DEVELOPMENT_TRACE(sMessage);
 		m_COMIDarwinetDomainView = CoDarwinetDomainView::Create();
 	}
 	return m_COMIDarwinetDomainView;

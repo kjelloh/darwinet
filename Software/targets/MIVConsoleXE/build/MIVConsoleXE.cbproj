@@ -68,7 +68,7 @@
 			<PackageImports>IPIndyImpl;bindcompfmx;fmx;rtl;dbrtl;IndySystem;DbxClientDriver;bindcomp;inetdb;DBXInterBaseDriver;DataSnapCommon;DataSnapClient;DataSnapServer;DataSnapProviderClient;xmlrtl;DbxCommonDriver;IndyProtocols;DBXMySQLDriver;dbxcds;soaprtl;bindengine;DBXOracleDriver;CustomIPTransport;dsnap;DBXInformixDriver;IndyCore;fmxase;DBXFirebirdDriver;inet;fmxobj;inetdbxpress;DBXSybaseASADriver;fmxdae;dbexpress;DataSnapIndy10ServerTransport;$(PackageImports)</PackageImports>
 			<Multithreaded>true</Multithreaded>
 			<DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
-			<AllPackageLibs>rtl.lib;vcl.lib;vclactnband.lib;vclx.lib;VclSmp.lib;IndyCore.lib;IndySystem.lib;IndyProtocols.lib;DarwinetCOM.lib;DarwinetRADLibXE.lib</AllPackageLibs>
+			<AllPackageLibs>rtl.lib;vcl.lib;vclactnband.lib;vclx.lib;VclSmp.lib;IndyCore.lib;IndySystem.lib;IndyProtocols.lib;DarwinetCOM.lib;DarwinetRADLibXE.lib;bcbsmp.lib</AllPackageLibs>
 			<Icon_MainIcon>$(BDS)\bin\cbuilder_PROJECTICON.ico</Icon_MainIcon>
 			<UsingDelphiRTL>true</UsingDelphiRTL>
 			<IncludePath>ImportedTLB\;darwinet\;frames\;Forms\;C:\subversion\darwinet\trunk\Software\targets\DarwinetRADLibXE\build;$(IncludePath)</IncludePath>
@@ -119,7 +119,7 @@
 			<Defines>_DEBUG;$(Defines)</Defines>
 			<Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>
 			<VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-			<LinkPackageImports>rtl.bpi;vcl.bpi;vclactnband.bpi;vclx.bpi;VclSmp.bpi;IndyCore.bpi;IndySystem.bpi;IndyProtocols.bpi</LinkPackageImports>
+			<LinkPackageImports>rtl.bpi;vcl.bpi;vclactnband.bpi;vclx.bpi;VclSmp.bpi;IndyCore.bpi;IndySystem.bpi;IndyProtocols.bpi;bcbsmp.bpi</LinkPackageImports>
 			<VerInfo_Locale>1033</VerInfo_Locale>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_2)'!=''">
