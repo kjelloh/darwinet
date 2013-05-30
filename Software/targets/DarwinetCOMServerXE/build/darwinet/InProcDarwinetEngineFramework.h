@@ -1,4 +1,5 @@
 //---------------------------------------------------------------------------
+#include "DarwinetBase.h"
 #include "DataRepresentationFrameWork.h"
 #include <boost/shared_ptr.hpp>
 #include "keypath.h"
@@ -14,16 +15,6 @@
   */
 namespace darwinet {
 
-	typedef c_DataRepresentationFramework::c_UTF8String c_DarwinetString;
-
-	typedef c_DarwinetString c_CaptionNode;
-
-	typedef oprime::c_KeyPath<c_CaptionNode> c_DomainPath;
-	typedef oprime::c_KeyPath<c_CaptionNode> c_ViewPath;
-	typedef oprime::c_KeyPath<c_CaptionNode> c_ModelPath;
-	typedef oprime::c_KeyPath<oprime::c_IndexedKeyNode<c_CaptionNode> > c_InstancePath;
-
-	typedef oprime::c_KeyPath<c_CaptionNode> c_DeltaIndex; // Models the index of a Delta
 
 	/**
 	  * Models the interface of an MIV Instance.

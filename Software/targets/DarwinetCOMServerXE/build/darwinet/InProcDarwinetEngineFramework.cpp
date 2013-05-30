@@ -3,6 +3,7 @@
 #pragma hdrstop
 
 #include "InProcDarwinetEngineFramework.h"
+#include "PeerSinkMail.h"
 #include <map>
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
@@ -14,27 +15,25 @@ namespace darwinet {
 	  */
 	namespace miv {
 
-
 		/**
-		  * Base interface of all SEPSI deltas.
+		  * Models a Distributor of MIV deltas
 		  */
-		class c_DeltaSEPSI {
+		class c_DeltaMIVDistributor {
 		public:
-			// shared pointer to a c_DeltaSEPSI
-			typedef boost::shared_ptr<c_DeltaSEPSI> shared_ptr;
 
-			// Begin c_DeltaSEPSI
+			// Begin c_DeltaMIVDistributor
 
 			/**
-			  * Returns the index of the target Delta to which we apply
+			  * Distributes provided delta to peers and to ourself.
 			  */
-			virtual c_DeltaIndex::shared_ptr getTargetIndex() = 0;
+			virtual void distribute(const c_DeltaSEPSI::shared_ptr& pDelta) = 0;
 
-			// End c_DeltaSEPSI
+			// End c_DeltaMIVDistributor
+
 
 		};
 
-	};
+	}; // end namespace miv
 
 
 	/**
@@ -146,6 +145,65 @@ namespace darwinet {
 
 		};
 
+		/**
+		  * Models a Peer sink that connects to "us"
+		  */
+		class c_PeerSinkSelf : public c_PeerSink {
+		public:
+			/**
+			  * Constructor
+			  */
+			c_PeerSinkSelf();
+
+			// Begin c_PeerSink
+
+			/**
+			  * Send provided delta to the Sink we represent
+			  */
+			virtual void send(const miv::c_DeltaSEPSI::shared_ptr& pDelta);
+
+			// End c_PeerSink
+
+		};
+
+		/**
+		  * Implements the c_DeltaMIVDistributor interface
+		  */
+		class c_DeltaMIVDistributorImpl : public c_DeltaMIVDistributor {
+		public:
+
+			typedef boost::shared_ptr<c_DeltaMIVDistributorImpl> shared_ptr;
+
+			/**
+			  * Constructor
+			  */
+			c_DeltaMIVDistributorImpl();
+
+			// Begin c_DeltaMIVDistributor
+
+			/**
+			  * Distributes provided delta to peers and to ourself.
+			  */
+			virtual void distribute(const c_DeltaSEPSI::shared_ptr& pDelta);
+
+			// End c_DeltaMIVDistributor
+
+		private:
+
+			// this->distribute(pDelta,this->getPeerSinksToDistributeTo());
+
+			/**
+			  * Distributes provided delta to provided Peers
+			  */
+			void distribute(const c_DeltaSEPSI::shared_ptr& pDelta,const c_PeerSinks_shared_ptr& pPeers);
+
+			/**
+			  * Returns an instance of Peers selected to be targets of our delta distributions
+			  */
+			c_PeerSinks_shared_ptr getPeerSinksToDistributeTo();
+
+		};
+
 		//-----------------------------------------------------------------------
 		/**
 		  * Models an implementation of the c_SEPSI interface
@@ -186,6 +244,166 @@ namespace darwinet {
 
 		};
 	} // namespace miv
+
+	class c_DomainViewImpl : public c_DomainView {
+	public:
+		c_DomainViewImpl();
+
+		// Begin c_DomainView
+
+		/**
+		  * Reurns the current SEPSI
+		  */
+		virtual c_SEPSI::shared_ptr getSEPSI();
+
+		// End c_DomainView
+
+	private:
+
+		/**
+		  * private storage of our SEPSI instance
+		  */
+		c_SEPSI::shared_ptr m_pSEPSI;
+
+	};
+	//-----------------------------------------------------------------------
+	/**
+	  * Models a Darwinet Domain
+	  */
+	class c_DarwinetDomainImpl : public c_DarwinetDomain {
+	public:
+
+		typedef boost::shared_ptr<c_DarwinetDomainImpl> shared_ptr;
+
+		/**
+		  * Constructor
+		  */
+		c_DarwinetDomainImpl(c_DomainPath::shared_ptr pDomainPath);
+
+		// Begin c_DarwinetDomain
+
+		/**
+		  * Returns required view
+		  */
+		virtual c_DomainView::shared_ptr getView(const c_ViewPath::shared_ptr& pViewPath);
+
+		// End c_DarwinetDomain
+
+		// Begin c_DarwinetDomainImpl
+
+		/**
+		  * Returns access to our c_DeltaMIVDistributorImpl
+		  */
+		miv::c_DeltaMIVDistributorImpl::shared_ptr getDistrubutorImpl();
+
+		// End c_DarwinetDomainImpl
+
+
+	private:
+
+		/**
+		  * private storage of our domain path
+		  */
+		c_DomainPath::shared_ptr m_pDomainPath;
+
+		/**
+		  * Private storage of our view singleton
+		  */
+		c_DomainView::shared_ptr m_pViewSingleton;
+
+		/**
+		  * Private storage of access to our c_DeltaMIVDistributorImpl
+		  */
+		miv::c_DeltaMIVDistributorImpl::shared_ptr m_pDistributor;
+
+
+	};
+
+	/**
+	  * Implements the c_ClientProxyInterface
+	  */
+	class c_ClientProxyInterfaceImpl : public c_ClientProxyInterface {
+	public:
+		/**
+		  * Constructor
+		  */
+		c_ClientProxyInterfaceImpl();
+
+		// Begin c_ClientProxyInterface
+
+		/**
+		  * Returns the Engine SEPSI instance registered for provided Proxy Parent and Proxy.
+		  * Will create the instance if it does not yet exist.
+		  * Will return a NULL instance if Parent Proxy does not have a registered Engine instance.
+		  */
+		virtual c_SEPSI::shared_ptr getSEPSI(void* pParentProxy,void* pProxy);
+
+		// End c_ClientProxyInterface
+
+	private:
+
+		/**
+		  * Maps SEPSI Proxy Instances to SEPSI Instances
+		  */
+		std::map<void*,c_SEPSI::shared_ptr> m_SEPSIProxyMap;
+	};
+	//-----------------------------------------------------------------------
+	/**
+	  * Models a darwinet network Node (The Client Engine)
+	  */
+	class c_DarwinetEngineImpl : public c_DarwinetEngine {
+	public:
+
+		typedef boost::shared_ptr<c_DarwinetEngineImpl> shared_ptr;
+
+		/**
+		  * Constructor
+		  */
+		c_DarwinetEngineImpl();
+
+		// Begin c_DarwinetEngine
+
+		/**
+		  * Returns the domain with provided path
+		  */
+		virtual c_DarwinetDomain::shared_ptr getDomain(const c_DomainPath::shared_ptr& pDomainPath);
+
+		/**
+		  * Returns our Client Proxy interface used by proxies
+		  * to "find eachother".
+		  */
+		virtual c_ClientProxyInterface::shared_ptr getClientProxyInterface();
+
+		// End c_DarwinetEngine
+
+		// Begin c_DarwinetEngineImpl
+
+		/**
+		  * Returns access to the c_DarwinetDomainImpl of provided path
+		  */
+		virtual c_DarwinetDomainImpl::shared_ptr getDomainImpl();
+
+		// End c_DarwinetEngineImpl
+
+
+	private:
+
+		/**
+		  * Private storage of our domain singleton
+		  */
+		c_DarwinetDomainImpl::shared_ptr m_pDomainSingleton;
+
+		c_ClientProxyInterface::shared_ptr m_pClientProxyInterface;
+
+	};
+
+	/**
+	  * Returns the default c_DarwinetEngineImpl instance
+	  */
+	c_DarwinetEngineImpl::shared_ptr engineImpl();
+
+	//-----------------------------------------------------------------------
+	//-----------------------------------------------------------------------
 
 	/**
 	  * MIV namespace implementation
@@ -255,8 +473,11 @@ namespace darwinet {
 			LOG_NOT_IMPLEMENTED;
 			c_DeltaSEPSI::shared_ptr pDelta = this->diff(sValue);
 			if (pDelta) {
-				// We are to change!
-
+				// Distribute the change
+				// Note: The actual change to our state takes place when we process the delta distributed to ourselves.
+				//       In this way we change state through the same channel regardless of wether the change
+				//       occurred internally or at a remote peer.
+				engineImpl()->getDomainImpl()->getDistrubutorImpl()->distribute(pDelta);
 			}
 		}
 
@@ -298,6 +519,73 @@ namespace darwinet {
 
 		//-----------------------------------------------------------------------
 		//-----------------------------------------------------------------------
+		/**
+		  * Constructor
+		  */
+		c_PeerSinkSelf::c_PeerSinkSelf()
+		{
+			LOG_METHOD_SCOPE;
+		}
+
+		// Begin c_PeerSink
+
+		/**
+		  * Send provided delta to the Sink we represent
+		  */
+		void c_PeerSinkSelf::send(const miv::c_DeltaSEPSI::shared_ptr& pDelta) {
+			LOG_NOT_IMPLEMENTED;
+		}
+
+		// End c_PeerSink
+
+		//-----------------------------------------------------------------------
+		//-----------------------------------------------------------------------
+
+		/**
+		  * Constructor
+		  */
+		c_DeltaMIVDistributorImpl::c_DeltaMIVDistributorImpl()
+		{
+
+		}
+
+		// Begin c_DeltaMIVDistributor
+
+		/**
+		  * Distributes provided delta to peers and to ourself.
+		  */
+		void c_DeltaMIVDistributorImpl::distribute(const c_DeltaSEPSI::shared_ptr& pDelta) {
+			LOG_NOT_IMPLEMENTED;
+			this->distribute(pDelta,this->getPeerSinksToDistributeTo());
+		}
+
+		// End c_DeltaMIVDistributor
+
+		/**
+		  * Distributes provided delta to provided Peers
+		  */
+		void c_DeltaMIVDistributorImpl::distribute(const c_DeltaSEPSI::shared_ptr& pDelta,const c_PeerSinks_shared_ptr& pPeers) {
+			if (pDelta) {
+				if (pPeers) {
+					for (c_PeerSinks::const_iterator iter = pPeers->begin(); iter != pPeers->end(); ++iter) {
+						(*iter)->send(pDelta);
+					}
+				}
+			}
+		}
+
+		/**
+		  * Returns an instance of Peers selected to be targets of our delta distributions
+		  */
+		c_PeerSinks_shared_ptr c_DeltaMIVDistributorImpl::getPeerSinksToDistributeTo() {
+			c_PeerSinks_shared_ptr result(new c_PeerSinks());
+			LOG_NOT_IMPLEMENTED;
+			c_PeerSink::shared_ptr pTestPeer2(new c_PeerSinkMail(_UTF8sz("peer2@darwinet.se")));
+			result->push_back(pTestPeer2);
+			c_PeerSink::shared_ptr pThisPeer(new c_PeerSinkSelf());
+			result->push_back(pThisPeer);
+			return result;
+		}
 
 		//-----------------------------------------------------------------------
 		//-----------------------------------------------------------------------
@@ -337,131 +625,6 @@ namespace darwinet {
 		// End c_SEPSI
 
 	} // namespace miv
-
-	class c_DomainViewImpl : public c_DomainView {
-	public:
-		c_DomainViewImpl();
-
-		// Begin c_DomainView
-
-		/**
-		  * Reurns the current SEPSI
-		  */
-		virtual c_SEPSI::shared_ptr getSEPSI();
-
-		// End c_DomainView
-
-	private:
-
-		/**
-		  * private storage of our SEPSI instance
-		  */
-		c_SEPSI::shared_ptr m_pSEPSI;
-
-	};
-	//-----------------------------------------------------------------------
-	/**
-	  * Models a Darwinet Domain
-	  */
-	class c_DarwinetDomainImpl : public c_DarwinetDomain {
-	public:
-
-		/**
-		  * Constructor
-		  */
-		c_DarwinetDomainImpl(c_DomainPath::shared_ptr pDomainPath);
-
-		// Begin c_DarwinetDomain
-
-		/**
-		  * Returns required view
-		  */
-		virtual c_DomainView::shared_ptr getView(const c_ViewPath::shared_ptr& pViewPath);
-
-		// End c_DarwinetDomain
-
-	private:
-
-		/**
-		  * private storage of our domain path
-		  */
-		c_DomainPath::shared_ptr m_pDomainPath;
-
-		/**
-		  * Private storage of our view singleton
-		  */
-		c_DomainView::shared_ptr m_pViewSingleton;
-
-
-	};
-
-	/**
-	  * Implements the c_ClientProxyInterface
-	  */
-	class c_ClientProxyInterfaceImpl : public c_ClientProxyInterface {
-	public:
-		/**
-		  * Constructor
-		  */
-		c_ClientProxyInterfaceImpl();
-
-		// Begin c_ClientProxyInterface
-
-		/**
-		  * Returns the Engine SEPSI instance registered for provided Proxy Parent and Proxy.
-		  * Will create the instance if it does not yet exist.
-		  * Will return a NULL instance if Parent Proxy does not have a registered Engine instance.
-		  */
-		virtual c_SEPSI::shared_ptr getSEPSI(void* pParentProxy,void* pProxy);
-
-		// End c_ClientProxyInterface
-
-	private:
-
-		/**
-		  * Maps SEPSI Proxy Instances to SEPSI Instances
-		  */
-		std::map<void*,c_SEPSI::shared_ptr> m_SEPSIProxyMap;
-	};
-	//-----------------------------------------------------------------------
-	/**
-	  * Models a darwinet network Node (The Client Engine)
-	  */
-	class c_DarwinetEngineImpl : public c_DarwinetEngine {
-	public:
-
-		/**
-		  * Constructor
-		  */
-		c_DarwinetEngineImpl();
-
-		// Begin c_DarwinetEngine
-
-		/**
-		  * Returns the domain with provided path
-		  */
-		virtual c_DarwinetDomain::shared_ptr getDomain(const c_DomainPath::shared_ptr& pDomainPath);
-
-		/**
-		  * Returns our Client Proxy interface used by proxies
-		  * to "find eachother".
-		  */
-		virtual c_ClientProxyInterface::shared_ptr getClientProxyInterface();
-
-		// End c_DarwinetEngine
-
-	private:
-
-		/**
-		  * Private storage of our domain singleton
-		  */
-		c_DarwinetDomain::shared_ptr m_pDomainSingleton;
-
-		c_ClientProxyInterface::shared_ptr m_pClientProxyInterface;
-
-	};
-	//-----------------------------------------------------------------------
-	//-----------------------------------------------------------------------
 
 	c_DomainViewImpl::c_DomainViewImpl()
 	{
@@ -507,6 +670,20 @@ namespace darwinet {
 	}
 
 	// End c_DarwinetDomain
+
+	// Begin c_DarwinetDomainImpl
+
+	/**
+	  * Returns access to our c_DeltaMIVDistributorImpl
+	  */
+	miv::c_DeltaMIVDistributorImpl::shared_ptr c_DarwinetDomainImpl::getDistrubutorImpl() {
+		if (!this->m_pDistributor) {
+			this->m_pDistributor.reset(new miv::c_DeltaMIVDistributorImpl());
+		}
+		return this->m_pDistributor;
+	}
+
+	// End c_DarwinetDomainImpl
 
 	//-----------------------------------------------------------------------
 	//-----------------------------------------------------------------------
@@ -561,13 +738,7 @@ namespace darwinet {
 	  * Returns the domain with provided path
 	  */
 	c_DarwinetDomain::shared_ptr c_DarwinetEngineImpl::getDomain(const c_DomainPath::shared_ptr& pDomainPath) {
-		LOG_NOT_IMPLEMENTED;
-		// TODO: Implement Domian handling.
-		// For now, just return a singleton (disregard provided domain path if singleton already exists)
-		if (!this->m_pDomainSingleton) {
-			this->m_pDomainSingleton.reset(new c_DarwinetDomainImpl(pDomainPath));
-		}
-		return this->m_pDomainSingleton;
+		return this->getDomainImpl();
 	}
 
 	/**
@@ -583,15 +754,45 @@ namespace darwinet {
 
 	// End c_DarwinetEngine
 
+	// Begin c_DarwinetEngineImpl
+
+	/**
+	  * Returns access to the c_DarwinetDomainImpl of provided path
+	  */
+	c_DarwinetDomainImpl::shared_ptr c_DarwinetEngineImpl::getDomainImpl() {
+		LOG_NOT_IMPLEMENTED;
+		// TODO: Implement Domain handling.
+		// For now, just return a singleton (disregard provided domain path if singleton already exists)
+		if (!this->m_pDomainSingleton) {
+			c_DomainPath::shared_ptr pDomainPath; // NULL path (dummy)
+			this->m_pDomainSingleton.reset(new c_DarwinetDomainImpl(pDomainPath));
+		}
+		return this->m_pDomainSingleton;
+	}
+
+	// End c_DarwinetEngineImpl
+
+
 	//-----------------------------------------------------------------------
 	//-----------------------------------------------------------------------
+
+	/**
+	  * Returns the default c_DarwinetEngineImpl instance
+	  */
+	c_DarwinetEngineImpl::shared_ptr engineImpl() {
+		static c_DarwinetEngineImpl::shared_ptr pInstance;
+		if (!pInstance) {
+			pInstance.reset(new c_DarwinetEngineImpl());
+		}
+		return pInstance;
+	}
+
+
 	/**
 	  * Returns the local Darwinet Engine
 	  */
 	c_DarwinetEngine::shared_ptr engine() {
-		// Implement as a singleton
-		static c_DarwinetEngine::shared_ptr result(new c_DarwinetEngineImpl());
-		return result;
+		return engineImpl();
 	}
 
 	/**

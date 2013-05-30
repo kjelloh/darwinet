@@ -166,9 +166,17 @@
 			<CppCompile Include="DarwinetCOMServerXE.cpp">
 				<BuildOrder>0</BuildOrder>
 			</CppCompile>
+			<CppCompile Include="darwinet\DarwinetBase.cpp">
+				<DependentOn>darwinet\DarwinetBase.h</DependentOn>
+				<BuildOrder>10</BuildOrder>
+			</CppCompile>
 			<CppCompile Include="darwinet\InProcDarwinetEngineFramework.cpp">
 				<DependentOn>darwinet\InProcDarwinetEngineFramework.h</DependentOn>
 				<BuildOrder>8</BuildOrder>
+			</CppCompile>
+			<CppCompile Include="darwinet\PeerSinkMail.cpp">
+				<DependentOn>darwinet\PeerSinkMail.h</DependentOn>
+				<BuildOrder>11</BuildOrder>
 			</CppCompile>
 			<CppCompile Include="MainFormUnit.cpp">
 				<Form>MainForm</Form>
