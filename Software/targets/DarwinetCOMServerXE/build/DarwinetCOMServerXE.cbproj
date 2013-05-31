@@ -63,14 +63,14 @@
 			<VerInfo_Locale>1053</VerInfo_Locale>
 			<_TCHARMapping>wchar_t</_TCHARMapping>
 			<ProjectType>CppVCLApplication</ProjectType>
-			<ILINK_LibraryPath>..\..\MIVConsoleXE\build\darwinet\;darwinet\;COM\;$(ILINK_LibraryPath)</ILINK_LibraryPath>
+			<ILINK_LibraryPath>frames\;..\..\MIVConsoleXE\build\darwinet\;darwinet\;COM\;$(ILINK_LibraryPath)</ILINK_LibraryPath>
 			<PackageImports>IPIndyImpl;bindcompfmx;fmx;rtl;dbrtl;IndySystem;DbxClientDriver;bindcomp;inetdb;DBXInterBaseDriver;DataSnapCommon;DataSnapClient;DataSnapServer;DataSnapProviderClient;xmlrtl;ibxpress;DbxCommonDriver;IndyProtocols;DBXMySQLDriver;dbxcds;soaprtl;bindengine;DBXOracleDriver;CustomIPTransport;dsnap;DBXInformixDriver;IndyCore;fmxase;DBXFirebirdDriver;inet;fmxobj;inetdbxpress;DBXSybaseASADriver;fmxdae;dbexpress;DataSnapIndy10ServerTransport;DarwinetRADLibXE;$(PackageImports)</PackageImports>
 			<Multithreaded>true</Multithreaded>
 			<DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
 			<AllPackageLibs>rtl.lib;vcl.lib;DarwinetCOM.lib;IndyCore.lib;IndySystem.lib;DarwinetRADLibXE.lib</AllPackageLibs>
 			<Icon_MainIcon>$(BDS)\bin\cbuilder_PROJECTICON.ico</Icon_MainIcon>
 			<UsingDelphiRTL>true</UsingDelphiRTL>
-			<IncludePath>..\..\MIVConsoleXE\build\darwinet\;darwinet\;COM\;..\..\DarwinetRADLibXE\build;$(IncludePath)</IncludePath>
+			<IncludePath>frames\;..\..\MIVConsoleXE\build\darwinet\;darwinet\;COM\;..\..\DarwinetRADLibXE\build;$(IncludePath)</IncludePath>
 			<DCC_CBuilderOutput>JPHNE</DCC_CBuilderOutput>
 			<DynamicRTL>true</DynamicRTL>
 			<UsePackages>true</UsePackages>
@@ -178,6 +178,12 @@
 				<DependentOn>darwinet\PeerSinkMail.h</DependentOn>
 				<BuildOrder>11</BuildOrder>
 			</CppCompile>
+			<CppCompile Include="frames\PeerMailFrameUnit.cpp">
+				<Form>PeerMailFrame</Form>
+				<DesignClass>TFrame</DesignClass>
+				<DependentOn>frames\PeerMailFrameUnit.h</DependentOn>
+				<BuildOrder>12</BuildOrder>
+			</CppCompile>
 			<CppCompile Include="MainFormUnit.cpp">
 				<Form>MainForm</Form>
 				<FormType>dfm</FormType>
@@ -185,6 +191,7 @@
 				<BuildOrder>1</BuildOrder>
 			</CppCompile>
 			<FormResources Include="MainFormUnit.dfm"/>
+			<FormResources Include="frames\PeerMailFrameUnit.dfm"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

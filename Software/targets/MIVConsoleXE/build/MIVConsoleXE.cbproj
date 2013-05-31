@@ -141,13 +141,6 @@
 				<DependentOn>Forms\MainFormUnit.h</DependentOn>
 				<BuildOrder>2</BuildOrder>
 			</CppCompile>
-			<CppCompile Include="frames\DarwinetEngineFrameUnit.cpp">
-				<Form>DarwinetEngineFrame</Form>
-				<FormType>dfm</FormType>
-				<DesignClass>TFrame</DesignClass>
-				<DependentOn>frames\DarwinetEngineFrameUnit.h</DependentOn>
-				<BuildOrder>27</BuildOrder>
-			</CppCompile>
 			<None Include="HistoryOfChanges.txt"/>
 			<CppCompile Include="ImportedTLB\DarwinetCOMServer_OCX.cpp">
 				<DependentOn>ImportedTLB\DarwinetCOMServer_OCX.h</DependentOn>
@@ -161,7 +154,6 @@
 				<BuildOrder>0</BuildOrder>
 			</CppCompile>
 			<FormResources Include="Forms\MainFormUnit.dfm"/>
-			<FormResources Include="frames\DarwinetEngineFrameUnit.dfm"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

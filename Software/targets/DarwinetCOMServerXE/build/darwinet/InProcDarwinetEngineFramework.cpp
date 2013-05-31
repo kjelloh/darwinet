@@ -150,10 +150,23 @@ namespace darwinet {
 		  */
 		class c_PeerSinkSelf : public c_PeerSink {
 		public:
+
+			typedef boost::shared_ptr<c_PeerSinkSelf> shared_ptr;
+
+			/**
+			  * Creates a new implementation of this interface
+			  */
+			static c_PeerSinkSelf::shared_ptr create();
+
+		};
+
+		class c_PeerSinkSelfImpl : public c_PeerSinkSelf {
+		public:
+
 			/**
 			  * Constructor
 			  */
-			c_PeerSinkSelf();
+			c_PeerSinkSelfImpl();
 
 			// Begin c_PeerSink
 
@@ -522,7 +535,7 @@ namespace darwinet {
 		/**
 		  * Constructor
 		  */
-		c_PeerSinkSelf::c_PeerSinkSelf()
+		c_PeerSinkSelfImpl::c_PeerSinkSelfImpl()
 		{
 			LOG_METHOD_SCOPE;
 		}
@@ -532,11 +545,19 @@ namespace darwinet {
 		/**
 		  * Send provided delta to the Sink we represent
 		  */
-		void c_PeerSinkSelf::send(const miv::c_DeltaSEPSI::shared_ptr& pDelta) {
+		void c_PeerSinkSelfImpl::send(const miv::c_DeltaSEPSI::shared_ptr& pDelta) {
 			LOG_NOT_IMPLEMENTED;
 		}
 
 		// End c_PeerSink
+
+		/**
+		  * Creates a new implementation of this interface
+		  */
+		c_PeerSinkSelf::shared_ptr c_PeerSinkSelf::create() {
+			c_PeerSinkSelf::shared_ptr result(new c_PeerSinkSelfImpl());
+			return result;
+        }
 
 		//-----------------------------------------------------------------------
 		//-----------------------------------------------------------------------
@@ -580,9 +601,9 @@ namespace darwinet {
 		c_PeerSinks_shared_ptr c_DeltaMIVDistributorImpl::getPeerSinksToDistributeTo() {
 			c_PeerSinks_shared_ptr result(new c_PeerSinks());
 			LOG_NOT_IMPLEMENTED;
-			c_PeerSink::shared_ptr pTestPeer2(new c_PeerSinkMail(_UTF8sz("peer2@darwinet.se")));
+			c_PeerSink::shared_ptr pTestPeer2(c_PeerSinkMail::create(_UTF8sz("peer2@darwinet.se")));
 			result->push_back(pTestPeer2);
-			c_PeerSink::shared_ptr pThisPeer(new c_PeerSinkSelf());
+			c_PeerSink::shared_ptr pThisPeer(c_PeerSinkSelf::create());
 			result->push_back(pThisPeer);
 			return result;
 		}
