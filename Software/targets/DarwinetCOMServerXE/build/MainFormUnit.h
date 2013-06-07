@@ -12,6 +12,8 @@
 class TMainForm : public TForm
 {
 __published:	// IDE-managed Components
+	TTimer *ProcessDarwinetIncomingMessagesTimer;
+	void __fastcall ProcessDarwinetIncomingMessagesTimerTimer(TObject *Sender);
 private:	// User declarations
 public:		// User declarations
 	__fastcall TMainForm(TComponent* Owner);

@@ -4,6 +4,7 @@
 
 #include "InProcDarwinetEngineFramework.h"
 #include "PeerSinkMail.h"
+#include "PeerSourceMail.h"
 #include <map>
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
@@ -398,8 +399,23 @@ namespace darwinet {
 
 		// End c_DarwinetEngineImpl
 
+		/**
+		  * Process incoming messages to this engine
+		  */
+		void processIncomingMessages();
 
 	private:
+
+		/**
+		  * Private storage of our Message Source
+		  */
+		c_PeerSource::shared_ptr m_pPeerSource;
+
+		/**
+		  * Returns the PeerSource we are to use to receive messages
+		  *, creating it if we don't have one yet.
+		  */
+		c_PeerSource::shared_ptr getOurPeerSource();
 
 		/**
 		  * Private storage of our domain singleton
@@ -793,6 +809,31 @@ namespace darwinet {
 
 	// End c_DarwinetEngineImpl
 
+	//-----------------------------------------------------------------------
+	/**
+	  * Process incoming messages to this engine
+	  */
+	void c_DarwinetEngineImpl::processIncomingMessages() {
+		// Read any deltas from our Source
+		miv::c_DeltaSEPSI::shared_ptr pDelta = this->getOurPeerSource()->receive();
+		if (pDelta) {
+			// Process the Delta we have received
+			c_LogString sMessage("c_DarwinetEngineImpl::processIncomingMessages(), received a delta but no Process implemented yet");
+			LOG_DESIGN_INSUFFICIENCY(sMessage);
+		}
+	}
+
+	//-----------------------------------------------------------------------
+	/**
+	  * Returns the PeerSource we are to use to receive messages
+	  *, creating it if we don't have one yet.
+	  */
+	c_PeerSource::shared_ptr c_DarwinetEngineImpl::getOurPeerSource() {
+		if (!this->m_pPeerSource) {
+			this->m_pPeerSource = c_PeerSourceMail::create();
+		}
+		return this->m_pPeerSource;
+	}
 
 	//-----------------------------------------------------------------------
 	//-----------------------------------------------------------------------
@@ -807,7 +848,6 @@ namespace darwinet {
 		}
 		return pInstance;
 	}
-
 
 	/**
 	  * Returns the local Darwinet Engine
@@ -834,5 +874,11 @@ namespace darwinet {
 	//-----------------------------------------------------------------------
 	//-----------------------------------------------------------------------
 
-
+	/**
+	  * Call this method from a worker thread to process incoming Darwinet Messages
+	  * to this engine.
+	  */
+	void processIncomingMessages() {
+		engineImpl()->processIncomingMessages();
+	}
 }

@@ -14,4 +14,9 @@ object MainForm: TMainForm
   OldCreateOrder = False
   PixelsPerInch = 96
   TextHeight = 13
+  object ProcessDarwinetIncomingMessagesTimer: TTimer
+    OnTimer = ProcessDarwinetIncomingMessagesTimerTimer
+    Left = 56
+    Top = 24
+  end
 end

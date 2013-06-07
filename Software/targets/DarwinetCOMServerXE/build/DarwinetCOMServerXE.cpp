@@ -22,8 +22,14 @@
 
 
 
+
+
+
+
+
 USEFORM("MainFormUnit.cpp", MainForm);
 USEFORM("frames\PeerMailFrameUnit.cpp", PeerMailFrame); /* TFrame: File Type */
+USEFORM("frames\IMAPClientFrameUnit.cpp", IMAPClientFrame); /* TFrame: File Type */
 //---------------------------------------------------------------------------
 #pragma link "ComServ.obj"
 /**

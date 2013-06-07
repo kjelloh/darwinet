@@ -6,6 +6,7 @@
 #include "MainFormUnit.h"
 #include "BusinessLogFormUnit.h"
 #include "BusinessLogUnit.h"
+#include "InProcDarwinetEngineFramework.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 //#pragma link "DarwinetRADLibXE.bpi"
@@ -22,3 +23,11 @@ __fastcall TMainForm::TMainForm(TComponent* Owner)
 	LOG_BUSINESS(_UTF8sz("Application Started!"));
 }
 //---------------------------------------------------------------------------
+void __fastcall TMainForm::ProcessDarwinetIncomingMessagesTimerTimer(TObject *Sender)
+
+{
+	// Call Darwinet Engine to process any incoming messages
+	darwinet::processIncomingMessages();
+}
+//---------------------------------------------------------------------------
+

@@ -67,7 +67,7 @@
 			<PackageImports>IPIndyImpl;bindcompfmx;fmx;rtl;dbrtl;IndySystem;DbxClientDriver;bindcomp;inetdb;DBXInterBaseDriver;DataSnapCommon;DataSnapClient;DataSnapServer;DataSnapProviderClient;xmlrtl;ibxpress;DbxCommonDriver;IndyProtocols;DBXMySQLDriver;dbxcds;soaprtl;bindengine;DBXOracleDriver;CustomIPTransport;dsnap;DBXInformixDriver;IndyCore;fmxase;DBXFirebirdDriver;inet;fmxobj;inetdbxpress;DBXSybaseASADriver;fmxdae;dbexpress;DataSnapIndy10ServerTransport;DarwinetRADLibXE;$(PackageImports)</PackageImports>
 			<Multithreaded>true</Multithreaded>
 			<DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
-			<AllPackageLibs>rtl.lib;vcl.lib;DarwinetCOM.lib;IndyCore.lib;IndySystem.lib;DarwinetRADLibXE.lib</AllPackageLibs>
+			<AllPackageLibs>rtl.lib;vcl.lib;DarwinetCOM.lib;IndyCore.lib;IndySystem.lib;DarwinetRADLibXE.lib;IndyProtocols.lib</AllPackageLibs>
 			<Icon_MainIcon>$(BDS)\bin\cbuilder_PROJECTICON.ico</Icon_MainIcon>
 			<UsingDelphiRTL>true</UsingDelphiRTL>
 			<IncludePath>frames\;..\..\MIVConsoleXE\build\darwinet\;darwinet\;COM\;..\..\DarwinetRADLibXE\build;$(IncludePath)</IncludePath>
@@ -178,6 +178,17 @@
 				<DependentOn>darwinet\PeerSinkMail.h</DependentOn>
 				<BuildOrder>11</BuildOrder>
 			</CppCompile>
+			<CppCompile Include="darwinet\PeerSourceMail.cpp">
+				<DependentOn>darwinet\PeerSourceMail.h</DependentOn>
+				<BuildOrder>14</BuildOrder>
+			</CppCompile>
+			<CppCompile Include="frames\IMAPClientFrameUnit.cpp">
+				<Form>IMAPClientFrame</Form>
+				<FormType>dfm</FormType>
+				<DesignClass>TFrame</DesignClass>
+				<DependentOn>frames\IMAPClientFrameUnit.h</DependentOn>
+				<BuildOrder>13</BuildOrder>
+			</CppCompile>
 			<CppCompile Include="frames\PeerMailFrameUnit.cpp">
 				<Form>PeerMailFrame</Form>
 				<DesignClass>TFrame</DesignClass>
@@ -192,6 +203,7 @@
 			</CppCompile>
 			<FormResources Include="MainFormUnit.dfm"/>
 			<FormResources Include="frames\PeerMailFrameUnit.dfm"/>
+			<FormResources Include="frames\IMAPClientFrameUnit.dfm"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

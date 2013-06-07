@@ -63,5 +63,25 @@ namespace darwinet {
 	typedef std::vector<c_PeerSink::shared_ptr> c_PeerSinks;
 	typedef boost::shared_ptr<c_PeerSinks> c_PeerSinks_shared_ptr;
 
+	/**
+	  * Models a Peer Source we may call to read
+	  * Messages to a Peer
+	  */
+	class c_PeerSource {
+	public:
+
+		typedef boost::shared_ptr<c_PeerSource> shared_ptr;
+
+		// Begin c_PeerSource
+
+		/**
+		  * Receive a delta from this source.
+		  */
+		virtual miv::c_DeltaSEPSI::shared_ptr receive()=0;
+
+		// End c_PeerSource
+
+	};
+
 }
 #endif

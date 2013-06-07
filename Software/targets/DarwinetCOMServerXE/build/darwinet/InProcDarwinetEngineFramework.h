@@ -178,5 +178,11 @@ namespace darwinet {
 	  * Creats a shared model path instance from provided string
 	  */
 	c_ModelPath::shared_ptr shared_model_path(c_DarwinetString sModelPath);
+
+	/**
+	  * Call this method from a worker thread to process incoming Darwinet Messages
+	  * to this engine.
+	  */
+	void processIncomingMessages();
 }
 #endif
