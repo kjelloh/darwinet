@@ -115,7 +115,7 @@
 			<Defines>_DEBUG;$(Defines)</Defines>
 		</PropertyGroup>
 		<PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
-			<LinkPackageImports>rtl.bpi;vcl.bpi;IndyCore.bpi;IndySystem.bpi;DarwinetRADLibXE.bpi</LinkPackageImports>
+			<LinkPackageImports>rtl.bpi;vcl.bpi;IndyCore.bpi;IndySystem.bpi;DarwinetRADLibXE.bpi;IndyProtocols.bpi</LinkPackageImports>
 			<ILINK_LibraryPath>C:\Users\Public\Documents\RAD Studio\9.0\Dcp;$(ILINK_LibraryPath)</ILINK_LibraryPath>
 			<Defines>_DEBUG;$(Defines)</Defines>
 			<LinkPackageStatics>DarwinetCOM.lib</LinkPackageStatics>

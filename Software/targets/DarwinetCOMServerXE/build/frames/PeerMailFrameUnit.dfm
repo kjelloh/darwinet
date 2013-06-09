@@ -9,13 +9,13 @@ object PeerMailFrame: TPeerMailFrame
     AuthType = satSASL
     SASLMechanisms = <
       item
-        SASL = IdSASLLogin1
+        SASL = IdSMTPSASLLogin1
       end>
     Left = 224
     Top = 40
   end
   object IdMessage1: TIdMessage
-    AttachmentEncoding = 'MIME'
+    AttachmentEncoding = 'UUE'
     BccList = <>
     CCList = <>
     Encoding = meDefault
@@ -34,7 +34,7 @@ object PeerMailFrame: TPeerMailFrame
     Left = 168
     Top = 40
   end
-  object IdSASLLogin1: TIdSASLLogin
+  object IdSMTPSASLLogin1: TIdSASLLogin
     UserPassProvider = Darwinet2IdUserPassProvider
     Left = 224
     Top = 96

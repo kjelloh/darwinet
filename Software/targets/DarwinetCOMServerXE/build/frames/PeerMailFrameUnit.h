@@ -27,7 +27,7 @@ class TPeerMailFrame : public TFrame
 __published:	// IDE-managed Components
 	TIdSMTP *IdSMTP1;
 	TIdMessage *IdMessage1;
-	TIdSASLLogin *IdSASLLogin1;
+	TIdSASLLogin *IdSMTPSASLLogin1;
 	TIdUserPassProvider *Darwinet2IdUserPassProvider;
 	void __fastcall IdSMTP1Status(TObject *ASender, const TIdStatus AStatus, const UnicodeString AStatusText);
 

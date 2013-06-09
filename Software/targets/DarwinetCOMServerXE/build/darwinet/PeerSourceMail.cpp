@@ -75,6 +75,7 @@ namespace darwinet {
 		miv::c_DeltaSEPSI::shared_ptr result;
 		LOG_NOT_IMPLEMENTED;
 		String sMessage = this->getIMAPClientFrame()->GetMessage();
+
 		return result;
 	}
 

@@ -90,7 +90,7 @@ namespace darwinet {
 	  * to be sent with mail
 	  */
 	c_DarwinetString c_PeerSinkMailImpl::toMailString(const miv::c_DeltaSEPSI::shared_ptr& pDelta) {
-		c_DarwinetString result;
+		c_DarwinetString result("+17"); // Dummy Delta String
 		LOG_NOT_IMPLEMENTED;
 		return result;
 	}
