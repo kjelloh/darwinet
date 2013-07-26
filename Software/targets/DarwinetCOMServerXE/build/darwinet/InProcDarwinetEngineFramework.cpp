@@ -38,6 +38,28 @@ namespace darwinet {
 
 
 	/**
+	  * Implementes c_PeerPackage interface
+	  */
+	class c_PeerPackageImpl : public c_PeerPackage {
+	public:
+
+		/**
+		  * Constructor
+		  */
+		c_PeerPackageImpl();
+
+		// Begin c_PeerPackage
+
+		/**
+		  * Adds provided c_DeltaSEPSI instace to "us"
+		  */
+		virtual void add(const miv::c_DeltaSEPSI::shared_ptr& pDeltaSEPSI);
+
+		// End c_PeerPackage
+
+	};
+
+	/**
 	  * Implementation of the miv namespace
 	  */
 	namespace miv {
@@ -147,36 +169,36 @@ namespace darwinet {
 		};
 
 		/**
-		  * Models a Peer sink that connects to "us"
+		  * Models a Peer Proxy that connects to "us"
 		  */
-		class c_PeerSinkSelf : public c_PeerSink {
+		class c_PeerProxySelf : public c_PeerProxy {
 		public:
 
-			typedef boost::shared_ptr<c_PeerSinkSelf> shared_ptr;
+			typedef boost::shared_ptr<c_PeerProxySelf> shared_ptr;
 
 			/**
 			  * Creates a new implementation of this interface
 			  */
-			static c_PeerSinkSelf::shared_ptr create();
+			static c_PeerProxySelf::shared_ptr create();
 
 		};
 
-		class c_PeerSinkSelfImpl : public c_PeerSinkSelf {
+		class c_PeerProxySelfImpl : public c_PeerProxySelf {
 		public:
 
 			/**
 			  * Constructor
 			  */
-			c_PeerSinkSelfImpl();
+			c_PeerProxySelfImpl();
 
-			// Begin c_PeerSink
+			// Begin c_PeerProxy
 
 			/**
-			  * Send provided delta to the Sink we represent
+			  * Send provided delta to the Peer we represent
 			  */
 			virtual void send(const miv::c_DeltaSEPSI::shared_ptr& pDelta);
 
-			// End c_PeerSink
+			// End c_PeerProxy
 
 		};
 
@@ -204,17 +226,15 @@ namespace darwinet {
 
 		private:
 
-			// this->distribute(pDelta,this->getPeerSinksToDistributeTo());
-
 			/**
 			  * Distributes provided delta to provided Peers
 			  */
-			void distribute(const c_DeltaSEPSI::shared_ptr& pDelta,const c_PeerSinks_shared_ptr& pPeers);
+			void distribute(const c_DeltaSEPSI::shared_ptr& pDelta,const c_PeerProxies_shared_ptr& pPeers);
 
 			/**
 			  * Returns an instance of Peers selected to be targets of our delta distributions
 			  */
-			c_PeerSinks_shared_ptr getPeerSinksToDistributeTo();
+			c_PeerProxies_shared_ptr getPeersToDistributeTo();
 
 		};
 
@@ -435,6 +455,38 @@ namespace darwinet {
 	//-----------------------------------------------------------------------
 
 	/**
+	  * Creates a new instance implementing this interface
+	  */
+	c_PeerPackage::shared_ptr c_PeerPackage::create() {
+		c_PeerPackage::shared_ptr result(new c_PeerPackageImpl());
+		return result;
+	}
+
+	/**
+	  * Constructor
+	  */
+	c_PeerPackageImpl::c_PeerPackageImpl()
+		: c_PeerPackage()
+	{
+
+	}
+
+	// Begin c_PeerPackage
+
+	/**
+	  * Adds provided c_DeltaSEPSI instace to "us"
+	  */
+	void c_PeerPackageImpl::add(const miv::c_DeltaSEPSI::shared_ptr& pDeltaSEPSI) {
+		// We are a friend of miv::c_DeltaSEPSI so we have access to
+		// the actual contents :)
+		LOG_NOT_IMPLEMENTED;
+	}
+
+	// End c_PeerPackage
+
+	//-----------------------------------------------------------------------
+	//-----------------------------------------------------------------------
+	/**
 	  * MIV namespace implementation
 	  */
 	namespace miv {
@@ -551,27 +603,27 @@ namespace darwinet {
 		/**
 		  * Constructor
 		  */
-		c_PeerSinkSelfImpl::c_PeerSinkSelfImpl()
+		c_PeerProxySelfImpl::c_PeerProxySelfImpl()
 		{
 			LOG_METHOD_SCOPE;
 		}
 
-		// Begin c_PeerSink
+		// Begin c_PeerProxy
 
 		/**
-		  * Send provided delta to the Sink we represent
+		  * Send provided delta to the Peer we represent
 		  */
-		void c_PeerSinkSelfImpl::send(const miv::c_DeltaSEPSI::shared_ptr& pDelta) {
+		void c_PeerProxySelfImpl::send(const miv::c_DeltaSEPSI::shared_ptr& pDelta) {
 			LOG_NOT_IMPLEMENTED;
 		}
 
-		// End c_PeerSink
+		// End c_PeerProxy
 
 		/**
 		  * Creates a new implementation of this interface
 		  */
-		c_PeerSinkSelf::shared_ptr c_PeerSinkSelf::create() {
-			c_PeerSinkSelf::shared_ptr result(new c_PeerSinkSelfImpl());
+		c_PeerProxySelf::shared_ptr c_PeerProxySelf::create() {
+			c_PeerProxySelf::shared_ptr result(new c_PeerProxySelfImpl());
 			return result;
         }
 
@@ -593,7 +645,7 @@ namespace darwinet {
 		  */
 		void c_DeltaMIVDistributorImpl::distribute(const c_DeltaSEPSI::shared_ptr& pDelta) {
 			LOG_NOT_IMPLEMENTED;
-			this->distribute(pDelta,this->getPeerSinksToDistributeTo());
+			this->distribute(pDelta,this->getPeersToDistributeTo());
 		}
 
 		// End c_DeltaMIVDistributor
@@ -601,10 +653,10 @@ namespace darwinet {
 		/**
 		  * Distributes provided delta to provided Peers
 		  */
-		void c_DeltaMIVDistributorImpl::distribute(const c_DeltaSEPSI::shared_ptr& pDelta,const c_PeerSinks_shared_ptr& pPeers) {
+		void c_DeltaMIVDistributorImpl::distribute(const c_DeltaSEPSI::shared_ptr& pDelta,const c_PeerProxies_shared_ptr& pPeers) {
 			if (pDelta) {
 				if (pPeers) {
-					for (c_PeerSinks::const_iterator iter = pPeers->begin(); iter != pPeers->end(); ++iter) {
+					for (c_PeerProxies::const_iterator iter = pPeers->begin(); iter != pPeers->end(); ++iter) {
 						(*iter)->send(pDelta);
 					}
 				}
@@ -614,12 +666,12 @@ namespace darwinet {
 		/**
 		  * Returns an instance of Peers selected to be targets of our delta distributions
 		  */
-		c_PeerSinks_shared_ptr c_DeltaMIVDistributorImpl::getPeerSinksToDistributeTo() {
-			c_PeerSinks_shared_ptr result(new c_PeerSinks());
+		c_PeerProxies_shared_ptr c_DeltaMIVDistributorImpl::getPeersToDistributeTo() {
+			c_PeerProxies_shared_ptr result(new c_PeerProxies());
 			LOG_NOT_IMPLEMENTED;
-			c_PeerSink::shared_ptr pTestPeer2(c_PeerSinkMail::create(_UTF8sz("peer2@darwinet.se")));
+			c_PeerProxy::shared_ptr pTestPeer2(c_PeerProxyMail::create(_UTF8sz("peer2@darwinet.se")));
 			result->push_back(pTestPeer2);
-			c_PeerSink::shared_ptr pThisPeer(c_PeerSinkSelf::create());
+			c_PeerProxy::shared_ptr pThisPeer(c_PeerProxySelf::create());
 			result->push_back(pThisPeer);
 			return result;
 		}

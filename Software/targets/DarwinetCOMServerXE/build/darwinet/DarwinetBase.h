@@ -42,26 +42,51 @@ namespace darwinet {
 	}; // namespace miv
 
 	/**
-	  * Models a Peer Sink
+	  * Models a Peer Message interface
 	  */
-	class c_PeerSink {
+	class c_PeerPackage {
 	public:
 
-		typedef boost::shared_ptr<c_PeerSink> shared_ptr;
-
-		// Begin c_PeerSink
+		typedef boost::shared_ptr<c_PeerPackage> shared_ptr;
 
 		/**
-		  * Send provided delta to the Sink we represent
+		  * Creates a new instance implementing this interface
+		  */
+		static c_PeerPackage::shared_ptr create();
+
+		// Begin c_PeerPackage
+
+		/**
+		  * Adds provided c_DeltaSEPSI instace to "us"
+		  */
+		virtual void add(const miv::c_DeltaSEPSI::shared_ptr& pDeltaSEPSI) = 0;
+
+		// End c_PeerPackage
+
+	};
+
+	/**
+	  * Models a Peer Proxy
+	  */
+	class c_PeerProxy {
+	public:
+
+		typedef boost::shared_ptr<c_PeerProxy> shared_ptr;
+
+		// Begin c_PeerProxy
+
+		/**
+		  * Send provided delta to the Peer we represent
 		  */
 		virtual void send(const miv::c_DeltaSEPSI::shared_ptr& pDelta) = 0;
 
-		// End c_PeerSink
+		// End c_PeerProxy
+
 	};
 
 	// Models a set of Peers
-	typedef std::vector<c_PeerSink::shared_ptr> c_PeerSinks;
-	typedef boost::shared_ptr<c_PeerSinks> c_PeerSinks_shared_ptr;
+	typedef std::vector<c_PeerProxy::shared_ptr> c_PeerProxies;
+	typedef boost::shared_ptr<c_PeerProxies> c_PeerProxies_shared_ptr;
 
 	/**
 	  * Models a Peer Source we may call to read
