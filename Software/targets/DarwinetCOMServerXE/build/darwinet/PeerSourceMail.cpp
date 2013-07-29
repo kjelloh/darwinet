@@ -1,9 +1,9 @@
 //---------------------------------------------------------------------------
-
 #pragma hdrstop
-
+//---------------------------------------------------------------------------
 #include "PeerSourceMail.h"
 #include "IMAPClientFrameUnit.h"
+#include "DarwinetMessages.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 
@@ -73,9 +73,15 @@ namespace darwinet {
 	  */
 	miv::c_DeltaSEPSI::shared_ptr c_PeerSourceMailImpl::receive() {
 		miv::c_DeltaSEPSI::shared_ptr result;
-		LOG_NOT_IMPLEMENTED;
-		String sMessage = this->getIMAPClientFrame()->GetMessage();
-
+		try {
+			LOG_NOT_IMPLEMENTED;
+			String sMessage = this->getIMAPClientFrame()->GetMessage();
+			// The string should be a Peer message represented in BERTLV
+			c_DataRepresentationFramework::c_AsciiString sBERTLV = c_DataRepresentationFramework::toAsciiString(sMessage);
+			c_DataRepresentationFramework::t_raw_vector bertlv_vector = c_DataRepresentationFramework::parseHexNibblePairString(sBERTLV);
+			result = createDeltaSEPSI(bertlv_vector);
+		}
+		CATCH_AND_LOG_IDE_STD_AND_GENERAL_EXCEPTION_DESIGN_INSUFFICIENCY;
 		return result;
 	}
 

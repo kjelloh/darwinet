@@ -44,6 +44,9 @@ namespace darwinet {
 	  */
 	//-----------------------------------------------------------------------
 	//-----------------------------------------------------------------------
+	/**
+	  * Models the interface of an instance of "Shared Evolving Privately Stored Information"
+	  */
 	class c_SEPSI {
 	public:
 		typedef boost::shared_ptr<c_SEPSI> shared_ptr;

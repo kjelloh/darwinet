@@ -1,7 +1,6 @@
 //---------------------------------------------------------------------------
-
 #pragma hdrstop
-
+//---------------------------------------------------------------------------
 #include "PeerProxyMail.h"
 #include "PeerMailFrameUnit.h"
 #include <boost/iostreams/concepts.hpp>  // sink
@@ -9,6 +8,7 @@
 #include "bertlv/BerTlv.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
+//---------------------------------------------------------------------------
 
 /**
   * Models Proxies that are defined by an e-mail adress

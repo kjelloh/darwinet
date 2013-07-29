@@ -1114,12 +1114,13 @@ namespace bertlv {
 
 
 	/**
-	  * Models apsects of ASN1 encoding inBERTLV
+	  * Models aspects of ASN1 encoding inBERTLV
 	  */
 	namespace asn1 {
 
 		enum e_ASN1Tag {
 			// From: http://en.wikipedia.org/wiki/Basic_Encoding_Rules#BER_encoding
+
 			//EOC (End-of-Content)	P	0	0
 			//BOOLEAN	P	1	1
 			eASN1Tag_INTEGER = 	eBERTLVClass_ASN1 + eBERTLVContentType_Primitive + 0x02 // INTEGER
@@ -1159,6 +1160,31 @@ namespace bertlv {
 		  * Models an ASN.1 structure encoded in BERTLV
 		  */
 		typedef BerTlv<e_ASN1Tag> c_ASN1BERTLV;
+
+		/**
+		  * Models an Parser of BERTLV encoded ASN.1 data structures
+		  */
+		typedef BerTlvParser<e_ASN1Tag> c_ASN1BERTLVParser;
+
+		/**
+		  * Models a pointer to c_ASN1BERTLV instance
+		  */
+		typedef c_ASN1BERTLV* c_ASN1BERTLVPtr;
+
+		/**
+		  * Models a pointer to const c_ASN1BERTLV instance
+		  */
+		typedef const c_ASN1BERTLV* c_ConstASN1BERTLVPtr;
+
+		/**
+		  * Models a vector of pointers to const c_ASN1BERTLV instances
+		  */
+		typedef std::vector <c_ConstASN1BERTLVPtr> c_ConstASN1BERTLs;
+
+		/**
+		  * Interprets provided c_ASN1BERTLV as an INTEGER and returns the value
+		  */
+		int toASN1INTEGER(c_ConstASN1BERTLVPtr pASN1BERTL);
 
 	}
 

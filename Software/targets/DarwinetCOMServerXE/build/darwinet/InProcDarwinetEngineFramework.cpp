@@ -3,7 +3,8 @@
 #pragma hdrstop
 
 #include "InProcDarwinetEngineFramework.h"
-#include "PeerSinkMail.h"
+#include "DarwinetDeltas.h"
+#include "PeerProxyMail.h"
 #include "PeerSourceMail.h"
 #include <map>
 //---------------------------------------------------------------------------
@@ -63,58 +64,6 @@ namespace darwinet {
 	  * Implementation of the miv namespace
 	  */
 	namespace miv {
-
-
-		/**
-		  * Base class of all Delta implementations
-		  */
-		class c_DeltaImpl : public c_DeltaSEPSI {
-		public:
-
-			/**
-			  * Constructor
-			  */
-			c_DeltaImpl(const c_DeltaIndex::shared_ptr& pTargetIndex);
-
-			// Begin c_DeltaSEPSI
-
-			/**
-			  * Returns the index of the target Delta to which we apply
-			  */
-			virtual c_DeltaIndex::shared_ptr getTargetIndex();
-
-			// End c_DeltaSEPSI
-
-		private:
-
-			/**
-			  * Private storage of the index of the target delta
-			  * to which this delta applies.
-			  */
-			c_DeltaIndex::shared_ptr m_pTargetIndex;
-
-		};
-
-		/**
-		  * Implements an Integer Delta
-		  */
-		class c_IntDeltaImpl : public c_DeltaImpl {
-		public:
-
-			/**
-			  * Creates and integer delta
-			  */
-			c_IntDeltaImpl(const c_DeltaIndex::shared_ptr& pTargetIndex,int int_diff);
-
-		private:
-
-			/**
-			  * Private storage of the ingerer diff we represent.
-			  */
-			int m_int_diff;
-		};
-
-		//-----------------------------------------------------------------------
 
 		/**
 		  * Models an implementation of the c_MIVValueInstance interface
@@ -245,6 +194,8 @@ namespace darwinet {
 		class c_SEPSIImpl : public  c_SEPSI {
 		public:
 
+			typedef boost::shared_ptr<c_SEPSIImpl> shared_ptr;
+
 			/**
 			  * Constructor
 			  */
@@ -264,6 +215,15 @@ namespace darwinet {
 
 			// End c_SEPSI
 
+			// Begin c_SEPSIImpl
+
+			/**
+			  * Processes provided c_DeltaSEPSI instance
+			  */
+			void actOnDelta(miv::c_DeltaSEPSI::shared_ptr pDelta);
+
+			// End c_SEPSIImpl
+
 		private:
 
 			/**
@@ -281,6 +241,9 @@ namespace darwinet {
 
 	class c_DomainViewImpl : public c_DomainView {
 	public:
+
+		typedef boost::shared_ptr<c_DomainViewImpl> shared_ptr;
+
 		c_DomainViewImpl();
 
 		// Begin c_DomainView
@@ -292,12 +255,21 @@ namespace darwinet {
 
 		// End c_DomainView
 
+		// Begin c_DomainViewImpl
+
+		/**
+		  * Returns access to our c_SEPSIImpl instance
+		  */
+		miv::c_SEPSIImpl::shared_ptr getSEPSIImpl();
+
+		// End c_DomainViewImpl
+
 	private:
 
 		/**
 		  * private storage of our SEPSI instance
 		  */
-		c_SEPSI::shared_ptr m_pSEPSI;
+		miv::c_SEPSIImpl::shared_ptr m_pSEPSIImpl;
 
 	};
 	//-----------------------------------------------------------------------
@@ -326,9 +298,19 @@ namespace darwinet {
 		// Begin c_DarwinetDomainImpl
 
 		/**
+		  * Returns c_DomainViewImpl instance
+		  */
+		c_DomainViewImpl::shared_ptr getViewImpl();
+
+		/**
 		  * Returns access to our c_DeltaMIVDistributorImpl
 		  */
 		miv::c_DeltaMIVDistributorImpl::shared_ptr getDistrubutorImpl();
+
+		/**
+		  * Processes provided c_DeltaSEPSI instance
+		  */
+		void actOnDelta(miv::c_DeltaSEPSI::shared_ptr pDelta);
 
 		// End c_DarwinetDomainImpl
 
@@ -341,15 +323,14 @@ namespace darwinet {
 		c_DomainPath::shared_ptr m_pDomainPath;
 
 		/**
-		  * Private storage of our view singleton
+		  * Private storage of our c_DomainViewImpl singleton
 		  */
-		c_DomainView::shared_ptr m_pViewSingleton;
+		c_DomainViewImpl::shared_ptr m_pViewImplSingleton;
 
 		/**
 		  * Private storage of access to our c_DeltaMIVDistributorImpl
 		  */
 		miv::c_DeltaMIVDistributorImpl::shared_ptr m_pDistributor;
-
 
 	};
 
@@ -491,43 +472,6 @@ namespace darwinet {
 	  */
 	namespace miv {
 
-		//-----------------------------------------------------------------------
-		//-----------------------------------------------------------------------
-		/**
-		  * Constructor
-		  */
-		c_DeltaImpl::c_DeltaImpl(const c_DeltaIndex::shared_ptr& pTargetIndex)
-			: m_pTargetIndex(pTargetIndex)
-		{
-			LOG_METHOD_SCOPE;
-		}
-
-		// Begin c_DeltaSEPSI
-
-		/**
-		  * Returns the index of the target Delta to which we apply
-		  */
-		c_DeltaIndex::shared_ptr c_DeltaImpl::getTargetIndex() {
-			return this->m_pTargetIndex;
-		}
-
-		// End c_DeltaSEPSI
-
-
-		//-----------------------------------------------------------------------
-		//-----------------------------------------------------------------------
-		/**
-		  * Creates and integer delta
-		  */
-		c_IntDeltaImpl::c_IntDeltaImpl(const c_DeltaIndex::shared_ptr& pTargetIndex,int int_diff)
-			:  c_DeltaImpl(pTargetIndex)
-			  ,m_int_diff(int_diff)
-		{
-			LOG_METHOD_SCOPE;
-		}
-
-		//-----------------------------------------------------------------------
-		//-----------------------------------------------------------------------
 		/**
 		  * Constructor
 		  */
@@ -713,6 +657,18 @@ namespace darwinet {
 
 		// End c_SEPSI
 
+		// Begin c_SEPSIImpl
+
+		/**
+		  * Processes provided c_DeltaSEPSI instance
+		  */
+		void c_SEPSIImpl::actOnDelta(miv::c_DeltaSEPSI::shared_ptr pDelta) {
+			LOG_NOT_IMPLEMENTED;
+		}
+
+		// End c_SEPSIImpl
+
+
 	} // namespace miv
 
 	c_DomainViewImpl::c_DomainViewImpl()
@@ -726,13 +682,24 @@ namespace darwinet {
 	  * Reurns the current SEPSI
 	  */
 	c_SEPSI::shared_ptr c_DomainViewImpl::getSEPSI() {
-		if (!this->m_pSEPSI) {
-			this->m_pSEPSI.reset(new miv::c_SEPSIImpl());
-		}
-		return this->m_pSEPSI;
+		return this->getSEPSIImpl();
 	}
 
 	// End c_DomainView
+
+	// Begin c_DomainViewImpl
+
+	/**
+	  * Returns access to our c_SEPSIImpl instance
+	  */
+	miv::c_SEPSIImpl::shared_ptr c_DomainViewImpl::getSEPSIImpl() {
+		if (!this->m_pSEPSIImpl) {
+			this->m_pSEPSIImpl.reset(new miv::c_SEPSIImpl());
+		}
+		return this->m_pSEPSIImpl;
+    }
+
+	// End c_DomainViewImpl
 
 
 	//-----------------------------------------------------------------------
@@ -752,15 +719,22 @@ namespace darwinet {
 	  * Returns required view
 	  */
 	c_DomainView::shared_ptr c_DarwinetDomainImpl::getView(const c_ViewPath::shared_ptr& pViewPath) {
-		if (!this->m_pViewSingleton) {
-			this->m_pViewSingleton.reset(new c_DomainViewImpl());
-		}
-		return this->m_pViewSingleton;
+		return this->getViewImpl();
 	}
 
 	// End c_DarwinetDomain
 
 	// Begin c_DarwinetDomainImpl
+
+	/**
+	  * Returns c_DomainViewImpl instance
+	  */
+	c_DomainViewImpl::shared_ptr c_DarwinetDomainImpl::getViewImpl() {
+		if (!this->m_pViewImplSingleton) {
+			this->m_pViewImplSingleton.reset(new c_DomainViewImpl());
+		}
+		return this->m_pViewImplSingleton;
+    }
 
 	/**
 	  * Returns access to our c_DeltaMIVDistributorImpl
@@ -770,6 +744,15 @@ namespace darwinet {
 			this->m_pDistributor.reset(new miv::c_DeltaMIVDistributorImpl());
 		}
 		return this->m_pDistributor;
+	}
+
+	/**
+	  * Processes provided c_DeltaSEPSI instance
+	  */
+	void c_DarwinetDomainImpl::actOnDelta(miv::c_DeltaSEPSI::shared_ptr pDelta) {
+		if (pDelta) {
+			this->getViewImpl()->getSEPSIImpl()->actOnDelta(pDelta);
+		}
 	}
 
 	// End c_DarwinetDomainImpl
@@ -872,6 +855,7 @@ namespace darwinet {
 			// Process the Delta we have received
 			c_LogString sMessage("c_DarwinetEngineImpl::processIncomingMessages(), received a delta but no Process implemented yet");
 			LOG_DESIGN_INSUFFICIENCY(sMessage);
+			this->getDomainImpl()->actOnDelta(pDelta);
 		}
 	}
 

@@ -1114,7 +1114,7 @@ c_DataRepresentationFramework::c_ISO_8859_1_String c_DataRepresentationFramework
 		}
 		else {
 		  // Not printable
-		  // Use boost format. Note: Works onlyu if unsigned char is casted to an int. Strange...
+		  // Use boost format. Note: Works only if unsigned char is casted to an int. Strange...
 		  // If not, then for 'ö' the format call below returns "<0ö>"...
 		  result += _Asciis((boost::format("<%x>") % boost::io::group(std::setfill('0'), std::setw(2), static_cast<int>(*iter))).str());
 		}
@@ -1123,7 +1123,6 @@ c_DataRepresentationFramework::c_ISO_8859_1_String c_DataRepresentationFramework
 
 	return result;
 }
-
 
 /**
   * Parses a string of hex digits where each two digits are interpreted as
