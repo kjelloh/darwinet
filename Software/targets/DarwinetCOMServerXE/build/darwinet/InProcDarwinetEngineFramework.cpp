@@ -71,6 +71,8 @@ namespace darwinet {
 		class c_MIVValueInstanceImpl : public c_MIVValueInstance {
 		public:
 
+			typedef boost::shared_ptr<c_MIVValueInstanceImpl> shared_ptr;
+
 			/**
 			  * Constructor
 			  */
@@ -95,6 +97,15 @@ namespace darwinet {
 
 
 			// End c_MIVValueInstance
+
+			// Begin c_MIVValueInstanceImpl
+
+			/**
+			  * Applies provided Delta to this instance
+			  */
+			virtual void applyDelta(miv::c_DeltaSEPSI::shared_ptr pDelta);
+
+			// End c_MIVValueInstanceImpl
 
 		private:
 
@@ -216,6 +227,11 @@ namespace darwinet {
 			// End c_SEPSI
 
 			// Begin c_SEPSIImpl
+
+			/**
+			  * Returns access to the Value Instance impl. in the SEPSI with provided path.
+			  */
+			virtual c_MIVValueInstanceImpl::shared_ptr getInstanceImpl(const c_InstancePath::shared_ptr& pInstancePath);
 
 			/**
 			  * Processes provided c_DeltaSEPSI instance
@@ -515,6 +531,38 @@ namespace darwinet {
 
 		// End c_MIVValueInstance
 
+		// Begin c_MIVValueInstanceImpl
+
+		/**
+		  * Applies provided Delta to this instance
+		  */
+		void c_MIVValueInstanceImpl::applyDelta(miv::c_DeltaSEPSI::shared_ptr pDelta) {
+			if (*this->m_pCurrentDeltaIndex == *pDelta->getTargetIndex()) {
+				// Correct target Index. Apply the Delta
+				// For now, hard code that we are an integer and the provided Delta must by an integer Delta
+				c_IntDeltaImpl::shared_ptr pIntDelta = boost::dynamic_pointer_cast<c_IntDeltaImpl>(pDelta);
+				if (pIntDelta) {
+					// Yes, we received an Integer Delta
+					this->m_value += pIntDelta->getValue();
+				}
+				else {
+					c_LogString sMessage(__FUNCTION__" failed. Provided Delta not an c_IntDeltaImpl");
+					LOG_DESIGN_INSUFFICIENCY(sMessage);
+				}
+			}
+			else {
+				c_LogString sMessage(__FUNCTION__" failed. Instance index \"");
+				sMessage += this->m_pCurrentDeltaIndex->toString<c_LogString>();
+				sMessage += _UTF8sz("\" <> Delta Target Index \"");
+				sMessage += pDelta->getTargetIndex()->toString<c_LogString>();
+				sMessage += _UTF8sz("\"");
+				LOG_DESIGN_INSUFFICIENCY(sMessage);
+			}
+		}
+
+		// End c_MIVValueInstanceImpl
+
+
 		/**
 		  * Returns the difference between provided value and the value
 		  * we actually have
@@ -645,14 +693,7 @@ namespace darwinet {
 		  * Returns access to the Value Instance in the SEPSI with provided path.
 		  */
 		c_MIVValueInstance::shared_ptr c_SEPSIImpl::getInstance(const c_InstancePath::shared_ptr& pInstancePath) {
-			// TODO: Implement retruning the actual instance in our storage.
-			//       For now, simply return a lpocal static instance
-			static c_MIVValueInstance::shared_ptr static_value_instance;
-			if (!static_value_instance) {
-				c_DeltaIndex::shared_ptr pDummyIndex(new c_DeltaIndex()); // Dummy
-				static_value_instance.reset(new c_MIVValueInstanceImpl(pDummyIndex));
-			}
-			return static_value_instance;
+			return this->getInstanceImpl(pInstancePath);
 		}
 
 		// End c_SEPSI
@@ -660,10 +701,35 @@ namespace darwinet {
 		// Begin c_SEPSIImpl
 
 		/**
+		  * Returns access to the Value Instance impl. in the SEPSI with provided path.
+		  */
+		c_MIVValueInstanceImpl::shared_ptr c_SEPSIImpl::getInstanceImpl(const c_InstancePath::shared_ptr& pInstancePath) {
+			// TODO: Implement retruning the actual instance in our storage.
+			//       For now, simply return a local static instance
+			static c_MIVValueInstanceImpl::shared_ptr static_value_instance_impl;
+			if (!static_value_instance_impl) {
+				c_DeltaIndex::shared_ptr pDummyIndex(new c_DeltaIndex(c_DeltaIndex::Node(_UTF8sz("dummy_index")))); // Dummy
+				static_value_instance_impl.reset(new c_MIVValueInstanceImpl(pDummyIndex));
+			}
+			return static_value_instance_impl;
+        }
+
+		/**
 		  * Processes provided c_DeltaSEPSI instance
 		  */
 		void c_SEPSIImpl::actOnDelta(miv::c_DeltaSEPSI::shared_ptr pDelta) {
 			LOG_NOT_IMPLEMENTED;
+			c_MIVValueInstanceImpl::shared_ptr pInstance = this->getInstanceImpl(pDelta->getTargetInstancePath());
+			if (pInstance) {
+				// The instance exists
+				pInstance->applyDelta(pDelta);
+			}
+			else {
+				// Trying to apply a change to an instance that does not yet exist!
+				c_LogString sMessage(__FUNCTION__" failed. Can't change instance that does not exist. Path=");
+				sMessage += pDelta->getTargetInstancePath()->toString<c_LogString>();
+				LOG_DESIGN_INSUFFICIENCY(sMessage);
+			}
 		}
 
 		// End c_SEPSIImpl
@@ -853,8 +919,6 @@ namespace darwinet {
 		miv::c_DeltaSEPSI::shared_ptr pDelta = this->getOurPeerSource()->receive();
 		if (pDelta) {
 			// Process the Delta we have received
-			c_LogString sMessage("c_DarwinetEngineImpl::processIncomingMessages(), received a delta but no Process implemented yet");
-			LOG_DESIGN_INSUFFICIENCY(sMessage);
 			this->getDomainImpl()->actOnDelta(pDelta);
 		}
 	}

@@ -10,7 +10,7 @@
 // ************************************************************************ //
 
 // $Rev: 46046 $
-// File generated on 2013-05-30 11:33:08 from Type Library described below.
+// File generated on 2013-07-31 14:46:24 from Type Library described below.
 
 // ************************************************************************  //
 // Type Lib: C:\subversion\darwinet\trunk\Software\targets\DarwinetCOMServerXE\build\.\Win32\Debug\DarwinetCOMServerXE.exe (1)
@@ -57,7 +57,7 @@ namespace Darwinetcomserver_tlb
 {
 
 // *********************************************************************//
-// HelpString:
+// HelpString: 
 // Version:    1.0
 // *********************************************************************//
 
@@ -268,16 +268,16 @@ interface IDarwinetSEPSIValueEvents : public TDispWrapper<IDispatch>
 interface IDarwinetSEPSI  : public IDispatch
 {
 public:
-  virtual HRESULT STDMETHODCALLTYPE getValue(BSTR sInstancePath/*[in]*/,
-											 Darwinetcomserver_tlb::DarwinetSEPSIValue** pValue/*[out,retval]*/) = 0; // [201]
+  virtual HRESULT STDMETHODCALLTYPE getValue(BSTR sInstancePath/*[in]*/, 
+                                             Darwinetcomserver_tlb::DarwinetSEPSIValue** ppValue/*[out,retval]*/) = 0; // [201]
 
 #if !defined(__TLB_NO_INTERFACE_WRAPPERS)
 
   Darwinetcomserver_tlb::DarwinetSEPSIValue* __fastcall getValue(BSTR sInstancePath/*[in]*/)
   {
-	Darwinetcomserver_tlb::DarwinetSEPSIValue* pValue = 0;
-	OLECHECK(this->getValue(sInstancePath, (Darwinetcomserver_tlb::DarwinetSEPSIValue**)&pValue));
-	return pValue;
+    Darwinetcomserver_tlb::DarwinetSEPSIValue* ppValue = 0;
+    OLECHECK(this->getValue(sInstancePath, (Darwinetcomserver_tlb::DarwinetSEPSIValue**)&ppValue));
+    return ppValue;
   }
 
 
@@ -647,7 +647,7 @@ public:
   TCOMIDarwinetSEPSIT& operator=(const TCOMIDarwinetSEPSIT& src) { Bind(src, true); return *this;}
 
   HRESULT         __fastcall getValue(BSTR sInstancePath/*[in]*/, 
-                                      Darwinetcomserver_tlb::DarwinetSEPSIValue** pValue/*[out,retval]*/);
+                                      Darwinetcomserver_tlb::DarwinetSEPSIValue** ppValue/*[out,retval]*/);
   Darwinetcomserver_tlb::DarwinetSEPSIValue* __fastcall getValue(BSTR sInstancePath/*[in]*/);
 
 };
@@ -697,7 +697,7 @@ public:
   }
 
   HRESULT         __fastcall getValue(BSTR sInstancePath/*[in]*/, 
-                                      Darwinetcomserver_tlb::DarwinetSEPSIValue** pValue/*[out,retval]*/);
+                                      Darwinetcomserver_tlb::DarwinetSEPSIValue** ppValue/*[out,retval]*/);
   Darwinetcomserver_tlb::DarwinetSEPSIValue* __fastcall getValue(BSTR sInstancePath/*[in]*/);
 
 };
@@ -850,17 +850,17 @@ IDarwinetSEPSIValueDispT<T>::setTo(BSTR sValue/*[in]*/)
 // *********************************************************************//
 template <class T> HRESULT __fastcall
 TCOMIDarwinetSEPSIT<T>::getValue(BSTR sInstancePath/*[in]*/, 
-                                 Darwinetcomserver_tlb::DarwinetSEPSIValue** pValue/*[out,retval]*/)
+                                 Darwinetcomserver_tlb::DarwinetSEPSIValue** ppValue/*[out,retval]*/)
 {
-  return (*this)->getValue(sInstancePath, pValue);
+  return (*this)->getValue(sInstancePath, ppValue);
 }
 
 template <class T> Darwinetcomserver_tlb::DarwinetSEPSIValue* __fastcall
 TCOMIDarwinetSEPSIT<T>::getValue(BSTR sInstancePath/*[in]*/)
 {
-  Darwinetcomserver_tlb::DarwinetSEPSIValue* pValue;
-  OLECHECK(this->getValue(sInstancePath/*[in]*/, (Darwinetcomserver_tlb::DarwinetSEPSIValue**)&pValue));
-  return pValue;
+  Darwinetcomserver_tlb::DarwinetSEPSIValue* ppValue;
+  OLECHECK(this->getValue(sInstancePath/*[in]*/, (Darwinetcomserver_tlb::DarwinetSEPSIValue**)&ppValue));
+  return ppValue;
 }
 
 // *********************************************************************//
@@ -870,20 +870,20 @@ TCOMIDarwinetSEPSIT<T>::getValue(BSTR sInstancePath/*[in]*/)
 // *********************************************************************//
 template <class T> HRESULT __fastcall
 IDarwinetSEPSIDispT<T>::getValue(BSTR sInstancePath/*[in]*/, 
-                                 Darwinetcomserver_tlb::DarwinetSEPSIValue** pValue/*[out,retval]*/)
+                                 Darwinetcomserver_tlb::DarwinetSEPSIValue** ppValue/*[out,retval]*/)
 {
   _TDispID _dispid(*this, OLETEXT("getValue"), DISPID(201));
   TAutoArgs<1> _args;
   _args[1] = sInstancePath /*[VT_BSTR:0]*/;
-  return OutRetValSetterPtr((LPDISPATCH*)(Darwinetcomserver_tlb::DarwinetSEPSIValue**)pValue /*[VT_USERDEFINED:2]*/, _args, OleFunction(_dispid, _args));
+  return OutRetValSetterPtr((LPDISPATCH*)(Darwinetcomserver_tlb::DarwinetSEPSIValue**)ppValue /*[VT_USERDEFINED:2]*/, _args, OleFunction(_dispid, _args));
 }
 
 template <class T> Darwinetcomserver_tlb::DarwinetSEPSIValue* __fastcall
 IDarwinetSEPSIDispT<T>::getValue(BSTR sInstancePath/*[in]*/)
 {
-  Darwinetcomserver_tlb::DarwinetSEPSIValue* pValue;
-  this->getValue(sInstancePath, (Darwinetcomserver_tlb::DarwinetSEPSIValue**)&pValue);
-  return pValue;
+  Darwinetcomserver_tlb::DarwinetSEPSIValue* ppValue;
+  this->getValue(sInstancePath, (Darwinetcomserver_tlb::DarwinetSEPSIValue**)&ppValue);
+  return ppValue;
 }
 
 // *********************************************************************//

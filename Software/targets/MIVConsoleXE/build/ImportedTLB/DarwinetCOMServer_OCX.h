@@ -10,7 +10,7 @@
 // ************************************************************************ //
 
 // $Rev: 46046 $
-// File generated on 2013-05-30 11:33:08 from Type Library described below.
+// File generated on 2013-07-31 14:46:24 from Type Library described below.
 
 // ************************************************************************  //
 // Type Lib: C:\subversion\darwinet\trunk\Software\targets\DarwinetCOMServerXE\build\.\Win32\Debug\DarwinetCOMServerXE.exe (1)

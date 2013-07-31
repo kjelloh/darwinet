@@ -28,6 +28,11 @@ namespace darwinet {
 			  */
 			virtual c_DeltaIndex::shared_ptr getTargetIndex();
 
+			/**
+			  * Returns access to The Instance to wich we apply
+			  */
+			virtual c_InstancePath::shared_ptr getTargetInstancePath();
+
 			// End c_DeltaSEPSI
 
 		private:
@@ -38,6 +43,11 @@ namespace darwinet {
 			  */
 			c_DeltaIndex::shared_ptr m_pTargetIndex;
 
+			/**
+			  * Private storage of the path to the instance to which we apply
+			  */
+			c_InstancePath::shared_ptr m_pTargetInstancePath;
+
 		};
 
 		/**
@@ -46,10 +56,18 @@ namespace darwinet {
 		class c_IntDeltaImpl : public c_DeltaImpl {
 		public:
 
+			typedef boost::shared_ptr<c_IntDeltaImpl> shared_ptr;
+
 			/**
 			  * Creates and integer delta
 			  */
 			c_IntDeltaImpl(const c_DeltaIndex::shared_ptr& pTargetIndex,int int_diff);
+
+			// Begin c_IntDeltaImpl
+
+			virtual int getValue();
+
+			// End c_IntDeltaImpl
 
 		private:
 

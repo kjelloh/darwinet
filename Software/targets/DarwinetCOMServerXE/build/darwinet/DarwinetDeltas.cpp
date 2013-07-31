@@ -16,7 +16,7 @@ namespace darwinet {
 		  * Constructor
 		  */
 		c_DeltaImpl::c_DeltaImpl(const c_DeltaIndex::shared_ptr& pTargetIndex)
-			: m_pTargetIndex(pTargetIndex)
+			:  m_pTargetIndex(pTargetIndex)
 		{
 			LOG_METHOD_SCOPE;
 		}
@@ -28,6 +28,13 @@ namespace darwinet {
 		  */
 		c_DeltaIndex::shared_ptr c_DeltaImpl::getTargetIndex() {
 			return this->m_pTargetIndex;
+		}
+
+		/**
+		  * Returns access to The Instance to wich we apply
+		  */
+		c_InstancePath::shared_ptr c_DeltaImpl::getTargetInstancePath() {
+			return this->m_pTargetInstancePath;
 		}
 
 		// End c_DeltaSEPSI
@@ -44,6 +51,14 @@ namespace darwinet {
 		{
 			LOG_METHOD_SCOPE;
 		}
+
+		// Begin c_IntDeltaImpl
+
+		int c_IntDeltaImpl::getValue() {
+            return this->m_int_diff;
+        }
+
+		// End c_IntDeltaImpl
 
 		//-----------------------------------------------------------------------
 		//-----------------------------------------------------------------------

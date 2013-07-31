@@ -17,7 +17,7 @@ namespace darwinet {
 
 
 	/**
-	  * Models the interface of an MIV Instance.
+	  * Models the interface of an MIV Value Instance.
 	  */
 	class c_MIVValueInstance {
 	public:

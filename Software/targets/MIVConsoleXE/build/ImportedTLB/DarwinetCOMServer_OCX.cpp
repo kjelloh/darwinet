@@ -10,7 +10,7 @@
 // ************************************************************************ //
 
 // $Rev: 46046 $
-// File generated on 2013-05-30 11:33:08 from Type Library described below.
+// File generated on 2013-07-31 14:46:24 from Type Library described below.
 
 // ************************************************************************  //
 // Type Lib: C:\subversion\darwinet\trunk\Software\targets\DarwinetCOMServerXE\build\.\Win32\Debug\DarwinetCOMServerXE.exe (1)
@@ -411,9 +411,9 @@ void __fastcall TDarwinetSEPSI::InvokeEvent(int id, Vcl::Oleserver::TVariantArra
 
 Darwinetcomserver_tlb::DarwinetSEPSIValue* __fastcall TDarwinetSEPSI::getValue(BSTR sInstancePath/*[in]*/)
 {
-  Darwinetcomserver_tlb::DarwinetSEPSIValue* pValue = 0;
-  OLECHECK(GetDefaultInterface()->getValue(sInstancePath, (Darwinetcomserver_tlb::DarwinetSEPSIValue**)&pValue));
-  return pValue;
+  Darwinetcomserver_tlb::DarwinetSEPSIValue* ppValue = 0;
+  OLECHECK(GetDefaultInterface()->getValue(sInstancePath, (Darwinetcomserver_tlb::DarwinetSEPSIValue**)&ppValue));
+  return ppValue;
 }
 
 
@@ -439,7 +439,7 @@ void __fastcall PACKAGE Register()
                               __classid(Darwinetcomserver_tlb::TDarwinetSEPSIValue), 
                               __classid(Darwinetcomserver_tlb::TDarwinetSEPSI)
                            };
-  System::Classes::RegisterComponents("ActiveX", cls_svr,
+  System::Classes::RegisterComponents("Darwinet", cls_svr,
                      sizeof(cls_svr)/sizeof(cls_svr[0])-1);
 }
 

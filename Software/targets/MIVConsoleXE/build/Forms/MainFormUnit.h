@@ -89,6 +89,7 @@ private:	// User declarations
 	TCOMIDarwinetDomain m_pCOMIDarwinetDomain; // The COM Interface "smart pointer"
 	TCOMIDarwinetDomainView m_pCOMIDarwinetDomainView; // The COM Interface "smart pointer"
 	TCOMIDarwinetSEPSI m_pCOMIDarwinetSEPSI; // The COM Interface "smart pointer"
+	TCOMIDarwinetSEPSIValue m_pCOMIDarwinetSEPSIValue; // The COM Interface "smart pointer"
 
 	/**
 	  * Updates the GUI to reflect any chages that shall be reflected

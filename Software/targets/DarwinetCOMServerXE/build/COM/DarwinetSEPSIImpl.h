@@ -35,7 +35,7 @@ public:
 
   // IDarwinetSEPSI
 protected:
-  STDMETHOD(getValue(BSTR sInstancePath, DarwinetSEPSIValue** pValue));
+  STDMETHOD(getValue(BSTR sInstancePath, DarwinetSEPSIValue** ppValue));
 
 
 private:

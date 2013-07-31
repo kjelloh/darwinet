@@ -36,6 +36,11 @@ namespace darwinet {
 			  */
 			virtual c_DeltaIndex::shared_ptr getTargetIndex() = 0;
 
+			/**
+			  * Returns access to The Instance to wich we apply
+			  */
+			virtual c_InstancePath::shared_ptr getTargetInstancePath() = 0;
+
 			// End c_DeltaSEPSI
 
 		};

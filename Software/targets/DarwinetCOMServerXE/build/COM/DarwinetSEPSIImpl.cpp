@@ -57,8 +57,7 @@ static void createFactory()
 }
 #pragma startup createFactory 32
 
-STDMETHODIMP TDarwinetSEPSIImpl::getValue(BSTR sInstancePath, DarwinetSEPSIValue** pValue)
-
+STDMETHODIMP TDarwinetSEPSIImpl::getValue(BSTR sInstancePath, DarwinetSEPSIValue** ppValue)
 {
 //	LOG_METHOD_SCOPE;
 //	if (!m_COMIDarwinetSEPSIValue) {
@@ -67,14 +66,51 @@ STDMETHODIMP TDarwinetSEPSIImpl::getValue(BSTR sInstancePath, DarwinetSEPSIValue
 //		m_COMIDarwinetSEPSIValue = CoDarwinetSEPSIValue::Create();
 //	}
 //	return m_COMIDarwinetSEPSIValue;
+
+//	LOG_METHOD_SCOPE;
+//	if (!m_COMIDarwinetSEPSIValue) {
+//		c_LogString sMessage(__FUNCTION__" Called CoDarwinetSEPSIValue::Create() to create m_COMIDarwinetSEPSIValue");
+//		LOG_DEVELOPMENT_TRACE(sMessage);
+//		m_COMIDarwinetSEPSIValue = CoDarwinetSEPSIValue::Create();
+//	}
+//	*pValue = m_COMIDarwinetSEPSIValue;
+//	return S_OK;
+
 	LOG_METHOD_SCOPE;
-	if (!m_COMIDarwinetSEPSIValue) {
-		c_LogString sMessage(__FUNCTION__" Called CoDarwinetSEPSIValue::Create() to create m_COMIDarwinetSEPSIValue");
-		LOG_DEVELOPMENT_TRACE(sMessage);
-		m_COMIDarwinetSEPSIValue = CoDarwinetSEPSIValue::Create();
+
+	// Code below based on discussion forum answer at https://forums.embarcadero.com/message.jspa?messageID=566825&tstart=0
+	if (!ppValue) {
+		// The caller did not provide the "pointer-to-pointer" we are to modify
+		return E_POINTER;
 	}
-	*pValue = m_COMIDarwinetSEPSIValue;
-	return S_OK;
+
+	try
+	{
+		*ppValue = NULL; // Deafult
+		if (!m_COMIDarwinetSEPSIValue)
+		{
+			c_LogString sMessage(__FUNCTION__" Called CoDarwinetSEPSIValue::Create() to create m_COMIDarwinetSEPSIValue");
+			LOG_DEVELOPMENT_TRACE(sMessage);
+			m_COMIDarwinetSEPSIValue = CoDarwinetSEPSIValue::Create();
+			if (!m_COMIDarwinetSEPSIValue) {
+				// Failed to create the Value instance
+				return E_FAIL;
+			}
+		}
+
+		// Return the result of setting the returned parameter to the Value Interface (calls interface AddRef() internally)
+		return m_COMIDarwinetSEPSIValue->QueryInterface(IID_IDarwinetSEPSIValue,(void**)ppValue);
+
+		/* Alternatively:
+		*ppValue = m_COMIDarwinetSEPSIValue;
+		(*ppValue)->AddRef();
+		return S_OK;
+		*/
+	}
+	catch (const Exception &)
+	{
+		return E_UNEXPECTED;
+	}
 }
 
 /**

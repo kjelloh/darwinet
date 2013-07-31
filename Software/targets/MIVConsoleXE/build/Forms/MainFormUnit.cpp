@@ -10,7 +10,6 @@
 #pragma hdrstop
 
 #include "MainFormUnit.h"
-#include "DarwinetEngineFrameUnit.h"
 #include "BusinessLogUnit.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
@@ -214,6 +213,9 @@ void __fastcall TMainForm::SEPSIConnectButtonClick(TObject *Sender)
 				m_pCOMIDarwinetSEPSI = CoDarwinetSEPSI::Create();
 			}
 			else {
+				if (m_pCOMIDarwinetSEPSIValue) {
+					m_pCOMIDarwinetSEPSIValue.Release();
+				}
 				m_pCOMIDarwinetSEPSI.Release();
 			}
 		break;
@@ -230,20 +232,45 @@ void __fastcall TMainForm::SEPSIConnectButtonClick(TObject *Sender)
 void __fastcall TMainForm::IntValueEditChange(TObject *Sender)
 {
 	// Set the SEPSI value to the new one!
-	if (m_pCOMIDarwinetSEPSI) {
-		// We have a SEPSI instance to talk to!
-		String sValuePath = this->ValuePathLabel->Caption;
-		String sValue = this->IntValueEdit->Text;
-// 130530, This does not yet work. The returned pCOMIDarwinetSEPSIValue is not available beacuse I have not figured out how to marshal it back from teh server.
-//		TCOMIDarwinetSEPSIValue pCOMIDarwinetSEPSIValue = m_pCOMIDarwinetSEPSI->getValue(sValuePath.c_str());
-//		if (pCOMIDarwinetSEPSIValue) {
-//			pCOMIDarwinetSEPSIValue->setTo(sValue.c_str());
+
+	// Code based on discussion forums reply on https://forums.embarcadero.com/message.jspa?messageID=566825&tstart=0
+//	if (m_pCOMIDarwinetSEPSI)
+//	{
+//		// We have a SEPSI instance to talk to!
+//
+//		// String is not compatible with BSTR, have to use WideString instead...
+//		WideString sValuePath = ValuePathLabel->Caption;
+//		WideString sValue = IntValueEdit->Text;
+//
+//		TCOMIDarwinetSEPSIValue pCOMIDarwinetSEPSIValue;
+//		if (SUCCEEDED(m_pCOMIDarwinetSEPSI->getValue(sValuePath.c_bstr(),&pCOMIDarwinetSEPSIValue)))
+//		{
+//			pCOMIDarwinetSEPSIValue->setTo(sValue.c_bstr());
 //		}
-		TCOMIDarwinetSEPSIValue pCOMIDarwinetSEPSIValue = CoDarwinetSEPSIValue::Create();
-		if (pCOMIDarwinetSEPSIValue) {
-			pCOMIDarwinetSEPSIValue->setTo(sValue.c_str());
+//
+//		/* alternatively:
+//		// specifying false because AddRef() has already been called by getValue()...
+//		TCOMIDarwinetSEPSIValue pCOMIDarwinetSEPSIValue(m_pCOMIDarwinetSEPSI->getValue(sValuePath.c_bstr()),false);
+//		pCOMIDarwinetSEPSIValue->setTo(sValue.c_bstr());
+//		*/
+//	}
+
+	try {
+		if (!this->m_pCOMIDarwinetSEPSIValue) {
+			// String is not compatible with BSTR, have to use WideString instead...
+			WideString sValuePath = ValuePathLabel->Caption;
+			WideString sValue = IntValueEdit->Text;
+			if (SUCCEEDED(m_pCOMIDarwinetSEPSI->getValue(sValuePath.c_bstr(),&this->m_pCOMIDarwinetSEPSIValue)))
+			{
+				this->m_pCOMIDarwinetSEPSIValue->setTo(sValue.c_bstr());
+			}
+			else {
+				c_LogString sMessage(__FUNCTION__" failed to get hold of TCOMIDarwinetSEPSIValue instance interface");
+				LOG_DESIGN_INSUFFICIENCY(sMessage);
+			}
 		}
 	}
+	CATCH_AND_LOG_IDE_STD_AND_GENERAL_EXCEPTION_DESIGN_INSUFFICIENCY;
 }
 //---------------------------------------------------------------------------
 
