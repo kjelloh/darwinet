@@ -63,14 +63,14 @@
 			<VerInfo_Locale>1053</VerInfo_Locale>
 			<_TCHARMapping>wchar_t</_TCHARMapping>
 			<ProjectType>CppVCLApplication</ProjectType>
-			<ILINK_LibraryPath>bertlv\;frames\;..\..\MIVConsoleXE\build\darwinet\;darwinet\;COM\;$(ILINK_LibraryPath)</ILINK_LibraryPath>
+			<ILINK_LibraryPath>darwinet\impl\;bertlv\;frames\;..\..\MIVConsoleXE\build\darwinet\;darwinet\;COM\;$(ILINK_LibraryPath)</ILINK_LibraryPath>
 			<PackageImports>IPIndyImpl;bindcompfmx;fmx;rtl;dbrtl;IndySystem;DbxClientDriver;bindcomp;inetdb;DBXInterBaseDriver;DataSnapCommon;DataSnapClient;DataSnapServer;DataSnapProviderClient;xmlrtl;ibxpress;DbxCommonDriver;IndyProtocols;DBXMySQLDriver;dbxcds;soaprtl;bindengine;DBXOracleDriver;CustomIPTransport;dsnap;DBXInformixDriver;IndyCore;fmxase;DBXFirebirdDriver;inet;fmxobj;inetdbxpress;DBXSybaseASADriver;fmxdae;dbexpress;DataSnapIndy10ServerTransport;DarwinetRADLibXE;$(PackageImports)</PackageImports>
 			<Multithreaded>true</Multithreaded>
 			<DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
 			<AllPackageLibs>rtl.lib;vcl.lib;DarwinetCOM.lib;IndyCore.lib;IndySystem.lib;DarwinetRADLibXE.lib;IndyProtocols.lib</AllPackageLibs>
 			<Icon_MainIcon>$(BDS)\bin\cbuilder_PROJECTICON.ico</Icon_MainIcon>
 			<UsingDelphiRTL>true</UsingDelphiRTL>
-			<IncludePath>bertlv\;frames\;..\..\MIVConsoleXE\build\darwinet\;darwinet\;COM\;..\..\DarwinetRADLibXE\build;$(IncludePath)</IncludePath>
+			<IncludePath>darwinet\impl\;bertlv\;frames\;..\..\MIVConsoleXE\build\darwinet\;darwinet\;COM\;..\..\DarwinetRADLibXE\build;$(IncludePath)</IncludePath>
 			<DCC_CBuilderOutput>JPHNE</DCC_CBuilderOutput>
 			<DynamicRTL>true</DynamicRTL>
 			<UsePackages>true</UsePackages>
@@ -182,6 +182,11 @@
 				<DependentOn>darwinet\DarwinetMessages.h</DependentOn>
 				<BuildOrder>16</BuildOrder>
 			</CppCompile>
+			<CppCompile Include="darwinet\impl\DarwinetEngineImpl.cpp">
+				<DependentOn>darwinet\impl\DarwinetEngineImpl.h</DependentOn>
+				<Suffix>_0</Suffix>
+				<BuildOrder>19</BuildOrder>
+			</CppCompile>
 			<CppCompile Include="darwinet\InProcDarwinetEngineFramework.cpp">
 				<DependentOn>darwinet\InProcDarwinetEngineFramework.h</DependentOn>
 				<BuildOrder>8</BuildOrder>
@@ -214,9 +219,9 @@
 				<DependentOn>MainFormUnit.h</DependentOn>
 				<BuildOrder>1</BuildOrder>
 			</CppCompile>
-			<FormResources Include="frames\PeerMailFrameUnit.dfm"/>
 			<FormResources Include="MainFormUnit.dfm"/>
 			<FormResources Include="frames\IMAPClientFrameUnit.dfm"/>
+			<FormResources Include="frames\PeerMailFrameUnit.dfm"/>
 			<BuildConfiguration Include="Release">
 				<Key>Cfg_2</Key>
 				<CfgParent>Base</CfgParent>

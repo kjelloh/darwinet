@@ -10,7 +10,7 @@
 // ************************************************************************ //
 
 // $Rev: 46046 $
-// File generated on 2013-07-31 14:46:24 from Type Library described below.
+// File generated on 2013-08-02 09:10:13 from Type Library described below.
 
 // ************************************************************************  //
 // Type Lib: C:\subversion\darwinet\trunk\Software\targets\DarwinetCOMServerXE\build\.\Win32\Debug\DarwinetCOMServerXE.exe (1)
@@ -189,7 +189,9 @@ public:
 
   void            __fastcall setTo(BSTR sValue/*[in]*/);
 private:
+  System::Classes::TNotifyEvent  FOnonValueChanged;
 __published:
+  __property System::Classes::TNotifyEvent OnonValueChanged={ read=FOnonValueChanged, write=FOnonValueChanged };
 };
 
 

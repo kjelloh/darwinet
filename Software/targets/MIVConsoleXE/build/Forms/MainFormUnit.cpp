@@ -11,6 +11,7 @@
 
 #include "MainFormUnit.h"
 #include "BusinessLogUnit.h"
+#include "BusinessLogFormUnit.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 #pragma link "DarwinetCOMServer_OCX"
@@ -18,6 +19,65 @@
 #pragma link "cspin"
 #pragma resource "*.dfm"
 TMainForm *MainForm;
+
+//---------------------------------------------------------------------------
+	/*
+	When you generate a Component wrapper for an object whose type library you import,
+	you can respond to events simply using the events that are added to the generated component.
+	If you do not use a Component wrapper, however, (or if the server uses COM+ events), you must write the event sink code yourself.
+
+	Handling Automation events programmatically
+
+	Before you can handle events, you must define an event sink. This is a class that implements the event dispatch interface
+	that is defined in the server's type library.
+
+	To write the event sink, create an object that implements the event dispatch interface:
+
+		class MyEventSinkClass: TEventDispatcher<MyEventSinkClass, DIID_TheServerEvents>
+		{
+		...// declare the methods of DIID_TheServerEvents here
+		}
+
+	Once you have an instance of your event sink, you must inform the server object of its existence
+	so that the server can call it. To do this, you call the global InterfaceConnect procedure, passing it
+
+	* The interface to the server that generates events.
+	* The GUID for the event interface that your event sink handles.
+	* An IUnknown interface for your event sink.
+	* A variable that receives a Longint that represents the connection between the server and your event sink.
+
+		pInterface = CoServerClassName.CreateRemote("Machine1");
+		MyEventSinkClass ES;
+		ES.ConnectEvents(pInterface);
+
+	After calling InterfaceConnect, your event sink is connected and receives calls from the server when events occur.
+
+	You must terminate the connection before you free your event sink.
+	To do this, call the global InterfaceDisconnect procedure, passing it all the same parameters
+	except for the interface to your event sink (and the final parameter is ingoing rather than outgoing):
+
+		ES.DisconnectEvents(pInterface);
+
+	Note: You must be certain that the server has released its connection to your event sink before you free it.
+	Because you don't know how the server responds to the disconnect notification initiated by InterfaceDisconnect,
+	this may lead to a race condition if you free your event sink immediately after the call.
+	The easiest way to guard against problems is to have your event sink maintain its own reference count
+	that is not decremented until the server releases the event sink's interface.
+	*/
+
+class c_DarwinetSEPSIValueEventsSinkClass : TEventDispatcher<c_DarwinetSEPSIValueEventsSinkClass, &DIID_IDarwinetSEPSIValueEvents> {
+public:
+	c_DarwinetSEPSIValueEventsSinkClass(TCOMIDarwinetSEPSIValue& pTCOMIDarwinetSEPSIValue) {
+		LOG_METHOD_SCOPE;
+		this->ConnectEvents(pTCOMIDarwinetSEPSIValue);
+	}
+protected:
+  // To be overriden in derived class to dispatch events
+  virtual HRESULT InvokeEvent(DISPID id, TVariant* params = 0) {
+	LOG_METHOD_SCOPE;
+	return S_OK;
+  }
+};
 
 //---------------------------------------------------------------------------
 
@@ -68,6 +128,12 @@ __fastcall TMainForm::TMainForm(TComponent* Owner)
 //	m_DarwineEngineWrapperType = eDarwineEngineWrapperType_Proxy;
 //	m_DarwineEngineWrapperType = eDarwineEngineWrapperType_OCX;
 	m_DarwineEngineWrapperType = eDarwineEngineWrapperType_TLB;
+
+	// Dock the Business Log form to our main windows
+	TBusinessLogForm::instance()->ManualDock(this->LogPanel,NULL,alClient);
+	TBusinessLogForm::instance()->Align = alClient;
+	TBusinessLogForm::instance()->Visible = true;
+	LOG_BUSINESS(_UTF8sz("Application Started!"));
 
 	this->updateGUIToReflectChanges();
 }
@@ -232,43 +298,23 @@ void __fastcall TMainForm::SEPSIConnectButtonClick(TObject *Sender)
 void __fastcall TMainForm::IntValueEditChange(TObject *Sender)
 {
 	// Set the SEPSI value to the new one!
-
 	// Code based on discussion forums reply on https://forums.embarcadero.com/message.jspa?messageID=566825&tstart=0
-//	if (m_pCOMIDarwinetSEPSI)
-//	{
-//		// We have a SEPSI instance to talk to!
-//
-//		// String is not compatible with BSTR, have to use WideString instead...
-//		WideString sValuePath = ValuePathLabel->Caption;
-//		WideString sValue = IntValueEdit->Text;
-//
-//		TCOMIDarwinetSEPSIValue pCOMIDarwinetSEPSIValue;
-//		if (SUCCEEDED(m_pCOMIDarwinetSEPSI->getValue(sValuePath.c_bstr(),&pCOMIDarwinetSEPSIValue)))
-//		{
-//			pCOMIDarwinetSEPSIValue->setTo(sValue.c_bstr());
-//		}
-//
-//		/* alternatively:
-//		// specifying false because AddRef() has already been called by getValue()...
-//		TCOMIDarwinetSEPSIValue pCOMIDarwinetSEPSIValue(m_pCOMIDarwinetSEPSI->getValue(sValuePath.c_bstr()),false);
-//		pCOMIDarwinetSEPSIValue->setTo(sValue.c_bstr());
-//		*/
-//	}
-
 	try {
 		if (!this->m_pCOMIDarwinetSEPSIValue) {
 			// String is not compatible with BSTR, have to use WideString instead...
 			WideString sValuePath = ValuePathLabel->Caption;
-			WideString sValue = IntValueEdit->Text;
 			if (SUCCEEDED(m_pCOMIDarwinetSEPSI->getValue(sValuePath.c_bstr(),&this->m_pCOMIDarwinetSEPSIValue)))
 			{
-				this->m_pCOMIDarwinetSEPSIValue->setTo(sValue.c_bstr());
+				// Attach our Event sink for this value
+				c_DarwinetSEPSIValueEventsSinkClass* pDarwinetSEPSIValueEventsSinkClass(new c_DarwinetSEPSIValueEventsSinkClass(this->m_pCOMIDarwinetSEPSIValue));
 			}
 			else {
 				c_LogString sMessage(__FUNCTION__" failed to get hold of TCOMIDarwinetSEPSIValue instance interface");
 				LOG_DESIGN_INSUFFICIENCY(sMessage);
 			}
 		}
+		WideString sValue = IntValueEdit->Text;
+		this->m_pCOMIDarwinetSEPSIValue->setTo(sValue.c_bstr());
 	}
 	CATCH_AND_LOG_IDE_STD_AND_GENERAL_EXCEPTION_DESIGN_INSUFFICIENCY;
 }

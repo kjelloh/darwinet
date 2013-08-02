@@ -10,7 +10,7 @@
 // ************************************************************************ //
 
 // $Rev: 46046 $
-// File generated on 2013-07-31 14:46:24 from Type Library described below.
+// File generated on 2013-08-02 09:10:13 from Type Library described below.
 
 // ************************************************************************  //
 // Type Lib: C:\subversion\darwinet\trunk\Software\targets\DarwinetCOMServerXE\build\.\Win32\Debug\DarwinetCOMServerXE.exe (1)
@@ -331,6 +331,12 @@ void __fastcall TDarwinetSEPSIValue::InvokeEvent(int id, Vcl::Oleserver::TVarian
 {
   switch(id)
   {
+    case 201: {
+      if (OnonValueChanged) {
+        (OnonValueChanged)(this);
+      }
+      break;
+      }
     default:
       break;
   }
@@ -439,7 +445,7 @@ void __fastcall PACKAGE Register()
                               __classid(Darwinetcomserver_tlb::TDarwinetSEPSIValue), 
                               __classid(Darwinetcomserver_tlb::TDarwinetSEPSI)
                            };
-  System::Classes::RegisterComponents("Darwinet", cls_svr,
+  System::Classes::RegisterComponents("ActiveX", cls_svr,
                      sizeof(cls_svr)/sizeof(cls_svr[0])-1);
 }
 

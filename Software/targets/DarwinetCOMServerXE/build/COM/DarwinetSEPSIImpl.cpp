@@ -58,24 +58,9 @@ static void createFactory()
 #pragma startup createFactory 32
 
 STDMETHODIMP TDarwinetSEPSIImpl::getValue(BSTR sInstancePath, DarwinetSEPSIValue** ppValue)
+
+
 {
-//	LOG_METHOD_SCOPE;
-//	if (!m_COMIDarwinetSEPSIValue) {
-//		c_LogString sMessage(__FUNCTION__" Called CoDarwinetSEPSIValue::Create() to create m_COMIDarwinetSEPSIValue");
-//		LOG_DEVELOPMENT_TRACE(sMessage);
-//		m_COMIDarwinetSEPSIValue = CoDarwinetSEPSIValue::Create();
-//	}
-//	return m_COMIDarwinetSEPSIValue;
-
-//	LOG_METHOD_SCOPE;
-//	if (!m_COMIDarwinetSEPSIValue) {
-//		c_LogString sMessage(__FUNCTION__" Called CoDarwinetSEPSIValue::Create() to create m_COMIDarwinetSEPSIValue");
-//		LOG_DEVELOPMENT_TRACE(sMessage);
-//		m_COMIDarwinetSEPSIValue = CoDarwinetSEPSIValue::Create();
-//	}
-//	*pValue = m_COMIDarwinetSEPSIValue;
-//	return S_OK;
-
 	LOG_METHOD_SCOPE;
 
 	// Code below based on discussion forum answer at https://forums.embarcadero.com/message.jspa?messageID=566825&tstart=0

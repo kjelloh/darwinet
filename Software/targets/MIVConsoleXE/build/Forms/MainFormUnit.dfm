@@ -14,6 +14,15 @@ object MainForm: TMainForm
   OldCreateOrder = False
   PixelsPerInch = 96
   TextHeight = 13
+  object LogSplitter: TSplitter
+    Left = 0
+    Top = 449
+    Width = 804
+    Height = 3
+    Cursor = crVSplit
+    Align = alTop
+    ExplicitWidth = 85
+  end
   object EngineGroupBox: TGroupBox
     Left = 0
     Top = 0
@@ -109,6 +118,19 @@ object MainForm: TMainForm
       TabOrder = 0
       OnChange = IntValueEditChange
     end
+  end
+  object LogPanel: TPanel
+    Left = 0
+    Top = 452
+    Width = 804
+    Height = 82
+    Align = alClient
+    Caption = 'Log Frame goes here at run time'
+    TabOrder = 5
+    ExplicitLeft = 288
+    ExplicitTop = 488
+    ExplicitWidth = 185
+    ExplicitHeight = 41
   end
   object MainMenu1: TMainMenu
     Left = 280

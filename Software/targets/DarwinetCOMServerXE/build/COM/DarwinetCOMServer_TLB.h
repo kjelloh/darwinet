@@ -10,7 +10,7 @@
 // ************************************************************************ //
 
 // $Rev: 46046 $
-// File generated on 2013-07-31 13:31:11 from Type Library described below.
+// File generated on 2013-08-02 14:46:15 from Type Library described below.
 
 // ************************************************************************  //
 // Type Lib: C:\subversion\darwinet\trunk\Software\targets\DarwinetCOMServerXE\build\COM\DarwinetCOMServer (1)
@@ -258,6 +258,12 @@ public:
 // *********************************************************************//
 interface IDarwinetSEPSIValueEvents : public TDispWrapper<IDispatch>
 {
+  HRESULT __fastcall onValueChanged()
+  {
+    _TDispID _dispid(/* onValueChanged */ DISPID(201));
+    return OleFunction(_dispid);
+  }
+
 
 };
 // *********************************************************************//
@@ -629,6 +635,7 @@ public:
   void Attach(LPUNKNOWN punk)
   { m_Dispatch = static_cast<T*>(punk); }
 
+  HRESULT         __fastcall onValueChanged();
 
 };
 typedef IDarwinetSEPSIValueEventsDispT<IDarwinetSEPSIValueEvents> IDarwinetSEPSIValueEventsDisp;
@@ -844,6 +851,13 @@ IDarwinetSEPSIValueDispT<T>::setTo(BSTR sValue/*[in]*/)
 // Flags:     (0)
 // GUID:      {C7A01058-ADFF-428A-AA23-5F2C12176BC4}
 // *********************************************************************//
+template <class T> HRESULT __fastcall
+IDarwinetSEPSIValueEventsDispT<T>::onValueChanged()
+{
+  _TDispID _dispid(/* onValueChanged */ DISPID(201));
+  return OleFunction(_dispid);
+}
+
 // *********************************************************************//
 // SmartIntf: TCOMIDarwinetSEPSI
 // Interface: IDarwinetSEPSI
@@ -1030,9 +1044,30 @@ class TEvents_DarwinetSEPSIValue : public IConnectionPointImpl<T,
 #endif
 {
 public:
+  HRESULT         Fire_onValueChanged(void);
 protected:
   IDarwinetSEPSIValueEventsDisp m_EventIntfObj;
 };
+
+template <class T> HRESULT
+TEvents_DarwinetSEPSIValue<T>::Fire_onValueChanged(void)
+{
+  T * pT = (T*)this;
+  pT->Lock();
+  IUnknown ** pp = m_vec.begin();
+  while (pp < m_vec.end())
+  {
+    if (*pp != NULL)
+    {
+      m_EventIntfObj.Attach(*pp);
+      m_EventIntfObj.onValueChanged();
+      m_EventIntfObj.Attach(0);
+    }
+    pp++;
+  }
+  pT->Unlock();
+  return S_OK;
+}
 
 // *********************************************************************//
 // CONNECTIONPOINT/EVENT PROXY
@@ -1113,6 +1148,21 @@ template <typename T>
 class IDarwinetSEPSIValue_EventsDispatcher : public IUnknown
 {
 public:
+  HRESULT Fire_onValueChanged(void)
+  {
+    IDarwinetSEPSIValueEventsDisp dispInvoker;
+    T* pClass = static_cast<T*>(this);
+    TConnectionPointSinkList<T> cpsl(pClass->ConnectionPoint);
+    if (cpsl.HasConnectionPoint()) {
+      for (int i=0; i<cpsl.GetCount(); i++) {
+        _di_IInterface punk;
+        if (cpsl.GetSink(i, punk) && (dispInvoker.Bind(punk)==S_OK))
+          dispInvoker.onValueChanged();
+      }
+    }
+    return S_OK;
+  }
+
 };
 
 // *********************************************************************//

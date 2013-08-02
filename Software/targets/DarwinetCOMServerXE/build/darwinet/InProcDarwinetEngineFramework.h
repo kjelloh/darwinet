@@ -15,6 +15,22 @@
   */
 namespace darwinet {
 
+	/**
+	  * Interface to be implemented by a c_MIVValueInstance listener
+	  */
+	class c_MIVValueInstanceListener {
+	public:
+
+		// Begin c_MIVValueInstanceListener
+
+		/**
+		  * Act on the change made to c_MIVValueInstance value
+		  */
+		virtual void actOnMIVValueInstanceValueChanged() = 0;
+
+		// End c_MIVValueInstanceListener
+
+	};
 
 	/**
 	  * Models the interface of an MIV Value Instance.
@@ -36,7 +52,18 @@ namespace darwinet {
 		  */
 		virtual c_DeltaIndex::shared_ptr getCurrentDeltaIndex() = 0;
 
+		/**
+		  * Adds provided listener to this instance
+		  */
+		virtual void addListener(c_MIVValueInstanceListener* pListener) = 0;
+
+		/**
+		  * Removes provided listener from this instance
+		  */
+		virtual void removeListener(c_MIVValueInstanceListener* pListener) = 0;
+
 		// End c_MIVValueInstance
+
 	};
 
 	/**
@@ -173,12 +200,12 @@ namespace darwinet {
 	c_DarwinetEngine::shared_ptr engine();
 
 	/**
-	  * Creats a shared domain path instance from provided string
+	  * Creats a domain path shared instance from provided string
 	  */
 	c_DomainPath::shared_ptr shared_domain_path(c_DarwinetString sDomainPath);
 
 	/**
-	  * Creats a shared model path instance from provided string
+	  * Creats a model path shared instance from provided string
 	  */
 	c_ModelPath::shared_ptr shared_model_path(c_DarwinetString sModelPath);
 
