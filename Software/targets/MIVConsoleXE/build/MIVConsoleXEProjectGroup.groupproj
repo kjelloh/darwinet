@@ -12,6 +12,9 @@
 			<Projects Include="..\..\DarwinetRADLibXE\build\DarwinetRADLibXE.cbproj">
 				<Dependencies/>
 			</Projects>
+			<Projects Include="..\..\DarwinetCoreTestXE\build\DarwinetCoreTest.cbproj">
+				<Dependencies/>
+			</Projects>
 		</ItemGroup>
 		<ProjectExtensions>
 			<Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -47,14 +50,23 @@
 		<Target Name="DarwinetRADLibXE:Make">
 			<MSBuild Projects="..\..\DarwinetRADLibXE\build\DarwinetRADLibXE.cbproj" Targets="Make"/>
 		</Target>
+		<Target Name="DarwinetCoreTest">
+			<MSBuild Projects="..\..\DarwinetCoreTestXE\build\DarwinetCoreTest.cbproj"/>
+		</Target>
+		<Target Name="DarwinetCoreTest:Clean">
+			<MSBuild Projects="..\..\DarwinetCoreTestXE\build\DarwinetCoreTest.cbproj" Targets="Clean"/>
+		</Target>
+		<Target Name="DarwinetCoreTest:Make">
+			<MSBuild Projects="..\..\DarwinetCoreTestXE\build\DarwinetCoreTest.cbproj" Targets="Make"/>
+		</Target>
 		<Target Name="Build">
-			<CallTarget Targets="MIVConsoleXE;DarwinetCOMServerXE;DarwinetRADLibXE"/>
+			<CallTarget Targets="MIVConsoleXE;DarwinetCOMServerXE;DarwinetRADLibXE;DarwinetCoreTest"/>
 		</Target>
 		<Target Name="Clean">
-			<CallTarget Targets="MIVConsoleXE:Clean;DarwinetCOMServerXE:Clean;DarwinetRADLibXE:Clean"/>
+			<CallTarget Targets="MIVConsoleXE:Clean;DarwinetCOMServerXE:Clean;DarwinetRADLibXE:Clean;DarwinetCoreTest:Clean"/>
 		</Target>
 		<Target Name="Make">
-			<CallTarget Targets="MIVConsoleXE:Make;DarwinetCOMServerXE:Make;DarwinetRADLibXE:Make"/>
+			<CallTarget Targets="MIVConsoleXE:Make;DarwinetCOMServerXE:Make;DarwinetRADLibXE:Make;DarwinetCoreTest:Make"/>
 		</Target>
 		<Import Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')" Project="$(BDS)\Bin\CodeGear.Group.Targets"/>
 	</Project>
