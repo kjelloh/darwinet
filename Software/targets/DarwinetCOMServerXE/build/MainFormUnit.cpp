@@ -16,11 +16,14 @@ TMainForm *MainForm;
 __fastcall TMainForm::TMainForm(TComponent* Owner)
 	: TForm(Owner)
 {
-	// Dock the Business Log form to our main windows
+	// Dock the Business Log form to our main window
 	TBusinessLogForm::instance()->ManualDock(this,NULL,alClient);
 	TBusinessLogForm::instance()->Align = alClient;
 	TBusinessLogForm::instance()->Visible = true;
 	LOG_BUSINESS(_UTF8sz("Application Started!"));
+
+	ProcessDarwinetIncomingMessagesTimer->Enabled = true; // Enable implemented
+//	ProcessDarwinetIncomingMessagesTimer->Enabled = false; // Disable until implemented
 }
 //---------------------------------------------------------------------------
 void __fastcall TMainForm::ProcessDarwinetIncomingMessagesTimerTimer(TObject *Sender)

@@ -13,7 +13,7 @@
 				<Dependencies/>
 			</Projects>
 			<Projects Include="..\..\DarwinetCoreTestXE\build\DarwinetCoreTest.cbproj">
-				<Dependencies/>
+				<Dependencies>..\..\DarwinetRADLibXE\build\DarwinetRADLibXE.cbproj</Dependencies>
 			</Projects>
 		</ItemGroup>
 		<ProjectExtensions>
@@ -50,13 +50,13 @@
 		<Target Name="DarwinetRADLibXE:Make">
 			<MSBuild Projects="..\..\DarwinetRADLibXE\build\DarwinetRADLibXE.cbproj" Targets="Make"/>
 		</Target>
-		<Target Name="DarwinetCoreTest">
+		<Target Name="DarwinetCoreTest" DependsOnTargets="DarwinetRADLibXE">
 			<MSBuild Projects="..\..\DarwinetCoreTestXE\build\DarwinetCoreTest.cbproj"/>
 		</Target>
-		<Target Name="DarwinetCoreTest:Clean">
+		<Target Name="DarwinetCoreTest:Clean" DependsOnTargets="DarwinetRADLibXE:Clean">
 			<MSBuild Projects="..\..\DarwinetCoreTestXE\build\DarwinetCoreTest.cbproj" Targets="Clean"/>
 		</Target>
-		<Target Name="DarwinetCoreTest:Make">
+		<Target Name="DarwinetCoreTest:Make" DependsOnTargets="DarwinetRADLibXE:Make">
 			<MSBuild Projects="..\..\DarwinetCoreTestXE\build\DarwinetCoreTest.cbproj" Targets="Make"/>
 		</Target>
 		<Target Name="Build">

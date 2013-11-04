@@ -36,6 +36,7 @@
 #include "DarwinetCOMServer_OCX.h"
 #include "cspin.h"
 #include <Vcl.ExtCtrls.hpp>
+#include <System.Actions.hpp>
 //---------------------------------------------------------------------------
 class TMainForm : public TForm
 {

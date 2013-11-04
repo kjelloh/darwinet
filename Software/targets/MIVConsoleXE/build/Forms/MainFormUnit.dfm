@@ -127,10 +127,6 @@ object MainForm: TMainForm
     Align = alClient
     Caption = 'Log Frame goes here at run time'
     TabOrder = 5
-    ExplicitLeft = 288
-    ExplicitTop = 488
-    ExplicitWidth = 185
-    ExplicitHeight = 41
   end
   object MainMenu1: TMainMenu
     Left = 280
