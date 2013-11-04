@@ -17,6 +17,16 @@ namespace seedsrc {
 	namespace integrate {
 
 
+		c_ValueDelta::c_ValueDelta()
+			: m_pInstancePath(new darwinet::c_InstancePath())
+		{
+
+		}
+
+		const darwinet::c_InstancePath& c_ValueDelta::getTargetInstancePath() const {
+			return *m_pInstancePath;
+		}
+
 		/**
 		  * Creates a c_IntValueDelta from provided raw delta value
 		  */
@@ -31,11 +41,45 @@ namespace seedsrc {
 		  * Apply "us" to provided c_MIV
 		  */
 		void c_IntValueDelta::applyTo(c_MIV& miv) const {
-			LOG_NOT_IMPLEMENTED;
-        }
+			c_VariantValuePtr pVariantValue = miv.getInstance(this->getTargetInstancePath());
+			if (pVariantValue) {
+				boost::get<c_IntValue>(*pVariantValue) += *this;
+			}
+			else {
+				// Received a Delta to an instance that does not exist!
+				// This is a design insufficiency.
+				c_LogString sMessage(__FUNCTION__" failed. Provided Delta refers to an instance we could not find. Target = \"");
+				sMessage += this->getTargetInstancePath().toString<c_LogString>();
+				sMessage += _UTF8sz("\"");
+				LOG_DESIGN_INSUFFICIENCY(sMessage);
+            }
+		}
+
+		/**
+		  * Apply us to raw value
+		  */
+		void c_IntValueDelta::applyTo(int& raw_value) const {
+			raw_value += m_raw_delta;
+		}
+
 
 		// End c_Delta
 
+
+		c_IntValue::c_IntValue(int raw_value)
+			: m_raw_value(raw_value)
+		{
+		}
+
+		void c_IntValue::operator+=(const c_IntValueDelta& delta) {
+			delta.applyTo(m_raw_value);
+		}
+
+		c_MIV::c_MIV()
+			: m_pVariantValuesMap(new c_VariantValuesMap())
+		{
+
+		}
 
 		/**
 		  * Applies provided delta to us, updating our state
@@ -45,6 +89,11 @@ namespace seedsrc {
 			// Apply the delta to us
 			delta.applyTo(*this);
 		};
+
+		c_VariantValuePtr c_MIV::getInstance(const darwinet::c_InstancePath& InstancePath) {
+			c_VariantValuePtr result = (*m_pVariantValuesMap)[InstancePath];
+			return result;
+		}
 
 		/**
 		  * Creates a MIV instance with the state defined by provided

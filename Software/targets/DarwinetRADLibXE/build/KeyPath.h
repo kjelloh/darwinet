@@ -238,6 +238,7 @@ namespace oprime {
 			return result;
 		}
 
+
 		/**
 		  * Returns true if all our nodes matches corresponding nodes in other path.
 		  * _Node must implement the operator!=
@@ -423,6 +424,17 @@ namespace oprime {
 			this->key() = key;
 			return *this;
 		}
+
+		bool operator<(const c_IndexedKeyNode& other_instance) const {
+			bool result = false;
+			if (m_key == other_instance.m_key) {
+				result = m_index < other_instance.m_index;
+			}
+			else {
+				result = m_key < other_instance.m_key;
+			}
+			return result;
+		};
 
 		/**
 		  * Returns our keyPathNode node index
