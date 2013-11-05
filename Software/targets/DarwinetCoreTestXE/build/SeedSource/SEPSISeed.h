@@ -47,6 +47,35 @@ namespace seedsrc {
 		class c_InstanceDelta : public c_Delta {
 		public:
 			typedef boost::shared_ptr<c_InstanceDelta> shared_ptr;
+
+		};
+
+		class c_CreateIntInstanceDelta : public c_InstanceDelta {
+		public:
+			typedef boost::shared_ptr<c_CreateIntInstanceDelta> shared_ptr;
+
+			/**
+			  * Create a delta reporting creation of a new object instance
+			  * with provided darwinet::c_InstancePath and of type defined
+			  * by provided darwinet::c_ModelPath
+			  */
+			c_CreateIntInstanceDelta(const darwinet::c_InstancePath& InstancePath,const darwinet::c_ModelPath& ModelPath);
+
+			// Begin c_Delta
+
+			/**
+			  * Apply "us" to provided c_MIV
+			  */
+			virtual void applyTo(c_MIV& miv) const;
+
+			// End c_Delta
+		private:
+
+			darwinet::c_InstancePath m_InstancePath;
+			darwinet::c_ModelPath m_ModelPath;
+
+			const darwinet::c_InstancePath getTargetInstancePath() const;
+
 		};
 
 		//-------------------------------------------------------------------
@@ -102,18 +131,20 @@ namespace seedsrc {
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
-		class c_Value {
+		class c_ObjectInstance {
 		public:
-			typedef boost::shared_ptr<c_Value> shared_ptr;
+			typedef boost::shared_ptr<c_ObjectInstance> shared_ptr;
+
+			void operator+=(const c_CreateIntInstanceDelta& delta);
 
 		};
 
 		//-------------------------------------------------------------------
-		class c_IntValue : public c_Value {
+		class c_IntObjectInstance : public c_ObjectInstance {
 		public:
-			typedef boost::shared_ptr<c_IntValue> shared_ptr;
+			typedef boost::shared_ptr<c_IntObjectInstance> shared_ptr;
 
-			c_IntValue::c_IntValue(int raw_value);
+			c_IntObjectInstance::c_IntObjectInstance(int raw_value);
 
 			void operator+=(const c_IntValueDelta& delta);
 
@@ -124,20 +155,20 @@ namespace seedsrc {
 		};
 
 		//-------------------------------------------------------------------
-		class c_StringValue : public c_Value {
+		class c_StringObjectInstance : public c_ObjectInstance {
 		public:
-			typedef boost::shared_ptr<c_StringValue> shared_ptr;
+			typedef boost::shared_ptr<c_StringObjectInstance> shared_ptr;
 
 		};
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
-		typedef boost::variant<c_IntValue,c_StringValue> c_VariantValue;
-		typedef boost::shared_ptr<c_VariantValue> c_VariantValuePtr;
+		typedef boost::variant<c_IntObjectInstance,c_StringObjectInstance> c_VariantObjectInstance;
+		typedef boost::shared_ptr<c_VariantObjectInstance> c_VariantObjectInstancePtr;
 
-		class c_VariantValuesMap : public std::map<darwinet::c_InstancePath,c_VariantValuePtr> {
+		class c_VariantObjectInstancesMap : public std::map<darwinet::c_InstancePath,c_VariantObjectInstancePtr> {
 		public:
-			typedef boost::shared_ptr<c_VariantValuesMap> shared_ptr;
+			typedef boost::shared_ptr<c_VariantObjectInstancesMap> shared_ptr;
 		};
 
 		class c_MIV {
@@ -154,13 +185,18 @@ namespace seedsrc {
 			  */
 			void operator+=(const c_Delta& delta);
 
-			c_VariantValuePtr getInstance(const darwinet::c_InstancePath& InstancePath);
+			c_VariantObjectInstancePtr getInstance(const darwinet::c_InstancePath& InstancePath);
 
 			// End c_MIV
 
 		private:
 
-			c_VariantValuesMap::shared_ptr m_pVariantValuesMap;
+			c_VariantObjectInstancesMap::shared_ptr m_pVariantValuesMap;
+
+			/**
+			  * Create a new instance of type defined by provided darwinet::c_ModelPath
+			  */
+			c_VariantObjectInstancePtr createInstance(const darwinet::c_ModelPath& ModelPath);
 
 		};
 
