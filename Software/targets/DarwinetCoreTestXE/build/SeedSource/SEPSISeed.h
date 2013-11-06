@@ -69,6 +69,9 @@ namespace seedsrc {
 			virtual void applyTo(c_MIV& miv) const;
 
 			// End c_Delta
+
+			const darwinet::c_InstancePath& getInstancePath() const;
+
 		private:
 
 			darwinet::c_InstancePath m_InstancePath;
@@ -131,20 +134,44 @@ namespace seedsrc {
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
+		class c_ObjectInstance; // Forward
+		class c_IntObjectInstance; // forward
+		class c_StringObjectInstance; // forward
+		typedef boost::variant<c_IntObjectInstance,c_StringObjectInstance> c_VariantObjectInstance;
+		typedef boost::shared_ptr<c_VariantObjectInstance> c_VariantObjectInstancePtr;
+
+		class c_VariantObjectInstancesMap : public std::map<darwinet::c_InstancePath,c_VariantObjectInstancePtr> {
+		public:
+			typedef boost::shared_ptr<c_VariantObjectInstancesMap> shared_ptr;
+
+		};
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
 		class c_ObjectInstance {
 		public:
 			typedef boost::shared_ptr<c_ObjectInstance> shared_ptr;
 
+			c_ObjectInstance(const c_VariantObjectInstancesMap::shared_ptr& pVariantObjectInstancesMap);
+
 			void operator+=(const c_CreateIntInstanceDelta& delta);
+
+		protected:
+
+			c_VariantObjectInstancesMap::shared_ptr getInstanceMap();
+
+		private:
+
+			c_VariantObjectInstancesMap::shared_ptr m_pVariantObjectInstancesMap;
 
 		};
 
 		//-------------------------------------------------------------------
+		const DEFAULT_INT_OBJECT_VALUE = 0;
 		class c_IntObjectInstance : public c_ObjectInstance {
 		public:
 			typedef boost::shared_ptr<c_IntObjectInstance> shared_ptr;
 
-			c_IntObjectInstance::c_IntObjectInstance(int raw_value);
+			c_IntObjectInstance(const c_VariantObjectInstancesMap::shared_ptr& pVariantObjectInstancesMap = c_VariantObjectInstancesMap::shared_ptr(),int raw_value = DEFAULT_INT_OBJECT_VALUE);
 
 			void operator+=(const c_IntValueDelta& delta);
 
@@ -155,22 +182,19 @@ namespace seedsrc {
 		};
 
 		//-------------------------------------------------------------------
+		const darwinet::c_DarwinetString DEFAULT_STRING_OBJECT_VALUE = _UTF8sz("");
 		class c_StringObjectInstance : public c_ObjectInstance {
 		public:
 			typedef boost::shared_ptr<c_StringObjectInstance> shared_ptr;
 
+			c_StringObjectInstance(const c_VariantObjectInstancesMap::shared_ptr& pVariantObjectInstancesMap = c_VariantObjectInstancesMap::shared_ptr(),darwinet::c_DarwinetString raw_value = DEFAULT_STRING_OBJECT_VALUE);
+
+		private:
+			darwinet::c_DarwinetString m_raw_value;
 		};
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
-		typedef boost::variant<c_IntObjectInstance,c_StringObjectInstance> c_VariantObjectInstance;
-		typedef boost::shared_ptr<c_VariantObjectInstance> c_VariantObjectInstancePtr;
-
-		class c_VariantObjectInstancesMap : public std::map<darwinet::c_InstancePath,c_VariantObjectInstancePtr> {
-		public:
-			typedef boost::shared_ptr<c_VariantObjectInstancesMap> shared_ptr;
-		};
-
 		class c_MIV {
 		public:
 			typedef boost::shared_ptr<c_MIV> shared_ptr;

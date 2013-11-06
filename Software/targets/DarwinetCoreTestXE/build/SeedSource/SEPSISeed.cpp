@@ -51,6 +51,11 @@ namespace seedsrc {
 
 		// End c_Delta
 
+		const darwinet::c_InstancePath& c_CreateIntInstanceDelta::getInstancePath() const {
+			return this->m_InstancePath;
+        }
+
+
 		const darwinet::c_InstancePath c_CreateIntInstanceDelta::getTargetInstancePath() const {
 			// The instance we create must define at least the object identifier.
 			// If instance path is only the root obejct idenitifer then parent path is empty.
@@ -107,20 +112,40 @@ namespace seedsrc {
 
 		// End c_Delta
 
+		c_ObjectInstance::c_ObjectInstance(const c_VariantObjectInstancesMap::shared_ptr& pVariantObjectInstancesMap)
+			: m_pVariantObjectInstancesMap(pVariantObjectInstancesMap)
+		{
+
+		}
 
 		void c_ObjectInstance::operator+=(const c_CreateIntInstanceDelta& delta) {
 			// Create an c_IntObjectInstance
-			LOG_NOT_IMPLEMENTED;
+			c_VariantObjectInstancePtr pVariantObjectInstancePtr(new c_VariantObjectInstance());
+			*pVariantObjectInstancePtr = c_IntObjectInstance(this->getInstanceMap());
+			this->getInstanceMap()->insert(std::make_pair(delta.getInstancePath(),pVariantObjectInstancePtr));
+			// createInstance();
 		}
 
-		c_IntObjectInstance::c_IntObjectInstance(int raw_value)
-			: m_raw_value(raw_value)
+		c_VariantObjectInstancesMap::shared_ptr c_ObjectInstance::getInstanceMap() {
+			return this->m_pVariantObjectInstancesMap;
+		}
+
+		c_IntObjectInstance::c_IntObjectInstance(const c_VariantObjectInstancesMap::shared_ptr& pVariantObjectInstancesMap,int raw_value)
+			:  c_ObjectInstance(pVariantObjectInstancesMap)
+			  ,m_raw_value(raw_value)
 		{
 		}
 
 		void c_IntObjectInstance::operator+=(const c_IntValueDelta& delta) {
 			delta.applyTo(m_raw_value);
 		}
+
+		c_StringObjectInstance::c_StringObjectInstance(const c_VariantObjectInstancesMap::shared_ptr& pVariantObjectInstancesMap,darwinet::c_DarwinetString raw_value)
+			:  c_ObjectInstance(pVariantObjectInstancesMap)
+			  ,m_raw_value(raw_value)
+		{
+
+        }
 
 		c_MIV::c_MIV()
 			: m_pVariantValuesMap(new c_VariantObjectInstancesMap())
@@ -177,5 +202,4 @@ namespace seedsrc {
 			c_MIV::shared_ptr pMIV = pIntegrator->integrate(pMIVEvolutionHistory);
 		}
 	}
-
 }
