@@ -24,6 +24,16 @@ namespace seedsrc {
 
 		}
 
+		c_Object::c_Object(const c_ModelPath& model_path)
+			: m_model_path(model_path)
+		{
+
+		}
+
+		const c_ModelPath& c_Object::getModelPath() {
+			return m_model_path;
+		}
+
 		namespace delta {
 
 
@@ -41,9 +51,20 @@ namespace seedsrc {
 			}
 
 			void c_AddModel::applyTo(c_MIV& miv) const {
-				LOG_NOT_IMPLEMENTED;
-				// Chekk that parent exists
+				// Check that parent exists
 				// Then create new model member
+				c_Model::shared_ptr pParentModel = miv.m_models[this->m_target_path];
+				if (pParentModel) {
+					// OK, create the member
+					c_ModelPath model_path = this->m_target_path;
+					model_path += m_memberId;
+					miv.m_models.insert(std::make_pair(model_path,boost::make_shared<c_Model>(this->m_model)));
+				}
+				else {
+					c_LogString sMessage(__FUNCTION__" failed. Unable to find parent model = ");
+					sMessage += this->m_target_path.toString<c_LogString>();
+					LOG_DESIGN_INSUFFICIENCY(sMessage);
+				}
 			}
 
 		}
@@ -72,7 +93,30 @@ namespace seedsrc {
 			// Begin c_Delta
 
 			void c_CreateInstance::applyTo(c_MIV& miv) const {
-				LOG_NOT_IMPLEMENTED;
+				// Check that parent object exists
+				c_Object::shared_ptr pParentObject = miv.m_objects[this->m_target_path];
+				if (pParentObject) {
+					// Now get the model to use for the new member object
+					c_ModelPath model_path = pParentObject->getModelPath();
+					model_path += m_memberId;
+					c_Model::shared_ptr pModel = miv.m_models[model_path];
+					if (pModel) {
+						// Ok, the model is defined
+						c_InstancePath instance_path = this->m_target_path;
+						instance_path += m_memberId;
+						miv.m_objects.insert(std::make_pair(instance_path,boost::make_shared<c_Object>(model_path)));
+					}
+					else {
+						c_LogString sMessage(__FUNCTION__" failed. Unable to find object model = ");
+						sMessage += model_path.toString<c_LogString>();
+						LOG_DESIGN_INSUFFICIENCY(sMessage);
+					}
+				}
+				else {
+					c_LogString sMessage(__FUNCTION__" failed. Unable to find parent object = ");
+					sMessage += this->m_target_path.toString<c_LogString>();
+					LOG_DESIGN_INSUFFICIENCY(sMessage);
+				}
 			}
 
 			// End c_Delta
@@ -105,7 +149,9 @@ namespace seedsrc {
 			:  m_models()
 			  ,m_objects()
 		{
-			m_models.insert(std::make_pair(c_ModelPath("root"),boost::make_shared<c_Model>(eType_Record)));
+			c_ModelPath model_path = c_ModelPath::fromString(c_DarwinetString("root"));
+			m_models.insert(std::make_pair(model_path,boost::make_shared<c_Model>(eType_Record)));
+			m_objects.insert(std::make_pair(c_InstancePath::fromString(c_DarwinetString("root")),boost::make_shared<c_Object>(model_path)));
 		}
 
 		void c_MIV::operator+=(const delta::c_Delta& delta) {
@@ -117,15 +163,14 @@ namespace seedsrc {
 			LOG_FUNCTION_SCOPE;
 			c_MIV::shared_ptr pMIV(new c_MIV());
 			delta::c_Deltas::shared_ptr pDeltas(new delta::c_Deltas());
-			pDeltas->push_back(boost::make_shared<delta::c_AddModel>(c_ModelPath("root.myInt"),c_Model(eType_Int)));
-			pDeltas->push_back(boost::make_shared<delta::c_CreateInstance>(c_InstancePath("root.myInt")));
-			pDeltas->push_back(boost::make_shared<delta::c_IntAdd>(c_InstancePath("root.myInt"),4));
+			pDeltas->push_back(boost::make_shared<delta::c_AddModel>(c_ModelPath::fromString(c_DarwinetString("root.myInt")),c_Model(eType_Int)));
+			pDeltas->push_back(boost::make_shared<delta::c_CreateInstance>(c_InstancePath::fromString(c_DarwinetString("root.myInt"))));
+			pDeltas->push_back(boost::make_shared<delta::c_IntAdd>(c_InstancePath::fromString(c_DarwinetString("root.myInt")),4));
 //			*pMIV += delta::c_IntAdd("root.myInt",4);
 			for (delta::c_Deltas::const_iterator iter = pDeltas->begin(); iter != pDeltas->end(); ++iter) {
 				*pMIV += **iter;
 			}
 		}
-
 	}
 
 	namespace integrate {

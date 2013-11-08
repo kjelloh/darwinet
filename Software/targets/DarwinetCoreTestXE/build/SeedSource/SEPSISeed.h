@@ -20,7 +20,8 @@ namespace seedsrc {
 		// The namespace integrate failed short on a number of requirements.
 		// Lets start over again
 
-		typedef std::string c_DarwinetString;
+//		typedef std::string c_DarwinetString;
+		typedef c_DataRepresentationFramework::c_UTF8String c_DarwinetString;
 		typedef c_DarwinetString c_CaptionNode;
 
 		enum e_Type {
@@ -67,7 +68,7 @@ namespace seedsrc {
 
 				c_DeltaM(const c_ModelPath& target_path);
 
-			private:
+			protected:
 				const c_ModelPath m_target_path;
 
 			};
@@ -122,7 +123,11 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<c_Object> shared_ptr;
 
-			c_Object();
+			c_Object(const c_ModelPath& model_path = c_ModelPath());
+
+			const c_ModelPath& getModelPath();
+		private:
+			const c_ModelPath m_model_path;
 		};
 
 		namespace delta {
@@ -133,7 +138,7 @@ namespace seedsrc {
 
 				c_DeltaIV(const c_InstancePath& target_path);
 
-			private:
+			protected:
 				const c_InstancePath m_target_path;
 
 			};
@@ -195,6 +200,8 @@ namespace seedsrc {
 		class c_MIV {
 		public:
 			typedef boost::shared_ptr<c_MIV> shared_ptr;
+			friend class delta::c_AddModel;
+			friend class delta::c_CreateInstance;
 
 			c_MIV();
 
