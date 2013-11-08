@@ -23,6 +23,7 @@ __fastcall TMainForm::TMainForm(TComponent* Owner)
 	TBusinessLogForm::instance()->Visible = true;
 	LOG_BUSINESS(_UTF8sz("Application Started!"));
 
-	seedsrc::integrate::test();
+//	seedsrc::integrate::test();
+	seedsrc::integrate2::test();
 }
 //---------------------------------------------------------------------------

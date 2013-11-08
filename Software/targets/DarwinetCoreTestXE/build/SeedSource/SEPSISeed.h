@@ -16,6 +16,134 @@
   */
 namespace seedsrc {
 
+	namespace integrate2 {
+		// The namespace integrate failed short on a number of requirements.
+		// Lets start over again
+
+		typedef std::string c_DarwinetString;
+		typedef c_DarwinetString c_CaptionNode;
+
+		enum e_Type {
+			eType_Undefined
+			,eType_Int
+			,eType_String
+			,eType_Record
+			,eType_Array
+			,eType_Unknown
+
+		};
+
+		typedef oprime::c_KeyPath<c_CaptionNode> c_ModelPath;
+
+		class c_Model {
+		public:
+			typedef boost::shared_ptr<c_Model> shared_ptr;
+
+			c_Model(e_Type type);
+		private:
+			e_Type m_type;
+		};
+
+		namespace delta {
+
+
+			class c_MIV; // Forward
+
+			class c_Delta {
+			public:
+				typedef boost::shared_ptr<c_Delta> shared_ptr;
+
+				virtual void applyTo(c_MIV& miv) const = 0;
+
+			private:
+
+			};
+
+			class c_DeltaM : public c_Delta {
+			public:
+				typedef boost::shared_ptr<c_DeltaM> shared_ptr;
+
+				c_DeltaM(const c_ModelPath& target_path);
+
+			private:
+				const c_ModelPath m_target_path;
+
+			};
+
+			class c_AddModel : public c_DeltaM {
+			public:
+				typedef boost::shared_ptr<c_AddModel> shared_ptr;
+
+				c_AddModel(const c_ModelPath& model_path,const c_Model& model);
+
+				virtual void applyTo(c_MIV& miv) const;
+
+			private:
+				const c_ModelPath::Node m_memberId;
+				const c_Model m_model;
+			};
+
+			class c_Deltas : public std::vector<c_Delta::shared_ptr> {
+			public:
+				typedef boost::shared_ptr<c_Deltas> shared_ptr;
+
+			};
+		}
+
+		class c_Models : public std::map<c_ModelPath,c_Model::shared_ptr> {
+		public:
+			typedef boost::shared_ptr<c_Models> shared_ptr;
+
+		};
+
+		typedef oprime::c_KeyPath<c_CaptionNode> c_InstancePath;
+
+		class c_IntValue {
+		};
+
+		class c_StringValue {
+		};
+
+		class c_RecordValue {
+		};
+
+		class c_ArrayValue {
+		};
+
+		typedef boost::variant<c_IntValue,c_StringValue,c_RecordValue, c_ArrayValue> c_VariantValue;
+
+		class c_Object {
+		public:
+			typedef boost::shared_ptr<c_Object> shared_ptr;
+
+			c_Object();
+		};
+
+		class c_Objects : public std::map<c_InstancePath,c_Object::shared_ptr> {
+		public:
+			typedef boost::shared_ptr<c_Objects> shared_ptr;
+		};
+
+		class c_MIV {
+		public:
+			typedef boost::shared_ptr<c_MIV> shared_ptr;
+
+			c_MIV();
+
+			void operator+=(const delta::c_Delta& delta);
+
+		private:
+
+			c_Models m_models;
+			c_Objects m_objects;
+		};
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+
+		void test();
+
+	}
+
 	namespace integrate {
 
 		class c_MIV; // Forward

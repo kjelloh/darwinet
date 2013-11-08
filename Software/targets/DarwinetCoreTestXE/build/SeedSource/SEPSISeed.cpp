@@ -14,6 +14,66 @@
   */
 namespace seedsrc {
 
+	namespace integrate2 {
+		// The namespace integrate failed short on a number of requirements.
+		// Lets start over again with integrate2
+
+		c_Model::c_Model(e_Type type)
+			: m_type(type)
+		{
+
+		}
+
+		namespace delta {
+
+
+			c_DeltaM::c_DeltaM(const c_ModelPath& target_path)
+				: c_Delta()
+				  ,m_target_path(target_path)
+			{
+			}
+
+			c_AddModel::c_AddModel(const c_ModelPath& model_path,const c_Model& model)
+				:  c_DeltaM(model_path.getParentPath())
+				  ,m_memberId(model_path.back())
+				  ,m_model(model)
+			{
+			}
+
+			void c_AddModel::applyTo(c_MIV& miv) const {
+				LOG_NOT_IMPLEMENTED;
+				// Chekk that parent exists
+				// Then create new model member
+			}
+
+		}
+
+		c_MIV::c_MIV()
+			:  m_models()
+			  ,m_objects()
+		{
+			m_models.insert(std::make_pair(c_ModelPath("root"),boost::make_shared<c_Model>(eType_Record)));
+		}
+
+		void c_MIV::operator+=(const delta::c_Delta& delta) {
+			LOG_NOT_IMPLEMENTED;
+		}
+
+		void test() {
+			LOG_FUNCTION_SCOPE;
+			c_MIV::shared_ptr pMIV(new c_MIV());
+			delta::c_Deltas::shared_ptr pDeltas(new delta::c_Deltas());
+			pDeltas->push_back(boost::make_shared<delta::c_AddModel>(c_ModelPath("root.myInt"),c_Model(eType_Int)));
+			*pMIV += delta::c_AddModel(c_ModelPath("root.myInt"),c_Model(eType_Int));
+//			*pMIV += delta::c_CreateInstance("root.myInt");
+//			*pMIV += delta::c_IntAdd("root.myInt",4);
+			for (delta::c_Deltas::const_iterator iter = pDeltas->begin(); iter != pDeltas->end(); ++iter) {
+				*pMIV += **iter;
+			}
+		}
+
+	}
+
 	namespace integrate {
 
 
