@@ -48,6 +48,59 @@ namespace seedsrc {
 
 		}
 
+		namespace delta {
+
+
+			c_DeltaIV::c_DeltaIV(const c_InstancePath& target_path)
+				: m_target_path(target_path)
+			{
+			}
+
+			c_DeltaI::c_DeltaI(const c_InstancePath& target_path)
+				: c_DeltaIV(target_path)
+			{
+
+            }
+
+
+			c_CreateInstance::c_CreateInstance(const c_InstancePath& instance_path)
+				:  c_DeltaI(instance_path.getParentPath())
+				  ,m_memberId(instance_path.back())
+			{
+			};
+
+			// Begin c_Delta
+
+			void c_CreateInstance::applyTo(c_MIV& miv) const {
+				LOG_NOT_IMPLEMENTED;
+			}
+
+			// End c_Delta
+
+
+			c_DeltaV::c_DeltaV(const c_InstancePath& target_path)
+				: c_DeltaIV(target_path)
+			{
+
+			}
+
+			c_IntAdd::c_IntAdd(const c_InstancePath& target_path,int raw_delta)
+				:  c_DeltaV(target_path)
+				  ,m_raw_delta(raw_delta)
+			{
+
+			}
+
+			// Begin c_Delta
+
+			void c_IntAdd::applyTo(c_MIV& miv) const {
+				LOG_NOT_IMPLEMENTED;
+            }
+
+			// End c_Delta
+
+		}
+
 		c_MIV::c_MIV()
 			:  m_models()
 			  ,m_objects()
@@ -56,7 +109,8 @@ namespace seedsrc {
 		}
 
 		void c_MIV::operator+=(const delta::c_Delta& delta) {
-			LOG_NOT_IMPLEMENTED;
+			// Delegate to specialization
+			delta.applyTo(*this);
 		}
 
 		void test() {
@@ -64,8 +118,8 @@ namespace seedsrc {
 			c_MIV::shared_ptr pMIV(new c_MIV());
 			delta::c_Deltas::shared_ptr pDeltas(new delta::c_Deltas());
 			pDeltas->push_back(boost::make_shared<delta::c_AddModel>(c_ModelPath("root.myInt"),c_Model(eType_Int)));
-			*pMIV += delta::c_AddModel(c_ModelPath("root.myInt"),c_Model(eType_Int));
-//			*pMIV += delta::c_CreateInstance("root.myInt");
+			pDeltas->push_back(boost::make_shared<delta::c_CreateInstance>(c_InstancePath("root.myInt")));
+			pDeltas->push_back(boost::make_shared<delta::c_IntAdd>(c_InstancePath("root.myInt"),4));
 //			*pMIV += delta::c_IntAdd("root.myInt",4);
 			for (delta::c_Deltas::const_iterator iter = pDeltas->begin(); iter != pDeltas->end(); ++iter) {
 				*pMIV += **iter;

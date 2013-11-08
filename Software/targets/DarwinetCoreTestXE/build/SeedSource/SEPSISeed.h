@@ -44,16 +44,18 @@ namespace seedsrc {
 			e_Type m_type;
 		};
 
+		class c_MIV; // Forward
 		namespace delta {
-
-
-			class c_MIV; // Forward
 
 			class c_Delta {
 			public:
 				typedef boost::shared_ptr<c_Delta> shared_ptr;
 
+				// Begin c_Delta
+
 				virtual void applyTo(c_MIV& miv) const = 0;
+
+				// End c_Delta
 
 			private:
 
@@ -76,7 +78,11 @@ namespace seedsrc {
 
 				c_AddModel(const c_ModelPath& model_path,const c_Model& model);
 
+				// Begin c_Delta
+
 				virtual void applyTo(c_MIV& miv) const;
+
+				// End c_Delta
 
 			private:
 				const c_ModelPath::Node m_memberId;
@@ -96,8 +102,6 @@ namespace seedsrc {
 
 		};
 
-		typedef oprime::c_KeyPath<c_CaptionNode> c_InstancePath;
-
 		class c_IntValue {
 		};
 
@@ -112,12 +116,76 @@ namespace seedsrc {
 
 		typedef boost::variant<c_IntValue,c_StringValue,c_RecordValue, c_ArrayValue> c_VariantValue;
 
+		typedef oprime::c_KeyPath<c_CaptionNode> c_InstancePath;
+
 		class c_Object {
 		public:
 			typedef boost::shared_ptr<c_Object> shared_ptr;
 
 			c_Object();
 		};
+
+		namespace delta {
+
+			class c_DeltaIV : public c_Delta {
+			public:
+				typedef boost::shared_ptr<c_DeltaIV> shared_ptr;
+
+				c_DeltaIV(const c_InstancePath& target_path);
+
+			private:
+				const c_InstancePath m_target_path;
+
+			};
+
+			class c_DeltaI : public c_DeltaIV {
+			public:
+				typedef boost::shared_ptr<c_DeltaIV> shared_ptr;
+
+				c_DeltaI(const c_InstancePath& target_path);
+			};
+
+			class c_CreateInstance : public c_DeltaI {
+			public:
+				typedef boost::shared_ptr<c_CreateInstance> shared_ptr;
+
+				c_CreateInstance(const c_InstancePath& instance_path);
+
+				// Begin c_Delta
+
+				virtual void applyTo(c_MIV& miv) const;
+
+				// End c_Delta
+			private:
+				c_InstancePath::Node m_memberId;
+
+			};
+
+			class c_DeltaV : public c_DeltaIV {
+			public:
+				typedef boost::shared_ptr<c_DeltaV> shared_ptr;
+
+				c_DeltaV(const c_InstancePath& target_path);
+
+			};
+
+			class c_IntAdd : public c_DeltaV {
+			public:
+				typedef boost::shared_ptr<c_IntAdd> shared_ptr;
+
+				c_IntAdd(const c_InstancePath& target_path,int raw_delta);
+
+				// Begin c_Delta
+
+				virtual void applyTo(c_MIV& miv) const;
+
+				// End c_Delta
+
+			private:
+				int m_raw_delta;
+			};
+
+		}
 
 		class c_Objects : public std::map<c_InstancePath,c_Object::shared_ptr> {
 		public:
