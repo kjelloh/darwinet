@@ -20,7 +20,6 @@ namespace seedsrc {
 		// The namespace integrate failed short on a number of requirements.
 		// Lets start over again
 
-//		typedef std::string c_DarwinetString;
 		typedef c_DataRepresentationFramework::c_UTF8String c_DarwinetString;
 		typedef c_DarwinetString c_CaptionNode;
 
@@ -41,6 +40,8 @@ namespace seedsrc {
 			typedef boost::shared_ptr<c_Model> shared_ptr;
 
 			c_Model(e_Type type);
+
+			e_Type type();
 		private:
 			e_Type m_type;
 		};
@@ -103,7 +104,23 @@ namespace seedsrc {
 
 		};
 
+		namespace delta {
+			class c_IntAdd; // forward
+		}
+
+		const INT_INIT_VALUE = 0;
 		class c_IntValue {
+		public:
+			typedef boost::shared_ptr<c_IntValue> shared_ptr;
+
+			c_IntValue();
+
+			void applyDeltaV(const delta::c_IntAdd& delta);
+
+			int raw_value();
+
+		private:
+			int m_raw_value;
 		};
 
 		class c_StringValue {
@@ -116,18 +133,25 @@ namespace seedsrc {
 		};
 
 		typedef boost::variant<c_IntValue,c_StringValue,c_RecordValue, c_ArrayValue> c_VariantValue;
+		typedef boost::shared_ptr<c_VariantValue> c_VariantValuePtr;
 
 		typedef oprime::c_KeyPath<c_CaptionNode> c_InstancePath;
 
 		class c_Object {
 		public:
 			typedef boost::shared_ptr<c_Object> shared_ptr;
+			friend class delta::c_IntAdd;
 
-			c_Object(const c_ModelPath& model_path = c_ModelPath());
+			c_Object(e_Type type,const c_ModelPath& model_path = c_ModelPath());
 
 			const c_ModelPath& getModelPath();
+
 		private:
 			const c_ModelPath m_model_path;
+			const e_Type m_type;
+			c_VariantValuePtr m_pVariantValue;
+
+			c_VariantValuePtr getVariantValue();
 		};
 
 		namespace delta {
@@ -177,6 +201,7 @@ namespace seedsrc {
 			class c_IntAdd : public c_DeltaV {
 			public:
 				typedef boost::shared_ptr<c_IntAdd> shared_ptr;
+				friend class c_IntValue;
 
 				c_IntAdd(const c_InstancePath& target_path,int raw_delta);
 
@@ -202,6 +227,7 @@ namespace seedsrc {
 			typedef boost::shared_ptr<c_MIV> shared_ptr;
 			friend class delta::c_AddModel;
 			friend class delta::c_CreateInstance;
+			friend class delta::c_IntAdd;
 
 			c_MIV();
 

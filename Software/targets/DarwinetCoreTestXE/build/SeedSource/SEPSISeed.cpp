@@ -24,14 +24,64 @@ namespace seedsrc {
 
 		}
 
-		c_Object::c_Object(const c_ModelPath& model_path)
-			: m_model_path(model_path)
+		e_Type c_Model::type() {
+			return m_type;
+		}
+
+
+		c_IntValue::c_IntValue()
+			: m_raw_value(INT_INIT_VALUE)
+		{
+
+		}
+
+		void c_IntValue::applyDeltaV(const delta::c_IntAdd& delta) {
+			m_raw_value += delta.m_raw_delta;
+		}
+
+		int c_IntValue::raw_value() {
+			return m_raw_value;
+        }
+
+
+		c_Object::c_Object(e_Type type,const c_ModelPath& model_path)
+			:  m_type(type)
+			  ,m_model_path(model_path)
+			  ,m_pVariantValue()
 		{
 
 		}
 
 		const c_ModelPath& c_Object::getModelPath() {
 			return m_model_path;
+		}
+
+		c_VariantValuePtr c_Object::getVariantValue() {
+			if (!m_pVariantValue) {
+				switch (m_type) {
+					case eType_Undefined:
+						LOG_DESIGN_INSUFFICIENCY(c_LogString(__FUNCTION__" failed. type = eType_Undefined"));
+					break;
+					case eType_Int:
+						m_pVariantValue = boost::make_shared<c_VariantValue>(c_IntValue());
+					break;
+					case eType_String:
+						m_pVariantValue = boost::make_shared<c_VariantValue>(c_StringValue());
+					break;
+					case eType_Record:
+						m_pVariantValue = boost::make_shared<c_VariantValue>(c_RecordValue());
+					break;
+					case eType_Array:
+						m_pVariantValue = boost::make_shared<c_VariantValue>(c_ArrayValue());
+					break;
+					case eType_Unknown:
+						LOG_DESIGN_INSUFFICIENCY(c_LogString(__FUNCTION__" failed. type = eType_Unknown"));
+					break;
+				default:
+					;
+				}
+			}
+			return m_pVariantValue;
 		}
 
 		namespace delta {
@@ -59,6 +109,11 @@ namespace seedsrc {
 					c_ModelPath model_path = this->m_target_path;
 					model_path += m_memberId;
 					miv.m_models.insert(std::make_pair(model_path,boost::make_shared<c_Model>(this->m_model)));
+					c_LogString sMessage("dM:");
+					sMessage += this->m_target_path.toString<c_LogString>();
+					sMessage += _UTF8sz("+=");
+					sMessage += m_memberId; // Works as c_LogString is compatible to c_CaptionNode
+					LOG_BUSINESS(sMessage);
 				}
 				else {
 					c_LogString sMessage(__FUNCTION__" failed. Unable to find parent model = ");
@@ -104,7 +159,12 @@ namespace seedsrc {
 						// Ok, the model is defined
 						c_InstancePath instance_path = this->m_target_path;
 						instance_path += m_memberId;
-						miv.m_objects.insert(std::make_pair(instance_path,boost::make_shared<c_Object>(model_path)));
+						miv.m_objects.insert(std::make_pair(instance_path,boost::make_shared<c_Object>(pModel->type(),model_path)));
+						c_LogString sMessage("dI:");
+						sMessage += this->m_target_path.toString<c_LogString>();
+						sMessage += _UTF8sz("+=");
+						sMessage += m_memberId; // Works as c_LogString is compatible to c_CaptionNode
+						LOG_BUSINESS(sMessage);
 					}
 					else {
 						c_LogString sMessage(__FUNCTION__" failed. Unable to find object model = ");
@@ -138,8 +198,24 @@ namespace seedsrc {
 			// Begin c_Delta
 
 			void c_IntAdd::applyTo(c_MIV& miv) const {
-				LOG_NOT_IMPLEMENTED;
-            }
+				c_Object::shared_ptr pObject = miv.m_objects[this->m_target_path];
+				if (pObject) {
+					// Apply to Integer value
+					boost::get<c_IntValue>(*pObject->getVariantValue()).applyDeltaV(*this);
+					c_LogString sMessage("dV:");
+					sMessage += this->m_target_path.toString<c_LogString>();
+					sMessage += _UTF8sz("+=");
+					sMessage += c_DataRepresentationFramework::intToDecimalString(this->m_raw_delta);
+					sMessage += _UTF8sz(" == ");
+					sMessage += c_DataRepresentationFramework::intToDecimalString(boost::get<c_IntValue>(*pObject->getVariantValue()).raw_value());
+					LOG_BUSINESS(sMessage);
+				}
+				else {
+					c_LogString sMessage(__FUNCTION__" failed. Unable to find object = ");
+					sMessage += this->m_target_path.toString<c_LogString>();
+					LOG_DESIGN_INSUFFICIENCY(sMessage);
+				}
+			}
 
 			// End c_Delta
 
@@ -151,7 +227,7 @@ namespace seedsrc {
 		{
 			c_ModelPath model_path = c_ModelPath::fromString(c_DarwinetString("root"));
 			m_models.insert(std::make_pair(model_path,boost::make_shared<c_Model>(eType_Record)));
-			m_objects.insert(std::make_pair(c_InstancePath::fromString(c_DarwinetString("root")),boost::make_shared<c_Object>(model_path)));
+			m_objects.insert(std::make_pair(c_InstancePath::fromString(c_DarwinetString("root")),boost::make_shared<c_Object>(eType_Record,model_path)));
 		}
 
 		void c_MIV::operator+=(const delta::c_Delta& delta) {
@@ -166,7 +242,7 @@ namespace seedsrc {
 			pDeltas->push_back(boost::make_shared<delta::c_AddModel>(c_ModelPath::fromString(c_DarwinetString("root.myInt")),c_Model(eType_Int)));
 			pDeltas->push_back(boost::make_shared<delta::c_CreateInstance>(c_InstancePath::fromString(c_DarwinetString("root.myInt"))));
 			pDeltas->push_back(boost::make_shared<delta::c_IntAdd>(c_InstancePath::fromString(c_DarwinetString("root.myInt")),4));
-//			*pMIV += delta::c_IntAdd("root.myInt",4);
+			pDeltas->push_back(boost::make_shared<delta::c_IntAdd>(c_InstancePath::fromString(c_DarwinetString("root.myInt")),2));
 			for (delta::c_Deltas::const_iterator iter = pDeltas->begin(); iter != pDeltas->end(); ++iter) {
 				*pMIV += **iter;
 			}
@@ -304,7 +380,7 @@ namespace seedsrc {
 			  ,m_raw_value(raw_value)
 		{
 
-        }
+		}
 
 		c_MIV::c_MIV()
 			: m_pVariantValuesMap(new c_VariantObjectInstancesMap())
