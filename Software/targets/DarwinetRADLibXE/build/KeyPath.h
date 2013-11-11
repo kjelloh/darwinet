@@ -92,10 +92,14 @@ namespace oprime {
 	class c_KeyPath : public std::vector<_Node> {
 	private:
 		typedef std::vector<_Node> _Base;
+		typedef c_KeyPath<_Node> _Self;
 	public:
 
 		typedef typename _Node Node;
-		typedef boost::shared_ptr<c_KeyPath<Node> > shared_ptr;
+		typedef boost::shared_ptr<_Self> shared_ptr;
+		typedef boost::weak_ptr<_Self> weak_ptr;
+		typedef boost::shared_ptr<const _Self> shared_ptr_const;
+		typedef boost::weak_ptr<const _Self> weak_ptr_const;
 
 		/**
 		  * Conveniant declaration of iterator to path tags

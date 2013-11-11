@@ -24,6 +24,7 @@ __fastcall TMainForm::TMainForm(TComponent* Owner)
 	LOG_BUSINESS(_UTF8sz("Application Started!"));
 
 //	seedsrc::integrate::test();
-	seedsrc::integrate2::test();
+//	seedsrc::integrate2::test();
+	seedsrc::integrate3::test();
 }
 //---------------------------------------------------------------------------

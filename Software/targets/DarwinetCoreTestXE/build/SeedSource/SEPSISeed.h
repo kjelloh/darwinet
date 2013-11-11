@@ -4,10 +4,12 @@
 #define SEPSISeedH
 //---------------------------------------------------------------------------
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 #include <vector>
 #include <boost/variant.hpp>
 #include "DarwinetBase.h"
 #include <map>
+#include <list>
 //---------------------------------------------------------------------------
 
 /**
@@ -15,6 +17,112 @@
   * are candiates to become part of the Darwinet framework
   */
 namespace seedsrc {
+
+	namespace integrate3 {
+
+		// The namespace integrate2 failed short in defining a recursive data model.
+		// Here we will try for a data model using ascociations.
+
+		//-------------------------------------------------------------------
+		typedef c_DataRepresentationFramework::c_UTF8String c_DarwinetString;
+		typedef c_DarwinetString c_CaptionNode;
+		//-------------------------------------------------------------------
+		typedef oprime::c_KeyPath<c_CaptionNode> c_ModelPath;
+
+		class c_Association {
+		public:
+			typedef boost::shared_ptr<c_Association> shared_ptr;
+
+		};
+
+		class c_Aggregation : public c_Association {
+		public:
+			typedef boost::shared_ptr<c_Aggregation> shared_ptr;
+			typedef boost::shared_ptr<const c_Aggregation> shared_ptr_const;
+
+			c_Aggregation(c_ModelPath::shared_ptr_const pModelPath);
+
+		private:
+			c_ModelPath::shared_ptr_const m_pModelPath;
+		};
+
+		class c_AssociationList : public std::map<c_ModelPath::Node,c_Association::shared_ptr> {
+		public:
+			typedef boost::shared_ptr<c_AssociationList> shared_ptr;
+			typedef boost::weak_ptr<c_AssociationList> weak_ptr;
+		};
+
+		class c_AssociationLists : public std::map<c_ModelPath,c_AssociationList::shared_ptr> {
+		public:
+			typedef boost::shared_ptr<c_AssociationLists> shared_ptr;
+		};
+
+		class c_MIV; // Forward
+		namespace delta {
+
+			class c_Delta {
+			public:
+				typedef boost::shared_ptr<c_Delta> shared_ptr;
+
+				virtual void operator()(c_MIV& miv) const = 0;
+
+			};
+
+			class c_DeltaM : public c_Delta {
+			public:
+				typedef boost::shared_ptr<c_DeltaM> shared_ptr;
+
+				c_DeltaM(c_ModelPath::shared_ptr pTargetPath);
+
+			protected:
+				c_ModelPath::shared_ptr m_pTargetPath;
+			};
+
+			class c_DeltaAggregation : public c_DeltaM {
+			public:
+				typedef boost::shared_ptr<c_DeltaAggregation> shared_ptr;
+
+				c_DeltaAggregation(c_ModelPath::shared_ptr pTargetPath,c_ModelPath::Node id,c_Aggregation::shared_ptr_const pAggregation);
+
+				virtual void operator()(c_MIV& miv) const;
+			private:
+				c_ModelPath::Node m_id;
+				c_Aggregation::shared_ptr_const m_pAggregation;
+			};
+
+			class c_Deltas : public std::list<c_Delta::shared_ptr> {
+			public:
+				typedef boost::shared_ptr<c_Deltas> shared_ptr;
+
+			};
+
+			class c_DeltaFactory {
+			public:
+				typedef boost::shared_ptr<c_DeltaFactory> shared_ptr;
+
+				c_Delta::shared_ptr createDeltaAggregation(const std::string& sMemberPath,const std::string& sModelPath);
+			};
+
+		}
+
+		class c_MIV {
+		public:
+			typedef boost::shared_ptr<c_MIV> shared_ptr;
+			friend class delta::c_DeltaAggregation;
+
+			c_MIV();
+
+			void operator+=(const delta::c_Delta& delta);
+
+		private:
+			c_AssociationLists::shared_ptr m_pAssociationLists;
+
+			c_AssociationList::weak_ptr getAssociationList(c_ModelPath::shared_ptr_const pTargetPath);
+
+		};
+
+		void test();
+	}
 
 	namespace integrate2 {
 		// The namespace integrate failed short on a number of requirements.

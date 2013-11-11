@@ -14,6 +14,97 @@
   */
 namespace seedsrc {
 
+	namespace integrate3 {
+		// The namespace integrate2 failed short in defining a recursive data model.
+		// Here we will try for a data model using ascociations.
+
+		c_Aggregation::c_Aggregation(c_ModelPath::shared_ptr_const pModelPath)
+			:  m_pModelPath(pModelPath)
+		{
+
+		}
+
+		namespace delta {
+
+			c_DeltaM::c_DeltaM(c_ModelPath::shared_ptr pTargetPath)
+				: m_pTargetPath(pTargetPath)
+			{
+
+			}
+
+			c_DeltaAggregation::c_DeltaAggregation(c_ModelPath::shared_ptr pTargetPath,c_ModelPath::Node id, c_Aggregation::shared_ptr_const pAggregation)
+				:  c_DeltaM(pTargetPath)
+				  ,m_id(id)
+				  ,m_pAggregation(pAggregation)
+			{
+
+			}
+
+			void c_DeltaAggregation::operator()(c_MIV& miv) const {
+				// get the target member
+				c_AssociationList::shared_ptr pAssociationList = miv.getAssociationList(this->m_pTargetPath).lock();
+				if (pAssociationList) {
+					// The target exists
+					pAssociationList->insert(std::make_pair(this->m_id,this->m_pAggregation));
+					c_LogString sMessage("dM:");
+					sMessage += this->m_pTargetPath->toString<c_LogString>();
+					sMessage += _UTF8sz("+=");
+					sMessage += m_id; // Works as c_LogString is compatible to c_CaptionNode
+					LOG_BUSINESS(sMessage);
+				}
+				else {
+					c_LogString sMessage(__FUNCTION__" failed. Unable to find parent model = ");
+					sMessage += this->m_pTargetPath->toString<c_LogString>();
+					LOG_DESIGN_INSUFFICIENCY(sMessage);
+				}
+			}
+
+			c_Delta::shared_ptr c_DeltaFactory::createDeltaAggregation(const std::string& sMemberPath,const std::string& sModelPath) {
+				c_Delta::shared_ptr result;
+				c_ModelPath member_path = c_ModelPath::fromString(c_DarwinetString(sMemberPath));
+				c_ModelPath::shared_ptr pTargetPath(new c_ModelPath(member_path.getParentPath()));
+				c_ModelPath::shared_ptr pModelPath(new c_ModelPath(c_ModelPath::fromString(c_DarwinetString(sModelPath))));
+				c_Aggregation::shared_ptr pAggregation(new c_Aggregation(pModelPath));
+				c_DeltaAggregation::shared_ptr pDeltaAggregation(new c_DeltaAggregation(pTargetPath,member_path.back(),pAggregation));
+				result = pDeltaAggregation;
+				return result;
+			}
+
+		}
+
+		c_MIV::c_MIV()
+			: m_pAssociationLists(boost::make_shared<c_AssociationLists>())
+		{
+
+		}
+
+		void c_MIV::operator+=(const delta::c_Delta& delta) {
+			// delegate to delta to do its stuff on us.
+			delta(*this);
+		}
+
+		c_AssociationList::weak_ptr c_MIV::getAssociationList(c_ModelPath::shared_ptr_const pTargetPath) {
+			c_AssociationList::weak_ptr result;
+			if (m_pAssociationLists) {
+				result = (*m_pAssociationLists)[*pTargetPath];
+			}
+			return result;
+		}
+
+		void test() {
+			LOG_FUNCTION_SCOPE;
+			c_MIV::shared_ptr pMIV(new c_MIV());
+			delta::c_Deltas::shared_ptr pDeltas(new delta::c_Deltas());
+			delta::c_DeltaFactory::shared_ptr pDeltaFactory(new delta::c_DeltaFactory);
+			pDeltas->push_back(pDeltaFactory->createDeltaAggregation("root.myInt","darwinet.integer"));
+
+			for (delta::c_Deltas::const_iterator iter = pDeltas->begin(); iter != pDeltas->end(); ++iter) {
+				*pMIV += **iter;
+			}
+
+		}
+	}
+
 	namespace integrate2 {
 		// The namespace integrate failed short on a number of requirements.
 		// Lets start over again with integrate2
