@@ -49,6 +49,8 @@ namespace seedsrc {
 		class c_ModelMember {
 		public:
 			typedef boost::shared_ptr<c_ModelMember> shared_ptr;
+
+			virtual ~c_ModelMember();
 		};
 
 		enum e_DataObjectModelType {
@@ -105,15 +107,8 @@ namespace seedsrc {
 
 		};
 
-		class c_Model {
-		public:
-			typedef boost::shared_ptr<c_Model> shared_ptr;
-
-		private:
-			c_ModelMembers m_ModelMembers;
-		};
-
 		class c_MIV; // Forward
+		class c_Model; // Forward
 		namespace delta {
 
 			enum e_DeltaDirection {
@@ -126,6 +121,12 @@ namespace seedsrc {
 			class c_Delta {
 			public:
 				typedef boost::shared_ptr<c_Delta> shared_ptr;
+
+				// Begin c_Delta
+
+				virtual void applyToMIV(c_MIV& miv) const = 0;
+
+				// End c_Delta
 			};
 
 			class c_ModelDelta : public c_Delta {
@@ -134,7 +135,19 @@ namespace seedsrc {
 
 				c_ModelDelta(e_DeltaDirection DeltaDirection,const c_ModelPath& target_path);
 
-			private:
+				// Begin c_Delta
+
+				virtual void applyToMIV(c_MIV& miv) const;
+
+				// End c_Delta
+
+				// Begin c_ModelDelta
+
+				virtual void applyToModel(c_Model& model) const = 0;
+
+				// End c_ModelDelta
+
+			protected:
 				e_DeltaDirection m_DeltaDirection;
 				c_ModelPath m_target_path;
 			};
@@ -144,6 +157,13 @@ namespace seedsrc {
 				typedef boost::shared_ptr<c_DataObjectModelInstanceDelta> shared_ptr;
 
 				c_DataObjectModelInstanceDelta(e_DeltaDirection DeltaDirection,const c_ModelPath& member_path,c_ModelMember::shared_ptr pMember);
+
+				// Begin c_ModelDelta
+
+				virtual void applyToModel(c_Model& model) const;
+
+				// End c_ModelDelta
+
 			private:
 				c_ModelPath::Node m_member_name;
 				c_ModelMember::shared_ptr m_pMember;
@@ -159,11 +179,37 @@ namespace seedsrc {
 				typedef boost::shared_ptr<c_InstanceDelta> shared_ptr;
 			};
 
+		}
+
+		class c_Model {
+		public:
+			typedef boost::shared_ptr<c_Model> shared_ptr;
+			friend class delta::c_DataObjectModelInstanceDelta;
+			c_Model();
+
+			void operator+=(const delta::c_ModelDelta& ModelDelta);
+
+		private:
+			c_ModelMembers m_ModelMembers;
+		};
+
+		class c_MIV {
+		public:
+			typedef boost::shared_ptr<c_MIV> shared_ptr;
+			friend class delta::c_ModelDelta;
+
+			void operator+=(const delta::c_Delta& Delta);
+
+		private:
+			c_Model m_Model;
+		};
+
+		namespace delta {
 			class c_DeltaSignalSource {
 			public:
 				typedef boost::shared_ptr<c_DeltaSignalSource> shared_ptr;
 
-				c_DeltaSignalSource(const c_MIVId& MIV_Id,const c_UserID& User_Id);
+				c_DeltaSignalSource(const c_MIVId& MIV_Id = c_MIVId(0),const c_UserID& User_Id = c_UserID(0));
 
 			private:
 				c_MIVId m_MIV_Id;
@@ -172,46 +218,71 @@ namespace seedsrc {
 
 			typedef oprime::c_KeyPath<unsigned int> c_DeltaIndex;
 
+			class c_MIVController; // Forward
+
 			class c_DeltaSignal {
 			public:
 				typedef boost::shared_ptr<c_DeltaSignal> shared_ptr;
+				friend class c_MIVController;
 
-				c_DeltaSignal(const c_DeltaSignalSource& source,const c_DeltaIndex& target_index, const c_Delta& delta);
+				c_DeltaSignal(const c_DeltaSignalSource& source,const c_DeltaIndex& target_index,c_Delta::shared_ptr pDelta);
 
-				virtual void operator()(c_MIV& miv) const;
+				virtual void applyToMIV(c_MIV& miv) const;
 
 			private:
 				c_DeltaSignalSource m_source;
 				c_DeltaIndex m_target_index;
-				c_Delta m_delta;
+				c_Delta::shared_ptr m_pDelta;
 			};
 
 			class c_DeltaSignals : public std::list<c_DeltaSignal::shared_ptr> {
 			public:
 				typedef boost::shared_ptr<c_DeltaSignals> shared_ptr;
 
-				c_DeltaSignals();
-
-				c_DeltaSignal::shared_ptr addDelta(const c_DeltaSignalSource& source,const c_Delta& delta);
-			private:
-
-				delta::c_DeltaIndex m_current_delta_index;
 			};
 
+			class c_DeltaSignalFactory {
+			public:
+				typedef boost::shared_ptr<c_DeltaSignalFactory> shared_ptr;
+
+				c_DeltaSignalFactory(const c_DeltaSignalSource& DeltaSignalSource = c_DeltaSignalSource());
+
+				c_DeltaSignal::shared_ptr createDeltaSignal(c_Delta::shared_ptr pDelta);
+
+			private:
+				c_DeltaSignalSource m_DeltaSignalSource;
+				c_DeltaIndex m_current_delta_index;
+
+			};
+
+			class c_MIVController {
+			public:
+				typedef boost::shared_ptr<c_MIVController> shared_ptr;
+
+				c_MIVController(c_MIV::shared_ptr pMIV);
+
+				void operator+=(const c_DeltaSignal& DeltaSignal);
+
+			private:
+				delta::c_DeltaIndex m_current_delta_index;
+				c_MIV::shared_ptr m_pMIV;
+			};
+
+			class c_DeltaManager {
+			public:
+				typedef boost::shared_ptr<c_DeltaManager> shared_ptr;
+
+				void addMIV(c_MIV::shared_ptr pMIV);
+
+				void operator+=(const c_DeltaSignal& DeltaSignal);
+
+			private:
+				typedef std::list<c_MIVController::shared_ptr> c_MIVControllers;
+				c_MIVControllers m_MIVControllers;
+
+			};
 
 		}
-
-		class c_MIV {
-		public:
-			typedef boost::shared_ptr<c_MIV> shared_ptr;
-			friend class delta::c_DeltaSignal;
-
-			void operator+=(const delta::c_DeltaSignal& DeltaSignal);
-
-		private:
-			c_Model m_Model;
-		};
-
 
 		/**
 		  * Dummy to access our c_DeltaSignalSource unti proper impl. is in place
@@ -268,7 +339,7 @@ namespace seedsrc {
 			public:
 				typedef boost::shared_ptr<c_Delta> shared_ptr;
 
-				virtual void operator()(c_MIV& miv) const = 0;
+				virtual void applyTo(c_MIV& miv) const = 0;
 
 			};
 
@@ -288,7 +359,7 @@ namespace seedsrc {
 
 				c_DeltaAggregation(c_ModelPath::shared_ptr pTargetPath,c_ModelPath::Node id,c_Aggregation::shared_ptr_const pAggregation);
 
-				virtual void operator()(c_MIV& miv) const;
+				virtual void applyTo(c_MIV& miv) const;
 			private:
 				c_ModelPath::Node m_id;
 				c_Aggregation::shared_ptr_const m_pAggregation;

@@ -5,6 +5,7 @@
 #include "SEPSISeed.h"
 #include "BusinessLogUnit.h"
 #include <boost/make_shared.hpp>
+#include <boost/pointer_cast.hpp>
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 
@@ -47,6 +48,10 @@ namespace seedsrc {
 
 		}
 
+		c_ModelMember::~c_ModelMember() {
+
+        }
+
 		c_DataObjectModel::c_DataObjectModel(const c_DataObjectModelType& DataObjectModelType,const c_DataObjectModelInstanceConstraints& DataObjectModelInstanceConstraints)
 			:  m_DataObjectModelType(DataObjectModelType)
 			  ,m_DataObjectModelInstanceConstraints(DataObjectModelInstanceConstraints)
@@ -62,6 +67,15 @@ namespace seedsrc {
 
 			}
 
+			// Begin c_Delta
+
+			void c_ModelDelta::applyToMIV(c_MIV& miv) const {
+				miv.m_Model += *this;
+			}
+
+			// End c_Delta
+
+
 			c_DataObjectModelInstanceDelta::c_DataObjectModelInstanceDelta(e_DeltaDirection DeltaDirection,const c_ModelPath& member_path,c_ModelMember::shared_ptr pMember)
 				:  c_ModelDelta(DeltaDirection,member_path.getParentPath())
 				  ,m_member_name(member_path.back())
@@ -69,6 +83,43 @@ namespace seedsrc {
 			{
 
 			}
+
+			// Begin c_ModelDelta
+
+			void c_DataObjectModelInstanceDelta::applyToModel(c_Model& model) const {
+
+				c_ModelMember::shared_ptr pTargetMember = model.m_ModelMembers[m_target_path];
+				if (pTargetMember) {
+					// The target data model object exists ok.
+					c_DataObjectModel::shared_ptr pDataObjectModelTarget = boost::dynamic_pointer_cast<c_DataObjectModel>(pTargetMember);
+					if (pDataObjectModelTarget) {
+						// We have a target data object model
+						{
+							c_LogString sMessage(__FUNCTION__", Check of data model target type is not yet implemented. delta always applied.");
+							LOG_DESIGN_INSUFFICIENCY(sMessage);
+						}
+						c_ModelPath model_path(m_target_path);
+						model_path += m_member_name;
+						model.m_ModelMembers.insert(std::make_pair(model_path,m_pMember));
+						{
+							c_LogString sMessage("dM: ");
+							sMessage += m_target_path.toString<c_LogString>();
+							sMessage += _UTF8sz(" += ");
+							sMessage += m_member_name; // works as long as sMessage and m_member_name are of same string encoding
+							LOG_BUSINESS(sMessage);
+						}
+					}
+				}
+				else {
+					c_LogString sMessage(__FUNCTION__" failed. Target member \"");
+					sMessage += m_target_path.toString<c_LogString>();
+					sMessage += _UTF8sz("\" does not exist.");
+					LOG_DESIGN_INSUFFICIENCY(sMessage);
+				}
+			}
+
+			// End c_ModelDelta
+
 
 			c_DeltaSignalSource::c_DeltaSignalSource(const c_MIVId& MIV_Id,const c_UserID& User_Id)
 				:  m_MIV_Id(MIV_Id)
@@ -79,21 +130,40 @@ namespace seedsrc {
 
 		}
 
-		void c_MIV::operator+=(const delta::c_DeltaSignal& DeltaSignal) {
-			// Delagate application c_DeltaSignal
-			DeltaSignal(*this);
+		c_Model::c_Model()
+			: m_ModelMembers()
+		{
+			// We alwyas need "root" record in the model
+			m_ModelMembers.insert(
+				std::make_pair(
+					 c_ModelPath::fromString(c_DarwinetString("root"))
+					,boost::make_shared<c_DataObjectModel>(
+						c_DataObjectModelType(eDataObjectModelType_Record)
+					)
+				)
+			);
+		}
+
+		void c_Model::operator+=(const delta::c_ModelDelta& ModelDelta) {
+			// Delegate to delta to operate on us.
+			ModelDelta.applyToModel(*this);
+        }
+
+		void c_MIV::operator+=(const delta::c_Delta& Delta) {
+			// Delagate application to c_DeltaSignal
+			Delta.applyToMIV(*this);
 		}
 
 		namespace delta {
-			c_DeltaSignal::c_DeltaSignal(const c_DeltaSignalSource& source,const c_DeltaIndex& target_index, const c_Delta& delta)
+			c_DeltaSignal::c_DeltaSignal(const c_DeltaSignalSource& source,const c_DeltaIndex& target_index, c_Delta::shared_ptr pDelta)
 				:  m_source(source)
 				  ,m_target_index(target_index)
-				  ,m_delta(delta)
+				  ,m_pDelta(pDelta)
 			{
 
 			}
 
-			void c_DeltaSignal::operator()(c_MIV& miv) const {
+			void c_DeltaSignal::applyToMIV(c_MIV& miv) const {
 				c_LogString sMessage;
 				sMessage += this->m_target_index.toString<c_LogString>();
 				sMessage += _UTF8sz(":dM:");
@@ -101,17 +171,42 @@ namespace seedsrc {
 				LOG_NOT_IMPLEMENTED;
 			}
 
-			c_DeltaSignals::c_DeltaSignals()
-				: m_current_delta_index(0)
+
+			c_DeltaSignalFactory::c_DeltaSignalFactory(const c_DeltaSignalSource& DeltaSignalSource)
+				:  m_DeltaSignalSource(DeltaSignalSource)
+				  ,m_current_delta_index(0)
 			{
 
 			}
 
-			c_DeltaSignal::shared_ptr c_DeltaSignals::addDelta(const c_DeltaSignalSource& source,const c_Delta& delta) {
-				c_DeltaSignal::shared_ptr result = boost::make_shared<c_DeltaSignal>(source,m_current_delta_index,delta);
-				this->push_back(result);
+			c_DeltaSignal::shared_ptr c_DeltaSignalFactory::createDeltaSignal(c_Delta::shared_ptr pDelta) {
+				c_DeltaSignal::shared_ptr result = boost::make_shared<c_DeltaSignal>(m_DeltaSignalSource,m_current_delta_index,pDelta);
 				m_current_delta_index.back()++; // Increment index
 				return result;
+			}
+
+			c_MIVController::c_MIVController(c_MIV::shared_ptr pMIV)
+				: m_pMIV(pMIV)
+			{
+
+			}
+
+			void c_MIVController::operator+=(const c_DeltaSignal& DeltaSignal) {
+				{
+					c_LogString sMessage(__FUNCTION__", Check of c_DeltaSignal index not yet implemented. Delta always applied");
+					LOG_DESIGN_INSUFFICIENCY(sMessage);
+				}
+				*m_pMIV += *DeltaSignal.m_pDelta;
+			}
+
+			void c_DeltaManager::addMIV(c_MIV::shared_ptr pMIV) {
+				m_MIVControllers.push_back(boost::make_shared<c_MIVController>(pMIV));
+			}
+
+			void c_DeltaManager::operator+=(const c_DeltaSignal& DeltaSignal) {
+				for (c_MIVControllers::const_iterator iter = m_MIVControllers.begin(); iter != m_MIVControllers.end(); ++iter) {
+					**iter += DeltaSignal;
+				}
 			}
 
 		}
@@ -127,15 +222,23 @@ namespace seedsrc {
 		void test() {
 			LOG_FUNCTION_SCOPE;
 			c_MIV::shared_ptr pMIV = boost::make_shared<c_MIV>();
+			delta::c_DeltaManager::shared_ptr pDeltaManager(new delta::c_DeltaManager());
+			pDeltaManager->addMIV(pMIV);
+
+			delta::c_DeltaSignalFactory::shared_ptr pDeltaSignalFactory(new delta::c_DeltaSignalFactory());
+
 			delta::c_DeltaSignals::shared_ptr pDeltaSignals = boost::make_shared<delta::c_DeltaSignals>();
-			pDeltaSignals->addDelta(
-				 getDeltaSource()
-				,delta::c_DataObjectModelInstanceDelta(
-					 delta::eDeltaDirection_Add
-					,c_ModelPath::fromString<c_DarwinetString>(c_DarwinetString("root.myInteger"))
-					,boost::make_shared<c_DataObjectModel>(c_DataObjectModelType(eDataObjectModelType_Integer),c_DataObjectModelInstanceConstraints())));
+			pDeltaSignals->push_back(
+				pDeltaSignalFactory->createDeltaSignal(
+					boost::make_shared<delta::c_DataObjectModelInstanceDelta>(
+						delta::eDeltaDirection_Add
+						,c_ModelPath::fromString<c_DarwinetString>(c_DarwinetString("root.myInteger"))
+						,boost::make_shared<c_DataObjectModel>(c_DataObjectModelType(eDataObjectModelType_Integer),c_DataObjectModelInstanceConstraints())
+					)
+				)
+			);
 			for (delta::c_DeltaSignals::const_iterator iter = pDeltaSignals->begin(); iter != pDeltaSignals->end(); ++iter) {
-				*pMIV += **iter; // update miv with delta
+				*pDeltaManager += **iter; // update miv with delta
 			}
 		}
 
@@ -167,7 +270,7 @@ namespace seedsrc {
 
 			}
 
-			void c_DeltaAggregation::operator()(c_MIV& miv) const {
+			void c_DeltaAggregation::applyTo(c_MIV& miv) const {
 				// get the target member
 				c_AssociationList::shared_ptr pAssociationList = miv.getAssociationList(this->m_pTargetPath).lock();
 				if (pAssociationList) {
@@ -207,7 +310,7 @@ namespace seedsrc {
 
 		void c_MIV::operator+=(const delta::c_Delta& delta) {
 			// delegate to delta to do its stuff on us.
-			delta(*this);
+			delta.applyTo(*this);
 		}
 
 		c_AssociationList::weak_ptr c_MIV::getAssociationList(c_ModelPath::shared_ptr_const pTargetPath) {
