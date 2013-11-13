@@ -18,6 +18,210 @@
   */
 namespace seedsrc {
 
+	namespace miv1 {
+		// iteration 4. Now decided to use flat model object list
+		// and add delta index and producer
+		//-------------------------------------------------------------------
+		typedef c_DataRepresentationFramework::c_UTF8String c_DarwinetString;
+		typedef c_DarwinetString c_CaptionNode;
+		//-------------------------------------------------------------------
+		typedef oprime::c_KeyPath<c_CaptionNode> c_ModelPath;
+
+		class c_MIVId {
+		public:
+			typedef boost::shared_ptr<c_MIVId> shared_ptr;
+
+			c_MIVId(unsigned int raw_id); // TODO, Change to GUID
+		private:
+			unsigned int m_raw_id;
+		};
+
+		class c_UserID {
+		public:
+			typedef boost::shared_ptr<c_UserID> shared_ptr;
+
+			c_UserID(unsigned int raw_id); // TODO, Change to GUID
+		private:
+			unsigned int m_raw_id;
+
+		};
+
+		class c_ModelMember {
+		public:
+			typedef boost::shared_ptr<c_ModelMember> shared_ptr;
+		};
+
+		enum e_DataObjectModelType {
+			 eDataObjectModelType_Undefined
+			,eDataObjectModelType_Integer
+			,eDataObjectModelType_String
+			,eDataObjectModelType_Record
+			,eDataObjectModelType_Array
+			,eDataObjectModelType_Unknown
+		};
+
+		class c_DataObjectModelType {
+		public:
+			typedef boost::shared_ptr<c_DataObjectModelType> shared_ptr;
+
+			c_DataObjectModelType(e_DataObjectModelType DataObjectModelType);
+		private:
+			e_DataObjectModelType m_DataObjectModelType;
+		};
+
+		class c_Cardinality {
+		public:
+			typedef boost::shared_ptr<c_Cardinality> shared_ptr;
+
+			c_Cardinality(unsigned int min_no_instances,unsigned int max_no_instances);
+		private:
+			unsigned int m_min_no_instances;
+			unsigned int m_max_no_instances;
+		};
+
+		class c_DataObjectModelInstanceConstraints {
+		public:
+			typedef boost::shared_ptr<c_Cardinality> shared_ptr;
+
+			c_DataObjectModelInstanceConstraints(const c_Cardinality& cardinality = c_Cardinality(0,1));
+		private:
+			const c_Cardinality m_cardinality;
+		};
+
+		class c_DataObjectModel : public c_ModelMember {
+		public:
+			typedef boost::shared_ptr<c_DataObjectModel> shared_ptr;
+
+			c_DataObjectModel(const c_DataObjectModelType& DataObjectModelType,const c_DataObjectModelInstanceConstraints& DataObjectModelInstanceConstraints = c_DataObjectModelInstanceConstraints());
+		private:
+			c_DataObjectModelType m_DataObjectModelType;
+			c_DataObjectModelInstanceConstraints m_DataObjectModelInstanceConstraints;
+
+		};
+
+		class c_ModelMembers : public std::map<c_ModelPath,c_ModelMember::shared_ptr> {
+		public:
+			typedef boost::shared_ptr<c_ModelMembers> shared_ptr;
+
+		};
+
+		class c_Model {
+		public:
+			typedef boost::shared_ptr<c_Model> shared_ptr;
+
+		private:
+			c_ModelMembers m_ModelMembers;
+		};
+
+		class c_MIV; // Forward
+		namespace delta {
+
+			enum e_DeltaDirection {
+				 eDeltaDirection_Undefined
+				,eDeltaDirection_Add
+				,eDeltaDirection_Remove
+				,eDeltaDirection_Unknown
+			};
+
+			class c_Delta {
+			public:
+				typedef boost::shared_ptr<c_Delta> shared_ptr;
+			};
+
+			class c_ModelDelta : public c_Delta {
+			public:
+				typedef boost::shared_ptr<c_ModelDelta> shared_ptr;
+
+				c_ModelDelta(e_DeltaDirection DeltaDirection,const c_ModelPath& target_path);
+
+			private:
+				e_DeltaDirection m_DeltaDirection;
+				c_ModelPath m_target_path;
+			};
+
+			class c_DataObjectModelInstanceDelta : public c_ModelDelta {
+			public:
+				typedef boost::shared_ptr<c_DataObjectModelInstanceDelta> shared_ptr;
+
+				c_DataObjectModelInstanceDelta(e_DeltaDirection DeltaDirection,const c_ModelPath& member_path,c_ModelMember::shared_ptr pMember);
+			private:
+				c_ModelPath::Node m_member_name;
+				c_ModelMember::shared_ptr m_pMember;
+			};
+
+			class c_InstanceDelta : public c_Delta {
+			public:
+				typedef boost::shared_ptr<c_InstanceDelta> shared_ptr;
+			};
+
+			class c_ValueDelta : public c_Delta {
+			public:
+				typedef boost::shared_ptr<c_InstanceDelta> shared_ptr;
+			};
+
+			class c_DeltaSignalSource {
+			public:
+				typedef boost::shared_ptr<c_DeltaSignalSource> shared_ptr;
+
+				c_DeltaSignalSource(const c_MIVId& MIV_Id,const c_UserID& User_Id);
+
+			private:
+				c_MIVId m_MIV_Id;
+				c_UserID m_User_Id;
+			};
+
+			typedef oprime::c_KeyPath<unsigned int> c_DeltaIndex;
+
+			class c_DeltaSignal {
+			public:
+				typedef boost::shared_ptr<c_DeltaSignal> shared_ptr;
+
+				c_DeltaSignal(const c_DeltaSignalSource& source,const c_DeltaIndex& target_index, const c_Delta& delta);
+
+				virtual void operator()(c_MIV& miv) const;
+
+			private:
+				c_DeltaSignalSource m_source;
+				c_DeltaIndex m_target_index;
+				c_Delta m_delta;
+			};
+
+			class c_DeltaSignals : public std::list<c_DeltaSignal::shared_ptr> {
+			public:
+				typedef boost::shared_ptr<c_DeltaSignals> shared_ptr;
+
+				c_DeltaSignals();
+
+				c_DeltaSignal::shared_ptr addDelta(const c_DeltaSignalSource& source,const c_Delta& delta);
+			private:
+
+				delta::c_DeltaIndex m_current_delta_index;
+			};
+
+
+		}
+
+		class c_MIV {
+		public:
+			typedef boost::shared_ptr<c_MIV> shared_ptr;
+			friend class delta::c_DeltaSignal;
+
+			void operator+=(const delta::c_DeltaSignal& DeltaSignal);
+
+		private:
+			c_Model m_Model;
+		};
+
+
+		/**
+		  * Dummy to access our c_DeltaSignalSource unti proper impl. is in place
+		  */
+		const delta::c_DeltaSignalSource& getDeltaSource();
+
+		void test();
+
+	}
+
 	namespace integrate3 {
 
 		// The namespace integrate2 failed short in defining a recursive data model.

@@ -14,6 +14,133 @@
   */
 namespace seedsrc {
 
+	namespace miv1 {
+
+		c_MIVId::c_MIVId(unsigned int raw_id) // TODO, Change to GUID
+			: m_raw_id(raw_id)
+		{
+
+		}
+
+		c_UserID::c_UserID(unsigned int raw_id) // TODO, Change to GUID
+			: m_raw_id(raw_id)
+		{
+
+		}
+
+		c_DataObjectModelType::c_DataObjectModelType(e_DataObjectModelType DataObjectModelType)
+			: m_DataObjectModelType(DataObjectModelType)
+		{
+
+		}
+
+		c_Cardinality::c_Cardinality(unsigned int min_no_instances,unsigned int max_no_instances)
+			:  m_min_no_instances(min_no_instances)
+			  ,m_max_no_instances(max_no_instances)
+		{
+
+		}
+
+		c_DataObjectModelInstanceConstraints::c_DataObjectModelInstanceConstraints(const c_Cardinality& cardinality)
+			: m_cardinality(cardinality)
+		{
+
+		}
+
+		c_DataObjectModel::c_DataObjectModel(const c_DataObjectModelType& DataObjectModelType,const c_DataObjectModelInstanceConstraints& DataObjectModelInstanceConstraints)
+			:  m_DataObjectModelType(DataObjectModelType)
+			  ,m_DataObjectModelInstanceConstraints(DataObjectModelInstanceConstraints)
+		{
+
+		}
+
+		namespace delta {
+			c_ModelDelta::c_ModelDelta(e_DeltaDirection DeltaDirection,const c_ModelPath& target_path)
+				:  m_DeltaDirection(DeltaDirection)
+				  ,m_target_path(target_path)
+			{
+
+			}
+
+			c_DataObjectModelInstanceDelta::c_DataObjectModelInstanceDelta(e_DeltaDirection DeltaDirection,const c_ModelPath& member_path,c_ModelMember::shared_ptr pMember)
+				:  c_ModelDelta(DeltaDirection,member_path.getParentPath())
+				  ,m_member_name(member_path.back())
+				  ,m_pMember(pMember)
+			{
+
+			}
+
+			c_DeltaSignalSource::c_DeltaSignalSource(const c_MIVId& MIV_Id,const c_UserID& User_Id)
+				:  m_MIV_Id(MIV_Id)
+				  ,m_User_Id(User_Id)
+			{
+
+			}
+
+		}
+
+		void c_MIV::operator+=(const delta::c_DeltaSignal& DeltaSignal) {
+			// Delagate application c_DeltaSignal
+			DeltaSignal(*this);
+		}
+
+		namespace delta {
+			c_DeltaSignal::c_DeltaSignal(const c_DeltaSignalSource& source,const c_DeltaIndex& target_index, const c_Delta& delta)
+				:  m_source(source)
+				  ,m_target_index(target_index)
+				  ,m_delta(delta)
+			{
+
+			}
+
+			void c_DeltaSignal::operator()(c_MIV& miv) const {
+				c_LogString sMessage;
+				sMessage += this->m_target_index.toString<c_LogString>();
+				sMessage += _UTF8sz(":dM:");
+				LOG_BUSINESS(sMessage);
+				LOG_NOT_IMPLEMENTED;
+			}
+
+			c_DeltaSignals::c_DeltaSignals()
+				: m_current_delta_index(0)
+			{
+
+			}
+
+			c_DeltaSignal::shared_ptr c_DeltaSignals::addDelta(const c_DeltaSignalSource& source,const c_Delta& delta) {
+				c_DeltaSignal::shared_ptr result = boost::make_shared<c_DeltaSignal>(source,m_current_delta_index,delta);
+				this->push_back(result);
+				m_current_delta_index.back()++; // Increment index
+				return result;
+			}
+
+		}
+
+		/**
+		  * Dummy to access our c_DeltaSignalSource unti proper impl. is in place
+		  */
+		const delta::c_DeltaSignalSource& getDeltaSource() {
+			static delta::c_DeltaSignalSource DeltaSignalSource(c_MIVId(1),c_UserID(1)); // dummy. MIV 1 and User 1.
+			return DeltaSignalSource;
+		}
+
+		void test() {
+			LOG_FUNCTION_SCOPE;
+			c_MIV::shared_ptr pMIV = boost::make_shared<c_MIV>();
+			delta::c_DeltaSignals::shared_ptr pDeltaSignals = boost::make_shared<delta::c_DeltaSignals>();
+			pDeltaSignals->addDelta(
+				 getDeltaSource()
+				,delta::c_DataObjectModelInstanceDelta(
+					 delta::eDeltaDirection_Add
+					,c_ModelPath::fromString<c_DarwinetString>(c_DarwinetString("root.myInteger"))
+					,boost::make_shared<c_DataObjectModel>(c_DataObjectModelType(eDataObjectModelType_Integer),c_DataObjectModelInstanceConstraints())));
+			for (delta::c_DeltaSignals::const_iterator iter = pDeltaSignals->begin(); iter != pDeltaSignals->end(); ++iter) {
+				*pMIV += **iter; // update miv with delta
+			}
+		}
+
+	}
+
 	namespace integrate3 {
 		// The namespace integrate2 failed short in defining a recursive data model.
 		// Here we will try for a data model using ascociations.
@@ -75,7 +202,7 @@ namespace seedsrc {
 		c_MIV::c_MIV()
 			: m_pAssociationLists(boost::make_shared<c_AssociationLists>())
 		{
-
+			m_pAssociationLists->insert(std::make_pair(c_ModelPath::fromString(c_DarwinetString("root")),boost::make_shared<c_AssociationList>()));
 		}
 
 		void c_MIV::operator+=(const delta::c_Delta& delta) {
@@ -97,6 +224,11 @@ namespace seedsrc {
 			delta::c_Deltas::shared_ptr pDeltas(new delta::c_Deltas());
 			delta::c_DeltaFactory::shared_ptr pDeltaFactory(new delta::c_DeltaFactory);
 			pDeltas->push_back(pDeltaFactory->createDeltaAggregation("root.myInt","darwinet.integer"));
+
+			/**
+			  * No, this still does not feel good. There is still something not right with how we represent the
+			  * data model.
+			  */
 
 			for (delta::c_Deltas::const_iterator iter = pDeltas->begin(); iter != pDeltas->end(); ++iter) {
 				*pMIV += **iter;
