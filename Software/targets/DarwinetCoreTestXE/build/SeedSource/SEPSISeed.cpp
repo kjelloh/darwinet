@@ -14,6 +14,197 @@
   * are candiates to become part of the Darwinet framework
   */
 namespace seedsrc {
+	namespace miv2 {
+
+		namespace view {
+			c_View::c_View(boost::shared_ptr<delta::c_EvolutionManager> pEvolutionManager)
+				: m_pEvolutionManager(pEvolutionManager)
+			{
+				c_MIVPath root_path = c_MIVPath::fromString(c_DarwinetString("root"));
+				m_Ms.insert(std::make_pair(
+					 root_path
+					,boost::make_shared<c_M>(root_path)
+				));
+			}
+
+			void c_View::operator+=(delta::c_dMIV& dMIV) {
+				// Delegate to delta to apply its change
+				dMIV.applyToView(*this);
+			}
+
+			c_M::shared_ptr c_View::getTargetM(const c_MIVPath& miv_path) {
+				return m_Ms[miv_path];
+            }
+
+			c_MIV::c_MIV(const c_MIVPath& miv_path)
+				: m_miv_path(miv_path)
+			{
+
+			}
+
+			c_M::c_M(const c_MIVPath& miv_path)
+				: c_MIV(miv_path)
+			{
+
+			}
+
+		}
+
+		namespace delta {
+
+			c_IndexFactory::c_IndexFactory(c_DeltaIndex branch,t_IndexNode seq)
+				:  m_branch(branch)
+				  ,m_seq(seq)
+			{
+			}
+
+			c_DeltaIndex c_IndexFactory::currentIndex() {
+				c_DeltaIndex result(m_branch);
+				result += m_seq;
+				return result;
+			}
+
+			c_DeltaIndex c_IndexFactory::nextIndex() {
+				c_DeltaIndex result(m_branch);
+				result += (++m_seq);
+				return result;
+			}
+
+			c_dMIV::c_dMIV(e_dDir dDir,const c_DeltaIndex& target_index,view::c_MIVPath target_miv_path,const c_DeltaIndex& index)
+				:  m_dDir(dDir)
+				  ,m_target_index(target_index)
+				  ,m_target_miv_path(target_miv_path)
+				  ,m_index(index)
+			{
+
+			}
+
+			// Begin c_dMIV
+
+			c_LogString c_dMIV::toLogString() {
+				c_LogString result("??c_dMIV??");
+				return result;
+			}
+
+			// End c_dMIV
+
+			c_dM::c_dM(e_dDir dDir,const c_DeltaIndex& target_index,const c_DeltaIndex& index,boost::shared_ptr<view::c_M> pM)
+				:  c_dMIV(dDir,target_index,pM->m_miv_path.getParentPath(),index)
+				  ,m_pM(pM)
+			{
+
+			}
+
+			// Begin c_dMIV
+
+			void c_dM::applyToView(view::c_View& view) {
+				view::c_M::shared_ptr pTargetM = view.getTargetM(this->m_target_miv_path);
+				if (pTargetM) {
+					// We have the target ok.
+					bool ok_to_add = true;
+					if (pTargetM->m_dMs.size() > 0) {
+						ok_to_add = (pTargetM->m_dMs.back()->m_index == this->m_target_index);
+					}
+					if (ok_to_add) {
+						// OK. We may apply the delta
+						switch (this->m_dDir) {
+							case e_dDir_Undefined:
+							break;
+							case e_dDir_Add: {
+								view.m_Ms.insert(std::make_pair(this->m_target_miv_path,this->m_pM));
+
+								c_LogString sMessage(this->m_index.toString<c_LogString>());
+								sMessage += _UTF8sz(":dM:");
+								this->m_target_miv_path.toString<c_LogString>();
+								sMessage += _UTF8sz(" += \"");
+								sMessage += this->m_pM->m_miv_path.back();
+								sMessage += _UTF8sz("\"");
+								LOG_BUSINESS(sMessage);
+							}
+							break;
+							case e_dDir_Remove:
+							break;
+							case e_dDir_Unknown:
+							break;
+						default:
+							;
+						}
+
+					}
+					else {
+						c_LogString sMessage(__FUNCTION__" failed. State index=\"");
+						sMessage += pTargetM->m_dMs.back()->m_index.toString<c_LogString>();
+						sMessage += _UTF8sz(" differs from target index=\"");
+						sMessage += this->m_target_index.toString<c_LogString>();
+						sMessage += _UTF8sz("\". Delta not applied!");
+						LOG_DESIGN_INSUFFICIENCY(sMessage);
+					}
+
+				}
+				else {
+					c_LogString sMessage(__FUNCTION__" failed. Target=\"");
+					sMessage += this->m_target_miv_path.toString<c_LogString>();
+					sMessage += _UTF8sz("\" does not exist.");
+					LOG_DESIGN_INSUFFICIENCY(sMessage);
+				}
+			}
+
+			c_LogString c_dM::toLogString() {
+				c_LogString result("dM:??");
+				return result;
+			}
+
+			// End c_dMIV
+
+
+			c_dMIVs::c_dMIVs()
+			{
+
+			}
+
+			bool c_dMIVs::dontExist(const delta::c_dMIV& dMIV) {
+				LOG_NOT_IMPLEMENTED;
+				c_dMIV::shared_ptr pMIV = (*this)[dMIV.m_index];
+				return true;
+			}
+
+			void c_EvolutionManager::addView(view::c_View::shared_ptr pView) {
+				this->m_Views.push_back(pView);
+			}
+
+			void c_EvolutionManager::operator+=(delta::c_dMIV& dMIV) {
+				if (this->m_dMIVs.dontExist(dMIV)) {
+					for (c_Views::iterator iter = m_Views.begin(); iter != m_Views.end(); ++iter) {
+						**iter += dMIV;
+					}
+				}
+				else {
+					// We have already received and processed this delta. Skip it!
+					c_LogString sMessage("Skipped redundant dMIV:");
+					sMessage += dMIV.toLogString();
+					LOG_BUSINESS(sMessage);
+				}
+			}
+
+		}
+
+
+		void test() {
+			LOG_FUNCTION_SCOPE;
+			delta::c_EvolutionManager::shared_ptr pEvolutionManager(new delta::c_EvolutionManager());
+			view::c_View::shared_ptr pView(new view::c_View(pEvolutionManager));
+			pEvolutionManager->addView(pView);
+			delta::c_IndexFactory::shared_ptr pIndexFacory(new delta::c_IndexFactory());
+
+			delta::c_dM dM(
+				 delta::e_dDir_Add
+				,pIndexFacory->currentIndex()
+				,pIndexFacory->nextIndex()
+				,boost::make_shared<view::c_M>(view::c_MIVPath::fromString(c_DarwinetString("root.myInt"))));
+			*pEvolutionManager += dM;
+		}
+
+	}
 
 	namespace miv1 {
 

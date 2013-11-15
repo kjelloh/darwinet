@@ -17,6 +17,210 @@
   * are candiates to become part of the Darwinet framework
   */
 namespace seedsrc {
+	namespace miv2 {
+		// Iteration 5. Now adjusting the design to better accomodfate the notion
+		// of delta target index and MIV instance.
+
+		//-------------------------------------------------------------------
+		typedef c_DataRepresentationFramework::c_UTF8String c_DarwinetString;
+		typedef c_DarwinetString c_CaptionNode;
+		//-------------------------------------------------------------------
+
+		namespace view {
+			typedef oprime::c_KeyPath<c_CaptionNode> c_MIVPath;
+			class c_M; // Forward
+			class c_View; // Forward
+		}
+
+		namespace delta {
+			typedef unsigned int t_IndexNode;
+			typedef oprime::c_KeyPath<t_IndexNode> c_DeltaIndex;
+
+			class c_IndexFactory {
+			public:
+				typedef boost::shared_ptr<c_IndexFactory> shared_ptr;
+
+				c_IndexFactory(c_DeltaIndex branch = c_DeltaIndex(),t_IndexNode seq = 0);
+
+				c_DeltaIndex currentIndex();
+
+				c_DeltaIndex nextIndex();
+			private:
+				c_DeltaIndex m_branch;
+				t_IndexNode m_seq;
+			};
+
+			class c_EvolutionManager; // Forward
+
+			enum e_dDir {
+				 e_dDir_Undefined
+				,e_dDir_Add
+				,e_dDir_Remove
+				,e_dDir_Unknown
+			};
+
+			class c_dMIVs; // Forward
+			class c_dMIV {
+			public:
+				typedef boost::shared_ptr<c_dMIV> shared_ptr;
+				friend class c_dMIVs;
+				friend class view::c_M;
+
+				c_dMIV(e_dDir dDir,const c_DeltaIndex& target_index,view::c_MIVPath target_miv_path,const c_DeltaIndex& index);
+
+				// Begin c_dMIV
+
+				virtual void applyToView(view::c_View& view) = 0;
+
+				virtual c_LogString toLogString();
+
+				// End c_dMIV
+
+			protected:
+				e_dDir m_dDir;
+				c_DeltaIndex m_target_index;
+				view::c_MIVPath m_target_miv_path;
+				c_DeltaIndex m_index;
+			};
+
+			class c_dM : public c_dMIV {
+			public:
+				typedef boost::shared_ptr<c_dM> shared_ptr;
+
+				c_dM(e_dDir dDir,const c_DeltaIndex& target_index,const c_DeltaIndex& index,boost::shared_ptr<view::c_M> pM);
+
+				// Begin c_dMIV
+
+				virtual void applyToView(view::c_View& view);
+
+				virtual c_LogString toLogString();
+
+				// End c_dMIV
+
+			private:
+				boost::shared_ptr<view::c_M> m_pM;
+			};
+
+			class c_dI : public c_dMIV {
+			public:
+				typedef boost::shared_ptr<c_dI> shared_ptr;
+			};
+
+			class c_dV : public c_dMIV {
+			public:
+				typedef boost::shared_ptr<c_dV> shared_ptr;
+			};
+
+		};
+
+		namespace view {
+			class c_MIV {
+			public:
+				typedef boost::shared_ptr<c_MIV> shared_ptr;
+				friend class delta::c_dM;
+
+				c_MIV(const c_MIVPath& miv_path);
+
+			protected:
+				c_MIVPath m_miv_path;
+			};
+
+			class c_V : public c_MIV {
+			public:
+				typedef boost::shared_ptr<c_V> shared_ptr;
+			private:
+				typedef std::vector<delta::c_dV::shared_ptr> c_dVs;
+				c_dVs m_dVs;
+			};
+
+			class c_I : public c_MIV {
+			public:
+				typedef boost::shared_ptr<c_I> shared_ptr;
+			private:
+				typedef std::vector<delta::c_dI::shared_ptr> c_dIs;
+				c_dIs m_dIs;
+				c_V::shared_ptr m_pV;
+			};
+
+			class c_M : public c_MIV {
+			public:
+				typedef boost::shared_ptr<c_M> shared_ptr;
+				friend class delta::c_dM;
+
+				c_M(const c_MIVPath& miv_path);
+
+			private:
+				typedef std::map<c_MIVPath::Node,c_I::shared_ptr> c_Is;
+				c_Is m_Is;
+				typedef std::vector<delta::c_dM::shared_ptr> c_dMs;
+				c_dMs m_dMs;
+			};
+
+			class c_Ms : public std::map<c_MIVPath,c_M::shared_ptr> {
+			public:
+				typedef boost::shared_ptr<c_Ms> shared_ptr;
+
+			};
+
+			class c_Is : public std::map<c_MIVPath,c_I::shared_ptr> {
+			public:
+				typedef boost::shared_ptr<c_Is> shared_ptr;
+
+			};
+
+			class c_View {
+			public:
+				typedef boost::shared_ptr<c_View> shared_ptr;
+				friend class delta::c_dM;
+
+				c_View(boost::shared_ptr<delta::c_EvolutionManager> pEvolutionManager);
+
+				void operator+=(delta::c_dMIV& dMIV);
+
+			private:
+				boost::shared_ptr<delta::c_EvolutionManager> m_pEvolutionManager;
+				c_Ms m_Ms;
+				c_Is m_Is;
+
+				c_M::shared_ptr getTargetM(const c_MIVPath& miv_path);
+
+			};
+
+		}
+
+		namespace delta {
+
+			class c_dMIVs : public std::map<c_DeltaIndex,c_dMIV::shared_ptr> {
+			public:
+				typedef boost::shared_ptr<view::c_M> shared_ptr;
+
+				c_dMIVs();
+
+				bool dontExist(const delta::c_dMIV& dMIV);
+			};
+
+			class c_EvolutionManager {
+			public:
+				typedef boost::shared_ptr<c_EvolutionManager> shared_ptr;
+
+				void addView(view::c_View::shared_ptr pView);
+
+				void operator+=(delta::c_dMIV& dMIV);
+
+			private:
+				/**
+				  * All deltas
+				  */
+				c_dMIVs m_dMIVs;
+
+				typedef std::vector<view::c_View::shared_ptr> c_Views;
+				c_Views m_Views;
+			};
+		}
+
+		void test();
+
+	}
 
 	namespace miv1 {
 		// iteration 4. Now decided to use flat model object list
