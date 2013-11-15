@@ -119,26 +119,23 @@ namespace seedsrc {
 				typedef boost::shared_ptr<c_MIV> shared_ptr;
 				friend class delta::c_dM;
 
-				c_MIV(const c_MIVPath& miv_path);
+				c_MIV(const c_MIVPath& miv_path,const delta::c_DeltaIndex& state_index);
 
 			protected:
 				c_MIVPath m_miv_path;
+				delta::c_DeltaIndex m_state_index;
 			};
 
 			class c_V : public c_MIV {
 			public:
 				typedef boost::shared_ptr<c_V> shared_ptr;
 			private:
-				typedef std::vector<delta::c_dV::shared_ptr> c_dVs;
-				c_dVs m_dVs;
 			};
 
 			class c_I : public c_MIV {
 			public:
 				typedef boost::shared_ptr<c_I> shared_ptr;
 			private:
-				typedef std::vector<delta::c_dI::shared_ptr> c_dIs;
-				c_dIs m_dIs;
 				c_V::shared_ptr m_pV;
 			};
 
@@ -147,13 +144,11 @@ namespace seedsrc {
 				typedef boost::shared_ptr<c_M> shared_ptr;
 				friend class delta::c_dM;
 
-				c_M(const c_MIVPath& miv_path);
+				c_M(const c_MIVPath& miv_path,const delta::c_DeltaIndex& state_index);
 
 			private:
 				typedef std::map<c_MIVPath::Node,c_I::shared_ptr> c_Is;
 				c_Is m_Is;
-				typedef std::vector<delta::c_dM::shared_ptr> c_dMs;
-				c_dMs m_dMs;
 			};
 
 			class c_Ms : public std::map<c_MIVPath,c_M::shared_ptr> {

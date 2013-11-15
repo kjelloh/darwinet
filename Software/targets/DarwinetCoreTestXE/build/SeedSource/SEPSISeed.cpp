@@ -21,9 +21,10 @@ namespace seedsrc {
 				: m_pEvolutionManager(pEvolutionManager)
 			{
 				c_MIVPath root_path = c_MIVPath::fromString(c_DarwinetString("root"));
+				delta::c_DeltaIndex root_index(0);
 				m_Ms.insert(std::make_pair(
 					 root_path
-					,boost::make_shared<c_M>(root_path)
+					,boost::make_shared<c_M>(root_path,root_index)
 				));
 			}
 
@@ -36,14 +37,15 @@ namespace seedsrc {
 				return m_Ms[miv_path];
             }
 
-			c_MIV::c_MIV(const c_MIVPath& miv_path)
+			c_MIV::c_MIV(const c_MIVPath& miv_path,const delta::c_DeltaIndex& state_index)
 				: m_miv_path(miv_path)
+				  ,m_state_index(state_index)
 			{
 
 			}
 
-			c_M::c_M(const c_MIVPath& miv_path)
-				: c_MIV(miv_path)
+			c_M::c_M(const c_MIVPath& miv_path,const delta::c_DeltaIndex& state_index)
+				: c_MIV(miv_path,state_index)
 			{
 
 			}
@@ -101,11 +103,7 @@ namespace seedsrc {
 				view::c_M::shared_ptr pTargetM = view.getTargetM(this->m_target_miv_path);
 				if (pTargetM) {
 					// We have the target ok.
-					bool ok_to_add = true;
-					if (pTargetM->m_dMs.size() > 0) {
-						ok_to_add = (pTargetM->m_dMs.back()->m_index == this->m_target_index);
-					}
-					if (ok_to_add) {
+					if (pTargetM->m_state_index == this->m_target_index) {
 						// OK. We may apply the delta
 						switch (this->m_dDir) {
 							case e_dDir_Undefined:
@@ -115,7 +113,7 @@ namespace seedsrc {
 
 								c_LogString sMessage(this->m_index.toString<c_LogString>());
 								sMessage += _UTF8sz(":dM:");
-								this->m_target_miv_path.toString<c_LogString>();
+								sMessage += this->m_target_miv_path.toString<c_LogString>();
 								sMessage += _UTF8sz(" += \"");
 								sMessage += this->m_pM->m_miv_path.back();
 								sMessage += _UTF8sz("\"");
@@ -133,7 +131,7 @@ namespace seedsrc {
 					}
 					else {
 						c_LogString sMessage(__FUNCTION__" failed. State index=\"");
-						sMessage += pTargetM->m_dMs.back()->m_index.toString<c_LogString>();
+						sMessage += pTargetM->m_state_index.toString<c_LogString>();
 						sMessage += _UTF8sz(" differs from target index=\"");
 						sMessage += this->m_target_index.toString<c_LogString>();
 						sMessage += _UTF8sz("\". Delta not applied!");
@@ -196,11 +194,16 @@ namespace seedsrc {
 			pEvolutionManager->addView(pView);
 			delta::c_IndexFactory::shared_ptr pIndexFacory(new delta::c_IndexFactory());
 
+			delta::c_DeltaIndex current_index = pIndexFacory->currentIndex();
+			delta::c_DeltaIndex next_index = pIndexFacory->nextIndex();
+
 			delta::c_dM dM(
 				 delta::e_dDir_Add
-				,pIndexFacory->currentIndex()
-				,pIndexFacory->nextIndex()
-				,boost::make_shared<view::c_M>(view::c_MIVPath::fromString(c_DarwinetString("root.myInt"))));
+				,current_index
+				,next_index
+				,boost::make_shared<view::c_M>(
+					view::c_MIVPath::fromString(c_DarwinetString("root.myInt"))
+					,current_index));
 			*pEvolutionManager += dM;
 		}
 
