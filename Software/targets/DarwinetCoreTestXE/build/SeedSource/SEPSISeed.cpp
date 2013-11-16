@@ -36,10 +36,16 @@ namespace seedsrc {
 			}
 
 			c_M::shared_ptr c_SEPSI::getM(const c_MIVPath& miv_path) {
-				return m_Ms[miv_path];
+				c_M::shared_ptr result;
+				c_Ms::const_iterator iter = m_Ms.find(miv_path);
+				if (iter != m_Ms.end()) {
+					result = iter->second;
+				}
+				return result;
 			}
 
 			void c_SEPSI::initiateMAdd(const view::c_MIVPath& miv_path,const view::c_MIVPath& type_path) {
+				LOG_FUNCTION_SCOPE;
 				view::c_MIVPath target_path = miv_path.getParentPath();
 				c_M::shared_ptr pTargetM = this->getM(target_path);
 				if (pTargetM) {
@@ -57,19 +63,25 @@ namespace seedsrc {
 			}
 
 			void c_SEPSI::initiateMAdd(const c_DarwinetString& sMIVPath,const c_DarwinetString& sTypePath) {
+				LOG_FUNCTION_SCOPE;
 				view::c_MIVPath miv_path = view::c_MIVPath::fromString(sMIVPath);
 				view::c_MIVPath type_path = view::c_MIVPath::fromString(sTypePath);;
 				this->initiateMAdd(miv_path,type_path);
 			}
 
-			void c_SEPSI::operator+=(delta::c_dMIV& dMIV) {
+			void c_SEPSI::actOndMIV(delta::c_dMIV::shared_ptr pdMIV) {
 				// Delegate to delta to apply its change
-				dMIV.applyToSEPSI(*this);
+				pdMIV->applyToSEPSI(*this);
 			}
 
 			type::c_DataType c_SEPSI::getTypeOf(const view::c_MIVPath& type_path) {
-				return this->m_DataTypes[type_path];
-            }
+				type::c_DataType result;
+				c_DataTypes::const_iterator iter = this->m_DataTypes.find(type_path);
+				if (iter != this->m_DataTypes.end()) {
+					result = iter->second;
+				}
+				return result;
+			}
 
 			c_View::c_View(boost::shared_ptr<delta::c_EvolutionManager> pEvolutionManager)
 				: m_pEvolutionManager(pEvolutionManager)
@@ -155,9 +167,17 @@ namespace seedsrc {
 							case edDir_Undefined:
 							break;
 							case edDir_Add: {
-								sepsi.m_Ms.insert(std::make_pair(this->m_target_miv_path,this->m_pM));
-								pTargetM->m_state_index = this->m_target_index;
-								LOG_BUSINESS(c_LogStringilizer::toLogCaption(*this));
+								c_LogString sMessage;
+								sMessage += c_LogStringilizer::toLogCaption(*pTargetM);
+								sMessage += _UTF8sz(" += ");
+								sMessage += c_LogStringilizer::toLogCaption(*this);
+
+								sepsi.m_Ms.insert(std::make_pair(this->m_pM->m_miv_path,this->m_pM));
+								pTargetM->m_state_index = this->m_index;
+
+								sMessage += _UTF8sz(" := ");
+								sMessage += c_LogStringilizer::toLogCaption(*pTargetM);
+								LOG_BUSINESS(sMessage);
 							}
 							break;
 							case edDir_Remove:
@@ -196,32 +216,58 @@ namespace seedsrc {
 			}
 
 			bool c_dMIVs::dontExist(const delta::c_dMIV& dMIV) {
-				LOG_NOT_IMPLEMENTED;
-				c_dMIV::shared_ptr pMIV = (*this)[dMIV.m_index];
-				return true;
+				bool result = true;
+				const_iterator iter = this->find(dMIV.m_index);
+				if (iter != this->end()) {
+					result = iter->second;
+				}
+				return result;
 			}
 
 			void c_EvolutionManager::addView(view::c_View::shared_ptr pView) {
 				this->m_Views.push_back(pView);
 			}
 
-			void c_EvolutionManager::operator+=(delta::c_dMIV& dMIV) {
-				if (this->m_dMIVs.dontExist(dMIV)) {
+			void c_EvolutionManager::initiateMAdd(e_dDir dDir,const c_DeltaIndex& target_index,boost::shared_ptr<view::c_M> pM) {
+				LOG_FUNCTION_SCOPE;
+				c_dM::shared_ptr pdM(new c_dM(
+					// e_dDir dDir,const c_DeltaIndex& target_index,const c_DeltaIndex& index,boost::shared_ptr<view::c_M> pM
+					 dDir
+					,target_index
+					,m_IndexFactory.nextIndex()
+					,pM
+				));
+				this->addToInQueue(pdM);
+				this->processInQueue();
+			}
+
+			void c_EvolutionManager::addToInQueue(delta::c_dMIV::shared_ptr pdMIV) {
+				this->m_dMIVQueue.push(pdMIV);
+			}
+
+			void c_EvolutionManager::processInQueue() {
+				while (!this->m_dMIVQueue.empty()) {
+					delta::c_dMIV::shared_ptr pdMIV = this->m_dMIVQueue.front();
+					this->m_dMIVQueue.pop();
+					this->processdMIV(pdMIV);
+				}
+			}
+
+			void c_EvolutionManager::processdMIV(delta::c_dMIV::shared_ptr pdMIV) {
+				if (this->m_dMIVs.dontExist(*pdMIV)) {
+					this->m_dMIVs.insert(std::make_pair(pdMIV->m_index,pdMIV));
+
 					for (c_Views::iterator iter = m_Views.begin(); iter != m_Views.end(); ++iter) {
-						*(*iter)->getSEPSI() += dMIV;
+						(*iter)->getSEPSI()->actOndMIV(pdMIV);
 					}
 				}
 				else {
 					// We have already received and processed this delta. Skip it!
 					c_LogString sMessage("Skipped redundant ");
-					sMessage += c_LogStringilizer::toLogCaption(dMIV);
+					sMessage += c_LogStringilizer::toLogCaption(*pdMIV);
 					LOG_BUSINESS(sMessage);
 				}
 			}
-
-			void c_EvolutionManager::initiateMAdd(e_dDir dDir,const c_DeltaIndex& target_index,boost::shared_ptr<view::c_M> pM) {
-                LOG_NOT_IMPLEMENTED;
-            }
 
 		}
 
@@ -229,9 +275,9 @@ namespace seedsrc {
 			c_LogString sMessage;
 			sMessage += dMIV.m_index.toString<c_LogString>();
 			sMessage += _UTF8sz(":dMIV[");
-			sMessage += dMIV.m_target_index.toString<c_LogString>();
-			sMessage += _UTF8sz(",");
 			sMessage += dMIV.m_target_miv_path.toString<c_LogString>();
+			sMessage += _UTF8sz(",");
+			sMessage += dMIV.m_target_index.toString<c_LogString>();
 			sMessage += _UTF8sz("]");
 			return sMessage;
 		}
@@ -240,50 +286,49 @@ namespace seedsrc {
 			c_LogString sMessage;
 			sMessage += dM.m_index.toString<c_LogString>();
 			sMessage += _UTF8sz(":dM[");
-			sMessage += dM.m_target_index.toString<c_LogString>();
-			sMessage += _UTF8sz(",");
 			sMessage += dM.m_target_miv_path.toString<c_LogString>();
-			sMessage += _UTF8sz("] + \"");
-			sMessage += dM.m_pM->m_miv_path.back();
-			sMessage += _UTF8sz(" := ");
+			sMessage += _UTF8sz(",");
+			sMessage += dM.m_target_index.toString<c_LogString>();
+			sMessage += _UTF8sz("] + ");
 			sMessage += c_LogStringilizer::toLogCaption(*(dM.m_pM));
 			return sMessage;
+		}
+		c_LogString c_LogStringilizer::toLogCaption(const view::type::c_DataType& DataType) {
+			c_LogString result = c_LogString("??") + c_DataRepresentationFramework::intToDecimalString(DataType.m_data_type) + c_LogString("??");
+			switch (DataType.m_data_type) {
+				case view::type::eDataType_Undefined: result = _UTF8sz("Undefined"); break;
+				case view::type::eDataType_Integer: result = _UTF8sz("Integer"); break;
+				case view::type::eDataType_String: result = _UTF8sz("String"); break;
+				case view::type::eDataType_Array: result = _UTF8sz("Array"); break;
+				case view::type::eDataType_Class: result = _UTF8sz("Class"); break;
+				case view::type::eDataType_Unknown: result = _UTF8sz("Unknown"); break;
+			default:
+				;
+			}
+			return result;
 		}
 		c_LogString c_LogStringilizer::toLogCaption(const view::c_M& M) {
 			c_LogString sMessage;
 			sMessage += _UTF8sz("M[");
-			sMessage += M.m_state_index.toString<c_LogString>();
-			sMessage += _UTF8sz(",");
 			sMessage += M.m_miv_path.toString<c_LogString>();
+			sMessage += _UTF8sz(",");
+			sMessage += M.m_state_index.toString<c_LogString>();
 			sMessage += _UTF8sz("] ");
-			sMessage += _UTF8sz(" Type:??");
+			sMessage += c_LogStringilizer::toLogCaption(M.m_DataType);
 			return sMessage;
 		}
 
 		void test() {
 			LOG_FUNCTION_SCOPE;
 			delta::c_EvolutionManager::shared_ptr pEvolutionManager(new delta::c_EvolutionManager());
-			view::c_View::shared_ptr pView(new view::c_View(pEvolutionManager));
-			pEvolutionManager->addView(pView);
-			{
-				delta::c_IndexFactory::shared_ptr pIndexFacory(new delta::c_IndexFactory());
-				delta::c_DeltaIndex current_index = pIndexFacory->currentIndex();
-				delta::c_DeltaIndex next_index = pIndexFacory->nextIndex();
+			view::c_View::shared_ptr pView1(new view::c_View(pEvolutionManager));
+			pEvolutionManager->addView(pView1);
 
-				delta::c_dM dM(
-					 delta::edDir_Add
-					,current_index
-					,next_index
-					,boost::make_shared<view::c_M>(
-						view::c_MIVPath::fromString(c_DarwinetString("root.myInt"))
-						,current_index
-						,view::type::c_DataType(view::type::eDataType_Integer)));
-				*pEvolutionManager += dM;
-			}
-
-			pView->getSEPSI()->initiateMAdd(view::c_MIVPath::fromString(c_DarwinetString("root.myInt")),view::c_MIVPath::fromString(c_DarwinetString("type.integer")));
+			pView1->getSEPSI()->initiateMAdd(c_DarwinetString("root.myInt"),c_DarwinetString("type.integer"));
+			pView1->getSEPSI()->initiateMAdd(c_DarwinetString("root.myClass"),c_DarwinetString("type.class"));
+			pView1->getSEPSI()->initiateMAdd(c_DarwinetString("root.myClass.myInt"),c_DarwinetString("type.integer"));
+			pView1->getSEPSI()->initiateMAdd(c_DarwinetString("root.myClass"),c_DarwinetString("type.class"));
 		}
-
 	}
 
 	namespace miv1 {
@@ -359,7 +404,12 @@ namespace seedsrc {
 
 			void c_DataObjectModelInstanceDelta::applyToModel(c_Model& model) const {
 
-				c_ModelMember::shared_ptr pTargetMember = model.m_ModelMembers[m_target_path];
+				c_ModelMember::shared_ptr pTargetMember;
+				c_ModelMembers::const_iterator iter = model.m_ModelMembers.find(m_target_path);
+				if (iter != model.m_ModelMembers.end()) {
+					pTargetMember = iter->second;
+				}
+
 				if (pTargetMember) {
 					// The target data model object exists ok.
 					c_DataObjectModel::shared_ptr pDataObjectModelTarget = boost::dynamic_pointer_cast<c_DataObjectModel>(pTargetMember);

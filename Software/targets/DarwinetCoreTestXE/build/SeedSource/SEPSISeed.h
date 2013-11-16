@@ -10,6 +10,7 @@
 #include "DarwinetBase.h"
 #include <map>
 #include <list>
+#include <queue>
 //---------------------------------------------------------------------------
 
 /**
@@ -18,6 +19,9 @@
   */
 namespace seedsrc {
 	namespace miv2 {
+
+		void test();
+
 		// Iteration 5. Now adjusting the design to better accomodfate the notion
 		// of delta target index and MIV instance.
 
@@ -67,6 +71,7 @@ namespace seedsrc {
 				friend class c_LogStringilizer;
 				friend class c_dMIVs;
 				friend class view::c_M;
+				friend class c_EvolutionManager;
 
 				c_dMIV(e_dDir dDir,const c_DeltaIndex& target_index,view::c_MIVPath target_miv_path,const c_DeltaIndex& index);
 
@@ -151,6 +156,7 @@ namespace seedsrc {
 				class c_DataType {
 				public:
 					typedef boost::shared_ptr<c_DataType> shared_ptr;
+					friend class c_LogStringilizer;
 
 					c_DataType(e_DataType data_type = eDataType_Undefined);
 				private:
@@ -208,7 +214,8 @@ namespace seedsrc {
 				c_Ms m_Ms;
 				c_Is m_Is;
 
-				void operator+=(delta::c_dMIV& dMIV);
+//				void operator+=(delta::c_dMIV& dMIV);
+				void actOndMIV(delta::c_dMIV::shared_ptr pdMIV);
 
 				typedef std::map<view::c_MIVPath,type::c_DataType> c_DataTypes;
 				c_DataTypes m_DataTypes;
@@ -247,19 +254,26 @@ namespace seedsrc {
 			class c_EvolutionManager {
 			public:
 				typedef boost::shared_ptr<c_EvolutionManager> shared_ptr;
+				friend void seedsrc::miv2::test();
 
 				void addView(view::c_View::shared_ptr pView);
 
-				void operator+=(delta::c_dMIV& dMIV);
+//				void operator+=(delta::c_dMIV& dMIV);
 
 				void initiateMAdd(e_dDir dDir,const c_DeltaIndex& target_index,boost::shared_ptr<view::c_M> pM);
 
 
 			private:
-				/**
-				  * All deltas
-				  */
+
+				delta::c_IndexFactory m_IndexFactory;
+
 				c_dMIVs m_dMIVs;
+
+				typedef std::queue<delta::c_dMIV::shared_ptr> c_dMIVQueue;
+				c_dMIVQueue m_dMIVQueue;
+				void addToInQueue(delta::c_dMIV::shared_ptr pdMIV);
+				void processInQueue();
+				void processdMIV(delta::c_dMIV::shared_ptr pdMIV);
 
 				typedef std::vector<view::c_View::shared_ptr> c_Views;
 				c_Views m_Views;
@@ -270,10 +284,10 @@ namespace seedsrc {
 		public:
 			static c_LogString toLogCaption(const delta::c_dMIV& dMIV);
 			static c_LogString toLogCaption(const delta::c_dM& dM);
+			static c_LogString toLogCaption(const view::type::c_DataType& DataType);
 			static c_LogString toLogCaption(const view::c_M& M);
 
 		};
-		void test();
 
 	}
 
