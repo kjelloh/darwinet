@@ -26,10 +26,11 @@ namespace seedsrc {
 		typedef c_DarwinetString c_CaptionNode;
 		//-------------------------------------------------------------------
 
+		class c_LogStringilizer; // Forward
 		namespace view {
 			typedef oprime::c_KeyPath<c_CaptionNode> c_MIVPath;
 			class c_M; // Forward
-			class c_View; // Forward
+			class c_SEPSI;
 		}
 
 		namespace delta {
@@ -53,16 +54,17 @@ namespace seedsrc {
 			class c_EvolutionManager; // Forward
 
 			enum e_dDir {
-				 e_dDir_Undefined
-				,e_dDir_Add
-				,e_dDir_Remove
-				,e_dDir_Unknown
+				 edDir_Undefined
+				,edDir_Add
+				,edDir_Remove
+				,edDir_Unknown
 			};
 
 			class c_dMIVs; // Forward
 			class c_dMIV {
 			public:
 				typedef boost::shared_ptr<c_dMIV> shared_ptr;
+				friend class c_LogStringilizer;
 				friend class c_dMIVs;
 				friend class view::c_M;
 
@@ -70,9 +72,7 @@ namespace seedsrc {
 
 				// Begin c_dMIV
 
-				virtual void applyToView(view::c_View& view) = 0;
-
-				virtual c_LogString toLogString();
+				virtual void applyToSEPSI(view::c_SEPSI& sepsi) = 0;
 
 				// End c_dMIV
 
@@ -86,14 +86,13 @@ namespace seedsrc {
 			class c_dM : public c_dMIV {
 			public:
 				typedef boost::shared_ptr<c_dM> shared_ptr;
+				friend class c_LogStringilizer;
 
 				c_dM(e_dDir dDir,const c_DeltaIndex& target_index,const c_DeltaIndex& index,boost::shared_ptr<view::c_M> pM);
 
 				// Begin c_dMIV
 
-				virtual void applyToView(view::c_View& view);
-
-				virtual c_LogString toLogString();
+				virtual void applyToSEPSI(view::c_SEPSI& sepsi);
 
 				// End c_dMIV
 
@@ -139,14 +138,38 @@ namespace seedsrc {
 				c_V::shared_ptr m_pV;
 			};
 
+			namespace type {
+				enum e_DataType {
+					 eDataType_Undefined
+					,eDataType_Integer
+					,eDataType_String
+					,eDataType_Array
+					,eDataType_Class
+					,eDataType_Unknown
+
+				};
+				class c_DataType {
+				public:
+					typedef boost::shared_ptr<c_DataType> shared_ptr;
+
+					c_DataType(e_DataType data_type = eDataType_Undefined);
+				private:
+					e_DataType m_data_type;
+
+				};
+			};
+
 			class c_M : public c_MIV {
 			public:
 				typedef boost::shared_ptr<c_M> shared_ptr;
+				friend class c_LogStringilizer;
 				friend class delta::c_dM;
+				friend class c_SEPSI;
 
-				c_M(const c_MIVPath& miv_path,const delta::c_DeltaIndex& state_index);
+				c_M(const c_MIVPath& miv_path,const delta::c_DeltaIndex& state_index,const type::c_DataType& DataType);
 
 			private:
+				type::c_DataType m_DataType;
 				typedef std::map<c_MIVPath::Node,c_I::shared_ptr> c_Is;
 				c_Is m_Is;
 			};
@@ -163,22 +186,49 @@ namespace seedsrc {
 
 			};
 
-			class c_View {
+			/**
+			  * Shared Evolving Privately Stored Information
+			  */
+			class c_SEPSI {
 			public:
-				typedef boost::shared_ptr<c_View> shared_ptr;
+				typedef boost::shared_ptr<c_SEPSI> shared_ptr;
 				friend class delta::c_dM;
+				friend class delta::c_EvolutionManager;
 
-				c_View(boost::shared_ptr<delta::c_EvolutionManager> pEvolutionManager);
+				c_SEPSI(boost::shared_ptr<delta::c_EvolutionManager> pEvolutionManager);
 
-				void operator+=(delta::c_dMIV& dMIV);
+				c_M::shared_ptr getM(const c_MIVPath& miv_path);
+
+				void initiateMAdd(const view::c_MIVPath& miv_path,const view::c_MIVPath& type_path);
+				void initiateMAdd(const c_DarwinetString& sMIVPath,const c_DarwinetString& sTypePath);
 
 			private:
 				boost::shared_ptr<delta::c_EvolutionManager> m_pEvolutionManager;
+
 				c_Ms m_Ms;
 				c_Is m_Is;
 
-				c_M::shared_ptr getTargetM(const c_MIVPath& miv_path);
+				void operator+=(delta::c_dMIV& dMIV);
 
+				typedef std::map<view::c_MIVPath,type::c_DataType> c_DataTypes;
+				c_DataTypes m_DataTypes;
+
+				type::c_DataType getTypeOf(const view::c_MIVPath& type_path);
+
+
+			};
+
+			class c_View {
+			public:
+				typedef boost::shared_ptr<c_View> shared_ptr;
+
+				c_View(boost::shared_ptr<delta::c_EvolutionManager> pEvolutionManager);
+
+				c_SEPSI::shared_ptr getSEPSI();
+
+			private:
+				boost::shared_ptr<delta::c_EvolutionManager> m_pEvolutionManager;
+				c_SEPSI::shared_ptr m_pSEPSI;
 			};
 
 		}
@@ -202,6 +252,9 @@ namespace seedsrc {
 
 				void operator+=(delta::c_dMIV& dMIV);
 
+				void initiateMAdd(e_dDir dDir,const c_DeltaIndex& target_index,boost::shared_ptr<view::c_M> pM);
+
+
 			private:
 				/**
 				  * All deltas
@@ -213,6 +266,13 @@ namespace seedsrc {
 			};
 		}
 
+		class c_LogStringilizer {
+		public:
+			static c_LogString toLogCaption(const delta::c_dMIV& dMIV);
+			static c_LogString toLogCaption(const delta::c_dM& dM);
+			static c_LogString toLogCaption(const view::c_M& M);
+
+		};
 		void test();
 
 	}
