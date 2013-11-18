@@ -14,6 +14,115 @@
   * are candiates to become part of the Darwinet framework
   */
 namespace seedsrc {
+	namespace miv3 {
+		// Iteration 6. Iteration 5 failed to provide a good design for the roundtrip
+		// MIV += change through Evolution manager and back to another MIV.
+		// The problem is naming of all the artefacts needed to make this processing clean.
+		// lets see if we can improve on the design this time.
+
+		namespace client {
+			c_ClientDelta::c_ClientDelta(const core::c_CoreDelta& CoreDelta, const c_MIVPath& TargetMIVPath)
+				:  core::c_CoreDelta(CoreDelta)
+				  ,m_TargetMIVPath(TargetMIVPath)
+			{
+			}
+		};
+
+		namespace view {
+
+			c_ViewDelta::c_ViewDelta(const client::c_ClientDelta& ClientDelta, const domain::c_DeltaIndex& TargetDeltaIndex)
+				:  client::c_ClientDelta(ClientDelta)
+				  ,m_TargetDeltaIndex(TargetDeltaIndex)
+			{
+
+			}
+
+			c_SEPSI::c_SEPSI(boost::shared_ptr<domain::c_EvolutionManager> pEvolutionManager)
+				: m_pEvolutionManager(pEvolutionManager)
+			{
+
+			}
+
+			void c_SEPSI::initAddM(const c_MIVPath& MIVPath,const view::c_TypePath& TypePath) {
+				c_MIVPath target_miv_path = MIVPath.getParentPath();
+				c_ViewM::shared_ptr pViewM = this->getViewM(MIVPath);
+				if (pViewM) {
+					// OK, we have the target
+					this->m_pEvolutionManager->initAddM(MIVPath,pViewM->m_state_index,TypePath);
+				}
+				else {
+					c_LogString sMessage(__FUNCTION__" failed. Target path \"");
+					sMessage += MIVPath.toString<c_LogString>();
+					sMessage += _UTF8sz("\" does not exist.");
+					LOG_DESIGN_INSUFFICIENCY(sMessage);
+				}
+			}
+
+			c_ViewM::shared_ptr c_SEPSI::getViewM(const c_MIVPath& MIVPath) {
+				c_ViewM::shared_ptr result;
+                LOG_NOT_IMPLEMENTED;
+				return result;
+            }
+
+			c_View::c_View(boost::shared_ptr<domain::c_EvolutionManager> pEvolutionManager)
+				: m_pEvolutionManager(pEvolutionManager)
+			{
+
+			}
+
+			void c_View::initAddM(const c_MIVPath& MIVPath,const view::c_TypePath& TypePath) {
+				this->getSEPSI()->initAddM(MIVPath,TypePath);
+			}
+
+			c_SEPSI::shared_ptr c_View::getSEPSI() {
+				if (!m_pSEPSI) {
+					m_pSEPSI = boost::make_shared<c_SEPSI>(m_pEvolutionManager);
+				}
+				return m_pSEPSI;
+			}
+
+		}
+
+		namespace domain {
+
+			c_DomainDelta::c_DomainDelta(const view::c_ViewDelta& ViewDelta, const domain::c_DeltaIndex& DeltaIndex)
+				:  view::c_ViewDelta(ViewDelta)
+				  ,m_DeltaIndex(DeltaIndex)
+			{
+
+            }
+
+			void c_EvolutionManager::addView(boost::shared_ptr<view::c_View> pView) {
+				m_Views.push_back(pView);
+			}
+
+			void c_EvolutionManager::initAddM(const c_MIVPath& MIVPath,const c_DeltaIndex& target_index,const view::c_TypePath& TypePath) {
+				LOG_NOT_IMPLEMENTED;
+			}
+
+			void c_EvolutionManager::process() {
+				LOG_NOT_IMPLEMENTED;
+			}
+		}
+
+
+		void test() {
+			domain::c_EvolutionManager::shared_ptr pEvolutionManager(new domain::c_EvolutionManager());
+
+			view::c_View::shared_ptr pView1(new view::c_View(pEvolutionManager));
+			pEvolutionManager->addView(pView1);
+
+			view::c_View::shared_ptr pView2(new view::c_View(pEvolutionManager));
+			pEvolutionManager->addView(pView2);
+
+			pView1->initAddM(c_MIVPath::fromString(c_DarwinetString("root.myInt")),c_MIVPath::fromString(c_DarwinetString("darwinet.integer")));
+			pView1->initAddM(c_MIVPath::fromString(c_DarwinetString("root.myClass")),c_MIVPath::fromString(c_DarwinetString("darwinet.class")));
+			pView1->initAddM(c_MIVPath::fromString(c_DarwinetString("root.myClass.myInt")),c_MIVPath::fromString(c_DarwinetString("darwinet.integer")));
+
+			pEvolutionManager->process();
+		}
+	}
+
 	namespace miv2 {
 
 		namespace view {
@@ -45,7 +154,7 @@ namespace seedsrc {
 			}
 
 			void c_SEPSI::initiateMAdd(const view::c_MIVPath& miv_path,const view::c_MIVPath& type_path) {
-				LOG_FUNCTION_SCOPE;
+				LOG_METHOD_SCOPE;
 				view::c_MIVPath target_path = miv_path.getParentPath();
 				c_M::shared_ptr pTargetM = this->getM(target_path);
 				if (pTargetM) {
@@ -63,7 +172,7 @@ namespace seedsrc {
 			}
 
 			void c_SEPSI::initiateMAdd(const c_DarwinetString& sMIVPath,const c_DarwinetString& sTypePath) {
-				LOG_FUNCTION_SCOPE;
+				LOG_METHOD_SCOPE;
 				view::c_MIVPath miv_path = view::c_MIVPath::fromString(sMIVPath);
 				view::c_MIVPath type_path = view::c_MIVPath::fromString(sTypePath);;
 				this->initiateMAdd(miv_path,type_path);
@@ -158,6 +267,7 @@ namespace seedsrc {
 			// Begin c_dMIV
 
 			void c_dM::applyToSEPSI(view::c_SEPSI& sepsi) {
+				LOG_METHOD_SCOPE;
 				view::c_M::shared_ptr pTargetM = sepsi.getM(this->m_target_miv_path);
 				if (pTargetM) {
 					// We have the target ok.
@@ -229,7 +339,7 @@ namespace seedsrc {
 			}
 
 			void c_EvolutionManager::initiateMAdd(e_dDir dDir,const c_DeltaIndex& target_index,boost::shared_ptr<view::c_M> pM) {
-				LOG_FUNCTION_SCOPE;
+				LOG_METHOD_SCOPE;
 				c_dM::shared_ptr pdM(new c_dM(
 					// e_dDir dDir,const c_DeltaIndex& target_index,const c_DeltaIndex& index,boost::shared_ptr<view::c_M> pM
 					 dDir
@@ -323,6 +433,9 @@ namespace seedsrc {
 			delta::c_EvolutionManager::shared_ptr pEvolutionManager(new delta::c_EvolutionManager());
 			view::c_View::shared_ptr pView1(new view::c_View(pEvolutionManager));
 			pEvolutionManager->addView(pView1);
+
+			view::c_View::shared_ptr pView2(new view::c_View(pEvolutionManager));
+			pEvolutionManager->addView(pView2);
 
 			pView1->getSEPSI()->initiateMAdd(c_DarwinetString("root.myInt"),c_DarwinetString("type.integer"));
 			pView1->getSEPSI()->initiateMAdd(c_DarwinetString("root.myClass"),c_DarwinetString("type.class"));

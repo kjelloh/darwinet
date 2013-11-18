@@ -17,7 +17,157 @@
   * Seed Source namespace. This is working source that
   * are candiates to become part of the Darwinet framework
   */
+
 namespace seedsrc {
+
+	namespace miv3 {
+		// Iteration 6. Iteration 5 failed to provide a good design for the roundtrip
+		// MIV += change through Evolution manager and back to another MIV.
+		// The problem is naming of all the artefacts needed to make this processing clean.
+		// lets see if we can improve on the design this time.
+
+		//-------------------------------------------------------------------
+		typedef c_DataRepresentationFramework::c_UTF8String c_DarwinetString;
+		typedef c_DarwinetString c_CaptionNode;
+		//-------------------------------------------------------------------
+		typedef oprime::c_KeyPath<c_CaptionNode> c_MIVPath;
+
+		namespace view {
+			typedef c_MIVPath c_ModelPath;
+			typedef c_MIVPath c_InstancePath;
+			typedef c_MIVPath c_TypePath;
+		}
+
+		namespace domain {
+			typedef unsigned int t_IndexNode;
+			typedef oprime::c_KeyPath<t_IndexNode> c_DeltaIndex;
+
+			class c_EvolutionManager; // Forward;
+		}
+
+		namespace core {
+
+			class c_CoreInt {
+				int m_raw_value;
+			};
+
+			class c_CoreString {
+				c_DarwinetString m_raw_value;
+			};
+
+			typedef boost::variant<c_CoreInt,c_CoreString> c_CoreV;
+
+			class c_CoreM {
+			};
+
+			class c_CoreI {
+			public:
+				c_CoreI(const view::c_ModelPath& ModelPath,const c_CoreV& CoreV);
+			protected:
+				view::c_ModelPath m_ModelPath;
+				c_CoreV m_CoreV;
+			};
+
+			class c_CoreDelta {
+			public:
+			};
+
+		}
+
+		namespace client {
+
+			class c_ClientDelta : public core::c_CoreDelta {
+			public:
+				c_ClientDelta(const core::c_CoreDelta& CoreDelta,const c_MIVPath& TargetMIVPath);
+			protected:
+				const c_MIVPath m_TargetMIVPath;
+			};
+		};
+
+		namespace view {
+
+			class c_ViewDelta : public client::c_ClientDelta {
+			public:
+				c_ViewDelta(const client::c_ClientDelta& ClientDelta,const domain::c_DeltaIndex& TargetDeltaIndex);
+			protected:
+				domain::c_DeltaIndex m_TargetDeltaIndex;
+			};
+
+			class c_ViewMIV {
+			public:
+				typedef boost::shared_ptr<c_ViewMIV> shared_ptr;
+
+			protected:
+				domain::c_DeltaIndex m_state_index;
+			};
+
+			class c_ViewM : public c_ViewMIV {
+			public:
+				typedef boost::shared_ptr<c_ViewM> shared_ptr;
+				friend class c_SEPSI;
+
+			};
+
+			class c_SEPSI {
+			public:
+				typedef boost::shared_ptr<c_SEPSI> shared_ptr;
+
+				c_SEPSI(boost::shared_ptr<domain::c_EvolutionManager> pEvolutionManager);
+
+				void initAddM(const c_MIVPath& MIVPath,const view::c_TypePath& TypePath);
+
+			private:
+				boost::shared_ptr<domain::c_EvolutionManager> m_pEvolutionManager;
+
+				c_ViewM::shared_ptr getViewM(const c_MIVPath& MIVPath);
+
+			};
+
+			class c_View {
+			public:
+				typedef boost::shared_ptr<c_View> shared_ptr;
+
+				c_View(boost::shared_ptr<domain::c_EvolutionManager> pEvolutionManager);
+
+				void initAddM(const c_MIVPath& MIVPath,const view::c_TypePath& TypePath);
+
+			private:
+				boost::shared_ptr<domain::c_EvolutionManager> m_pEvolutionManager;
+				c_SEPSI::shared_ptr m_pSEPSI;
+				c_SEPSI::shared_ptr getSEPSI();
+			};
+
+		}
+
+		namespace domain {
+
+			class c_DomainDelta : public view::c_ViewDelta {
+			public:
+				c_DomainDelta(const view::c_ViewDelta& ViewDelta, const domain::c_DeltaIndex& DeltaIndex);
+			private:
+				domain::c_DeltaIndex m_DeltaIndex;
+			};
+
+			class c_EvolutionManager {
+			public:
+				typedef boost::shared_ptr<c_EvolutionManager> shared_ptr;
+
+				void addView(boost::shared_ptr<view::c_View> pView);
+
+				void initAddM(const c_MIVPath& MIVPath,const c_DeltaIndex& target_index,const view::c_TypePath& TypePath);
+
+				void process();
+
+			private:
+				typedef std::vector<boost::shared_ptr<view::c_View> > c_Views;
+				c_Views m_Views;
+
+			};
+		}
+
+		void test();
+	}
+
 	namespace miv2 {
 
 		void test();
