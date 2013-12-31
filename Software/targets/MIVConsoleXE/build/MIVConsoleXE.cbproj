@@ -1,7 +1,7 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <ProjectGuid>{6A549985-0529-4267-A98C-5FF8F1CFCF81}</ProjectGuid>
-        <ProjectVersion>15.1</ProjectVersion>
+        <ProjectVersion>15.2</ProjectVersion>
         <FrameworkType>VCL</FrameworkType>
         <MainSource>MIVConsoleXE.cpp</MainSource>
         <Base>True</Base>
@@ -68,7 +68,7 @@
         <PackageImports>IPIndyImpl;bindcompfmx;fmx;rtl;dbrtl;IndySystem;DbxClientDriver;bindcomp;inetdb;DBXInterBaseDriver;DataSnapCommon;DataSnapClient;DataSnapServer;DataSnapProviderClient;xmlrtl;DbxCommonDriver;IndyProtocols;DBXMySQLDriver;dbxcds;soaprtl;bindengine;DBXOracleDriver;CustomIPTransport;dsnap;DBXInformixDriver;IndyCore;fmxase;DBXFirebirdDriver;inet;fmxobj;inetdbxpress;DBXSybaseASADriver;fmxdae;dbexpress;DataSnapIndy10ServerTransport;$(PackageImports)</PackageImports>
         <Multithreaded>true</Multithreaded>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
-        <AllPackageLibs>rtl.lib;vcl.lib;vclactnband.lib;vclx.lib;VclSmp.lib;IndyCore.lib;IndySystem.lib;IndyProtocols.lib;DarwinetCOM.lib;DarwinetRADLibXE.lib;bcbsmp.lib</AllPackageLibs>
+        <AllPackageLibs>rtl.lib;vcl.lib;vclactnband.lib;vclx.lib;VclSmp.lib;IndyCore.lib;IndySystem.lib;IndyProtocols.lib;DarwinetRADLibXE.lib;bcbsmp.lib</AllPackageLibs>
         <Icon_MainIcon>$(BDS)\bin\cbuilder_PROJECTICON.ico</Icon_MainIcon>
         <UsingDelphiRTL>true</UsingDelphiRTL>
         <IncludePath>..\..\DarwinetCOMServerXE\build\darwinet\impl\;ImportedTLB\;darwinet\;frames\;Forms\;C:\subversion\darwinet\trunk\Software\targets\DarwinetRADLibXE\build;$(IncludePath)</IncludePath>
@@ -114,7 +114,7 @@
         <ILINK_TranslatedLibraryPath>$(BDSLIB)\$(PLATFORM)\debug\$(LANGDIR);$(ILINK_TranslatedLibraryPath)</ILINK_TranslatedLibraryPath>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Cfg_1_Win32)'!=''">
-        <LinkPackageStatics>DarwinetCOM.lib;DarwinetRADLibXE.lib</LinkPackageStatics>
+        <LinkPackageStatics>DarwinetRADLibXE.lib</LinkPackageStatics>
         <Debugger_DebugSourcePath>C:\subversion\darwinet\trunk\Software\projects\DarwinetEngineBPL\build\;$(Debugger_DebugSourcePath)</Debugger_DebugSourcePath>
         <Defines>_DEBUG;$(Defines)</Defines>
         <Manifest_File>$(BDS)\bin\default_app.manifest</Manifest_File>

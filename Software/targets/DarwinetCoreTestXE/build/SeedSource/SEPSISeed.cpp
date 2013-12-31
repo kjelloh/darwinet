@@ -14,6 +14,192 @@
   * are candiates to become part of the Darwinet framework
   */
 namespace seedsrc {
+
+	namespace miv4 {
+
+
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+
+		c_TestClient::c_TestClient()
+			:  m_pToViewSignalQueue(boost::make_shared<c_SignalQueue>())
+		{
+
+		}
+
+		void c_TestClient::performTestAction() {
+			LOG_NOT_IMPLEMENTED;
+			this->m_pToViewSignalQueue->push(boost::make_shared<c_Signal>()); // Dummy
+		}
+
+		void c_TestClient::actOnSignalFromView(c_Signal::shared_ptr pSignal) {
+			LOG_NOT_IMPLEMENTED;
+		}
+
+		c_SignalQueue::shared_ptr c_TestClient::getToViewSignalQueue() {
+			return this->m_pToViewSignalQueue;
+		}
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+
+		c_TestView::c_TestView()
+			:  m_pToDomainSignalQueue(boost::make_shared<c_SignalQueue>())
+			  ,m_pToClientSignalQueue(boost::make_shared<c_SignalQueue>())
+		{
+
+		}
+
+		void c_TestView::actOnSignalFromClient(c_Signal::shared_ptr pSignal) {
+			LOG_NOT_IMPLEMENTED;
+			this->m_pToDomainSignalQueue->push(boost::make_shared<c_Signal>()); // Dummy
+		}
+
+		void c_TestView::actOnSignalFromDomain(c_Signal::shared_ptr pSignal) {
+			LOG_NOT_IMPLEMENTED;
+		}
+
+		c_SignalQueue::shared_ptr c_TestView::getToDomainSignalQueue() {
+			return this->m_pToDomainSignalQueue;
+		}
+
+		c_SignalQueue::shared_ptr c_TestView::getToClientSignalQueue() {
+			return this->m_pToClientSignalQueue;
+		}
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+		c_TestDomain::c_TestDomain()
+			:  m_pToOtherNodeSignalQueue(boost::make_shared<c_SignalQueue>())
+			  ,m_pToViewSignalQueue(boost::make_shared<c_SignalQueue>())
+		{
+
+		}
+
+		void c_TestDomain::actOnSignalFromView(c_Signal::shared_ptr pSignal) {
+			LOG_NOT_IMPLEMENTED;
+		}
+
+		void c_TestDomain::actOnSignalFromNode(c_Signal::shared_ptr pSignal) {
+			LOG_NOT_IMPLEMENTED;
+		}
+
+		c_SignalQueue::shared_ptr c_TestDomain::getToOtherNodeSignalQueue() {
+			return this->m_pToOtherNodeSignalQueue;
+		}
+
+		c_SignalQueue::shared_ptr c_TestDomain::getToViewSignalQueue() {
+			return this->m_pToViewSignalQueue;
+		}
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+		c_TestNode::c_TestNode()
+			:  m_pToDomainSignalQueue(boost::make_shared<c_SignalQueue>())
+		{
+
+		}
+		void c_TestNode::actOnSignalFromOtherNode(c_Signal::shared_ptr pSignal) {
+			LOG_NOT_IMPLEMENTED;
+		}
+
+		void c_TestNode::actOnSignalFromDomainHandler(c_Signal::shared_ptr pSignal) {
+			LOG_NOT_IMPLEMENTED;
+		}
+
+		c_SignalQueue::shared_ptr c_TestNode::getToDomainSignalQueue() {
+			return this->m_pToDomainSignalQueue;
+		}
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+		c_TestPeerConfiguration::c_TestPeerConfiguration()
+			:  m_pTestClient(boost::make_shared<c_TestClient>())
+			  ,m_pTestView(boost::make_shared<c_TestView>())
+			  ,m_pTestDomain(boost::make_shared<c_TestDomain>())
+			  ,m_pTestNode(boost::make_shared<c_TestNode>())
+		{
+
+		}
+
+		void c_TestPeerConfiguration::processSignals() {
+			bool there_are_more_signals_to_process = true;
+			while (there_are_more_signals_to_process) {
+				// Transfer from Client to View
+				if (m_pTestClient->getToViewSignalQueue()->size() > 0) {
+					c_Signal::shared_ptr pSignalFromClientToView = m_pTestClient->getToViewSignalQueue()->front();
+					m_pTestClient->getToViewSignalQueue()->pop();
+					m_pTestView->actOnSignalFromClient(pSignalFromClientToView);
+				}
+				// Transfer from View to Domain
+				if (m_pTestView->getToDomainSignalQueue()->size() > 0) {
+					c_Signal::shared_ptr pSignalFromViewToDomain = m_pTestView->getToDomainSignalQueue()->front();
+					m_pTestView->getToDomainSignalQueue()->pop();
+					m_pTestDomain->actOnSignalFromView(pSignalFromViewToDomain);
+				}
+				// Transfer from Domain to Other node is handled externally
+				// Transfer from Other Node to Domain
+				if (m_pTestNode->getToDomainSignalQueue()->size() > 0) {
+					c_Signal::shared_ptr pSignalFromNodeToDomain = m_pTestNode->getToDomainSignalQueue()->front();
+					m_pTestNode->getToDomainSignalQueue()->pop();
+					m_pTestDomain->actOnSignalFromNode(pSignalFromNodeToDomain);
+				}
+				// Transfer from Domain to View
+				if (m_pTestDomain->getToViewSignalQueue()->size() > 0) {
+					c_Signal::shared_ptr pSignalFromDomainToView = m_pTestDomain->getToViewSignalQueue()->front();
+					m_pTestDomain->getToViewSignalQueue()->pop();
+					m_pTestView->actOnSignalFromDomain(pSignalFromDomainToView);
+				}
+				if (m_pTestView->getToClientSignalQueue()->size() > 0) {
+					c_Signal::shared_ptr pSignalFromViewToClient = m_pTestView->getToClientSignalQueue()->front();
+					m_pTestView->getToClientSignalQueue()->pop();
+					m_pTestClient->actOnSignalFromView(pSignalFromViewToClient);
+				}
+
+				there_are_more_signals_to_process = (    (m_pTestClient->getToViewSignalQueue()->size() > 0)
+													  || (m_pTestView->getToDomainSignalQueue()->size() > 0)
+													  || (m_pTestNode->getToDomainSignalQueue()->size() > 0)
+													  || (m_pTestView->getToClientSignalQueue()->size() > 0));
+			}
+		}
+
+		c_TestClient::shared_ptr c_TestPeerConfiguration::getTestClient() {
+			return this->m_pTestClient;
+		}
+
+		c_TestView::shared_ptr c_TestPeerConfiguration::getTestView() {
+			return this->m_pTestView;
+		}
+
+		c_TestDomain::shared_ptr c_TestPeerConfiguration::getTestDomain() {
+			return this->m_pTestDomain;
+		}
+
+		c_TestNode::shared_ptr c_TestPeerConfiguration::getTestNode() {
+			return this->m_pTestNode;
+		}
+
+		void test() {
+			// 1. The Client requests the viewed MIV to be modified
+			// 2. The View produces a Delta that defines the change
+			// 3. The Domain distributes the Delta within the Domain
+			// 4. The View applies the distributed Delta and reports the change to the Client
+
+			c_TestPeerConfiguration::shared_ptr pTestPeerConfiguration1 = boost::make_shared<c_TestPeerConfiguration>();
+			c_TestPeerConfiguration::shared_ptr pTestPeerConfiguration2 = boost::make_shared<c_TestPeerConfiguration>();
+
+			pTestPeerConfiguration1->getTestClient()->performTestAction();
+			pTestPeerConfiguration1->processSignals();
+			if (pTestPeerConfiguration1->getTestDomain()->getToOtherNodeSignalQueue()->size() > 0) {
+				c_Signal::shared_ptr pSignalFromDomainToOtherNode = pTestPeerConfiguration1->getTestDomain()->getToOtherNodeSignalQueue()->front();
+				pTestPeerConfiguration1->getTestDomain()->getToOtherNodeSignalQueue()->pop();
+				pTestPeerConfiguration2->getTestNode()->actOnSignalFromOtherNode(pSignalFromDomainToOtherNode);
+			}
+			pTestPeerConfiguration2->processSignals();
+		}
+	}
+
 	namespace miv3 {
 		// Iteration 6. Iteration 5 failed to provide a good design for the roundtrip
 		// MIV += change through Evolution manager and back to another MIV.

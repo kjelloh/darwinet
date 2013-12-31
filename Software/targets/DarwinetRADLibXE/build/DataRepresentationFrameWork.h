@@ -183,8 +183,8 @@ public:
 	  */
 	#define STRONG_STRING_TYPE_COMMON_BODY \
 	public: \
-	typedef std::basic_string<C> S;                          \
-	typedef C CharType; \
+	/* typedef std::basic_string<C> S; */                          \
+	/* typedef C CharType; */ \
 	D & operator=(const D & rhs) { this->anonymous() = rhs.anonymous(); return *this;}   /* Assign to other D */ \
 	S& anonymous() {return (*this);} \
 	const S& anonymous() const {return (*this);} \
@@ -770,18 +770,21 @@ public:
 //	static c_DataRepresentationFramework::c_AsciiString& trimRight(c_DataRepresentationFramework::c_AsciiString &s);
 
 	// trim from both ends (from http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring)
-	static template <class S> S& trimLeftAndRight(S &s) {
+	template <class S>
+	static S& trimLeftAndRight(S &s) {
 		return trimLeft(trimRight(s));
 	}
 
 	// trim from start (from http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring)
-	static template <class S> S& trimLeft(S &s) {
+	template <class S>
+	static S& trimLeft(S &s) {
 		s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<int, int>(std::isspace))));
 		return s;
 	}
 
 	// trim from end (from http://stackoverflow.com/questions/216823/whats-the-best-way-to-trim-stdstring)
-	static template <class S> S& trimRight(S &s) {
+	template <class S>
+	static S& trimRight(S &s) {
 		s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
 		return s;
 	}

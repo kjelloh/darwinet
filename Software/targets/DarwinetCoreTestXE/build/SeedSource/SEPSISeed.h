@@ -19,12 +19,153 @@
   */
 
 namespace seedsrc {
+	namespace miv4 {
+		// Iteration 7. Going for the Delta with {Predecessor, Producer, Target, Index} properties.
+		//              Focusing on getting the synchronizarion to work.
+
+		//-------------------------------------------------------------------
+		typedef c_DataRepresentationFramework::c_UTF8String c_DarwinetString;
+		typedef c_DarwinetString c_CaptionNode;
+		//-------------------------------------------------------------------
+		typedef oprime::c_KeyPath<c_CaptionNode> c_MIVPath;
+		typedef unsigned int t_DeltaProducerId;
+		typedef unsigned int t_DeltaSequenceNumber;
+
+		//-------------------------------------------------------------------
+		class c_DeltaId {
+		private:
+			t_DeltaProducerId m_DeltaProducerId;
+			t_DeltaSequenceNumber m_DeltaSequenceNumber;
+		};
+
+		//-------------------------------------------------------------------
+		typedef oprime::c_KeyPath<c_DeltaId> c_DeltaBranchId;
+
+		//-------------------------------------------------------------------
+		class c_Delta {
+		private:
+			c_DeltaId m_Predecessor;
+			t_DeltaProducerId m_DeltaProducerId;
+			t_DeltaSequenceNumber m_DeltaSequenceNumber;
+			c_MIVPath m_Target;
+		};
+
+		//-------------------------------------------------------------------
+		class c_Signal : public std::map<std::string,std::string> {
+		public:
+			typedef boost::shared_ptr<c_Signal> shared_ptr;
+		};
+
+		//-------------------------------------------------------------------
+		class c_SignalQueue : public std::queue<c_Signal::shared_ptr> {
+		public:
+			typedef boost::shared_ptr<c_SignalQueue> shared_ptr;
+		};
+
+		//-------------------------------------------------------------------
+		class c_TestClient {
+		public:
+			typedef boost::shared_ptr<c_TestClient> shared_ptr;
+
+			c_TestClient();
+
+			void performTestAction();
+
+		private:
+			friend class c_TestPeerConfiguration;
+			void actOnSignalFromView(c_Signal::shared_ptr pSignal);
+
+			c_SignalQueue::shared_ptr m_pToViewSignalQueue;
+			c_SignalQueue::shared_ptr getToViewSignalQueue();
+		};
+
+		//-------------------------------------------------------------------
+		class c_TestView {
+		public:
+			typedef boost::shared_ptr<c_TestView> shared_ptr;
+
+			c_TestView();
+
+		private:
+			friend class c_TestPeerConfiguration;
+			void actOnSignalFromClient(c_Signal::shared_ptr pSignal);
+			void actOnSignalFromDomain(c_Signal::shared_ptr pSignal);
+			c_SignalQueue::shared_ptr m_pToDomainSignalQueue;
+			c_SignalQueue::shared_ptr getToDomainSignalQueue();
+			c_SignalQueue::shared_ptr m_pToClientSignalQueue;
+			c_SignalQueue::shared_ptr getToClientSignalQueue();
+		};
+
+		//-------------------------------------------------------------------
+		class c_TestDomain {
+		public:
+			typedef boost::shared_ptr<c_TestDomain> shared_ptr;
+
+			c_TestDomain();
+		private:
+			friend class c_TestPeerConfiguration;
+			friend void test();
+			void actOnSignalFromView(c_Signal::shared_ptr pSignal);
+			void actOnSignalFromNode(c_Signal::shared_ptr pSignal);
+			c_SignalQueue::shared_ptr m_pToOtherNodeSignalQueue;
+			c_SignalQueue::shared_ptr getToOtherNodeSignalQueue();
+			c_SignalQueue::shared_ptr m_pToViewSignalQueue;
+			c_SignalQueue::shared_ptr getToViewSignalQueue();
+		};
+
+		//-------------------------------------------------------------------
+		class c_TestNode {
+		public:
+			typedef boost::shared_ptr<c_TestNode> shared_ptr;
+
+			c_TestNode();
+
+		private:
+			friend class c_TestPeerConfiguration;
+			friend void test();
+			void actOnSignalFromOtherNode(c_Signal::shared_ptr pSignal);
+			void actOnSignalFromDomainHandler(c_Signal::shared_ptr pSignal);
+			c_SignalQueue::shared_ptr m_pToDomainSignalQueue;
+			c_SignalQueue::shared_ptr getToDomainSignalQueue();
+		};
+
+		//-------------------------------------------------------------------
+		class c_TestPeerConfiguration {
+		public:
+			typedef boost::shared_ptr<c_TestPeerConfiguration> shared_ptr;
+
+			c_TestPeerConfiguration();
+
+			void processSignals();
+
+			c_TestClient::shared_ptr getTestClient();
+			c_TestView::shared_ptr getTestView();
+			c_TestDomain::shared_ptr getTestDomain();
+			c_TestNode::shared_ptr getTestNode();
+
+		private:
+			friend void test();
+
+			c_TestClient::shared_ptr m_pTestClient;
+			c_TestView::shared_ptr m_pTestView;
+			c_TestDomain::shared_ptr m_pTestDomain;
+			c_TestNode::shared_ptr m_pTestNode;
+
+		};
+
+		//-------------------------------------------------------------------
+		void test();
+
+	};
 
 	namespace miv3 {
 		// Iteration 6. Iteration 5 failed to provide a good design for the roundtrip
 		// MIV += change through Evolution manager and back to another MIV.
 		// The problem is naming of all the artefacts needed to make this processing clean.
 		// lets see if we can improve on the design this time.
+
+		// 131121, Consider to use JSON strings to pass deltas
+		// See: http://www.codeproject.com/Articles/20027/JSON-Spirit-A-C-JSON-Parser-Generator-Implemented
 
 		//-------------------------------------------------------------------
 		typedef c_DataRepresentationFramework::c_UTF8String c_DarwinetString;
