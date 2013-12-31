@@ -58,6 +58,7 @@ namespace seedsrc {
 
 		void c_TestView::actOnSignalFromDomain(c_Signal::shared_ptr pSignal) {
 			LOG_NOT_IMPLEMENTED;
+			this->m_pToClientSignalQueue->push(boost::make_shared<c_Signal>()); // Dummy
 		}
 
 		c_SignalQueue::shared_ptr c_TestView::getToDomainSignalQueue() {
@@ -79,10 +80,12 @@ namespace seedsrc {
 
 		void c_TestDomain::actOnSignalFromView(c_Signal::shared_ptr pSignal) {
 			LOG_NOT_IMPLEMENTED;
+			this->m_pToOtherNodeSignalQueue->push(boost::make_shared<c_Signal>()); // Dummy
 		}
 
 		void c_TestDomain::actOnSignalFromNode(c_Signal::shared_ptr pSignal) {
 			LOG_NOT_IMPLEMENTED;
+			this->m_pToViewSignalQueue->push(boost::make_shared<c_Signal>()); // Dummy
 		}
 
 		c_SignalQueue::shared_ptr c_TestDomain::getToOtherNodeSignalQueue() {
@@ -102,10 +105,7 @@ namespace seedsrc {
 		}
 		void c_TestNode::actOnSignalFromOtherNode(c_Signal::shared_ptr pSignal) {
 			LOG_NOT_IMPLEMENTED;
-		}
-
-		void c_TestNode::actOnSignalFromDomainHandler(c_Signal::shared_ptr pSignal) {
-			LOG_NOT_IMPLEMENTED;
+			this->m_pToDomainSignalQueue->push(boost::make_shared<c_Signal>()); // Dummy
 		}
 
 		c_SignalQueue::shared_ptr c_TestNode::getToDomainSignalQueue() {

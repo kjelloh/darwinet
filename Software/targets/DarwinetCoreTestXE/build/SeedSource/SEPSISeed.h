@@ -124,7 +124,6 @@ namespace seedsrc {
 			friend class c_TestPeerConfiguration;
 			friend void test();
 			void actOnSignalFromOtherNode(c_Signal::shared_ptr pSignal);
-			void actOnSignalFromDomainHandler(c_Signal::shared_ptr pSignal);
 			c_SignalQueue::shared_ptr m_pToDomainSignalQueue;
 			c_SignalQueue::shared_ptr getToDomainSignalQueue();
 		};
