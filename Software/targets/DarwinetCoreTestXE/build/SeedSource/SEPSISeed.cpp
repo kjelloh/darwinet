@@ -6,6 +6,9 @@
 #include "BusinessLogUnit.h"
 #include <boost/make_shared.hpp>
 #include <boost/pointer_cast.hpp>
+# pragma warn -8072 // Seems to be a known Issue for  boost in Borland CPP 101112/KoH
+#include <boost/format.hpp>
+# pragma warn +8072 // Enable again. See above
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 
@@ -22,6 +25,8 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
+		int c_TestClient::m_class_state = 0;
+
 		c_TestClient::c_TestClient()
 			:  m_pToViewSignalQueue(boost::make_shared<c_SignalQueue>())
 		{
@@ -29,12 +34,50 @@ namespace seedsrc {
 		}
 
 		void c_TestClient::performTestAction() {
-			LOG_NOT_IMPLEMENTED;
-			this->m_pToViewSignalQueue->push(boost::make_shared<c_Signal>()); // Dummy
+			// target:MODEL operation:ADD member:myArray type:ARRAY
+			// target:MODEL operation ADD member:myArray.myString type:STRING
+			// target:INSTANCE operation CREATE member:myArray
+			// target:INSTANCE operation CREATE member:myArray.myString
+			// target:VALUE operation SET member:myArray.myString value:"Hello World"
+
+			c_Signal::shared_ptr pToViewSignal;
+			switch (m_class_state) {
+			case 0:
+				// target:MODEL operation:ADD member:myArray type:ARRAY
+				pToViewSignal = boost::make_shared<c_Signal>();
+				pToViewSignal->insert(std::make_pair(c_DarwinetString("target"),c_DarwinetString("MODEL")));
+				pToViewSignal->insert(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("ADD")));
+				pToViewSignal->insert(std::make_pair(c_DarwinetString("member"),c_DarwinetString("myArray")));
+				pToViewSignal->insert(std::make_pair(c_DarwinetString("type"),c_DarwinetString("ARRAY")));
+				break;
+			case 1:
+				// target:MODEL operation ADD member:myArray.myString type:STRING
+				pToViewSignal = boost::make_shared<c_Signal>();
+				pToViewSignal->insert(std::make_pair(c_DarwinetString("target"),c_DarwinetString("MODEL")));
+				pToViewSignal->insert(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("ADD")));
+				pToViewSignal->insert(std::make_pair(c_DarwinetString("member"),c_DarwinetString("myArray.myString")));
+				pToViewSignal->insert(std::make_pair(c_DarwinetString("type"),c_DarwinetString("STRING")));
+				break;
+			case 2:
+				// target:INSTANCE operation CREATE member:myArray
+				pToViewSignal = boost::make_shared<c_Signal>();
+				pToViewSignal->insert(std::make_pair(c_DarwinetString("target"),c_DarwinetString("INSTANCE")));
+				pToViewSignal->insert(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("CREATE")));
+				pToViewSignal->insert(std::make_pair(c_DarwinetString("member"),c_DarwinetString("myArray")));
+				break;
+
+			default:
+				;
+			}
+			if (pToViewSignal) {
+				this->m_pToViewSignalQueue->push(pToViewSignal);
+			}
+			++m_class_state;
 		}
 
 		void c_TestClient::actOnSignalFromView(c_Signal::shared_ptr pSignal) {
-			LOG_NOT_IMPLEMENTED;
+			log::logInSignal(*this,pSignal);
+			this->performTestAction(); // Initiate the next test action
 		}
 
 		c_SignalQueue::shared_ptr c_TestClient::getToViewSignalQueue() {
@@ -52,13 +95,109 @@ namespace seedsrc {
 		}
 
 		void c_TestView::actOnSignalFromClient(c_Signal::shared_ptr pSignal) {
-			LOG_NOT_IMPLEMENTED;
-			this->m_pToDomainSignalQueue->push(boost::make_shared<c_Signal>()); // Dummy
+			log::logInSignal(*this,pSignal);
+			c_Signal::shared_ptr pToDomainSignal;
+
+			c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("target"));
+			if (iter != pSignal->end()) {
+				if (iter->second == c_DarwinetString("MODEL")) {
+					// A Model modification request
+					c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("operation"));
+					if (iter != pSignal->end()) {
+						if (iter->second == c_DarwinetString("ADD")) {
+							// An ADD to Model request
+							c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("member"));
+							if (iter != pSignal->end()) {
+								c_DarwinetString sMember = iter->second;
+								c_MIVPath miv_member_id = c_MIVPath::fromString(sMember);
+								if (miv_member_id.size() > 0) {
+									// We have a reference to a miv
+									c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("type"));
+									if (iter != pSignal->end()) {
+										c_DarwinetString sType = iter->second;
+										pToDomainSignal = boost::make_shared<c_Signal>();
+										pToDomainSignal->insert(std::make_pair(c_DarwinetString("signal_id"),c_DarwinetString("dM")));
+										pToDomainSignal->insert(std::make_pair(c_DarwinetString("target"),miv_member_id.getParentPath().toString<c_DarwinetString>()));
+										pToDomainSignal->insert(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("ADD")));
+										pToDomainSignal->insert(std::make_pair(c_DarwinetString("member"),miv_member_id.back()));
+									}
+									else {
+										log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No MODEL ADD Member Type"));
+									}
+								}
+								else {
+									log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. Empty MODEL ADD Member"));
+								}
+							}
+							else {
+								log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No MODEL ADD Member"));
+							}
+						}
+						else {
+							c_LogString sMessage(__FUNCTION__" failed. Unknown Model Operation \"");
+							sMessage += toLogString(iter->second);
+							sMessage += _UTF8sz("\"");
+							log::logDesignInsufficiency(*this,sMessage);
+						}
+					}
+					else {
+						log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No Signal Operation"));
+					}
+				}
+				else if (iter->second == c_DarwinetString("INSTANCE")) {
+					// An Instance Set Modifiation Request
+					log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. Target INSTANCE not implemented"));
+				}
+				else if (iter->second == c_DarwinetString("VALUE")) {
+					// An Instance Value Modifiation Request
+					log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. Target VALUE not implemented"));
+				}
+				else {
+					c_LogString sMessage(__FUNCTION__" failed. Unknown Target \"");
+					sMessage += toLogString(iter->second);
+					sMessage += _UTF8sz("\"");
+					log::logDesignInsufficiency(*this,sMessage);
+				}
+			}
+			else {
+				log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No Signal Target"));
+			}
+			if (pToDomainSignal) {
+				this->m_pToDomainSignalQueue->push(pToDomainSignal); // Dummy
+			}
 		}
 
 		void c_TestView::actOnSignalFromDomain(c_Signal::shared_ptr pSignal) {
-			LOG_NOT_IMPLEMENTED;
-			this->m_pToClientSignalQueue->push(boost::make_shared<c_Signal>()); // Dummy
+			log::logInSignal(*this,pSignal);
+			c_Signal::shared_ptr pToClientSignal;
+
+			c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("signal_id"));
+			if (iter != pSignal->end()) {
+				if (iter->second == c_DarwinetString("dM")) {
+					pToClientSignal = boost::make_shared<c_Signal>();
+					pToClientSignal->insert(std::make_pair(c_DarwinetString("signal_id"),c_DarwinetString("onModelChange")));
+				}
+				else if (iter->second == c_DarwinetString("dI")) {
+					pToClientSignal = boost::make_shared<c_Signal>();
+					pToClientSignal->insert(std::make_pair(c_DarwinetString("signal_id"),c_DarwinetString("onInstanceChange")));
+				}
+				else if (iter->second == c_DarwinetString("dV")) {
+					pToClientSignal = boost::make_shared<c_Signal>();
+					pToClientSignal->insert(std::make_pair(c_DarwinetString("signal_id"),c_DarwinetString("onValueChange")));
+				}
+				else {
+					c_LogString sMessage(c_LogString(__FUNCTION__" failed. Unknown Signal Id"));
+					sMessage += iter->second;
+					log::logDesignInsufficiency(*this,sMessage);
+				}
+			}
+			else {
+				log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No Signal Id"));
+			}
+
+			if (pToClientSignal) {
+				this->m_pToClientSignalQueue->push(pToClientSignal);
+			}
 		}
 
 		c_SignalQueue::shared_ptr c_TestView::getToDomainSignalQueue() {
@@ -79,13 +218,55 @@ namespace seedsrc {
 		}
 
 		void c_TestDomain::actOnSignalFromView(c_Signal::shared_ptr pSignal) {
-			LOG_NOT_IMPLEMENTED;
-			this->m_pToOtherNodeSignalQueue->push(boost::make_shared<c_Signal>()); // Dummy
+			log::logInSignal(*this,pSignal);
+			c_Signal::shared_ptr pToOtherNodesSignal;
+
+			c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("signal_id"));
+			if (iter != pSignal->end()) {
+				if (    (iter->second == c_DarwinetString("dM"))
+					 || (iter->second == c_DarwinetString("dI"))
+					 || (iter->second == c_DarwinetString("dV"))) {
+					pToOtherNodesSignal = boost::make_shared<c_Signal>(*pSignal); // Forward a copy to other node
+				}
+				else {
+					c_LogString sMessage(c_LogString(__FUNCTION__" failed. Unknown Signal Id"));
+					sMessage += iter->second;
+					log::logDesignInsufficiency(*this,sMessage);
+				}
+			}
+			else {
+				log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No Signal Id"));
+			}
+
+			if (pToOtherNodesSignal) {
+				this->m_pToOtherNodeSignalQueue->push(pToOtherNodesSignal);
+			}
 		}
 
 		void c_TestDomain::actOnSignalFromNode(c_Signal::shared_ptr pSignal) {
-			LOG_NOT_IMPLEMENTED;
-			this->m_pToViewSignalQueue->push(boost::make_shared<c_Signal>()); // Dummy
+			log::logInSignal(*this,pSignal);
+			c_Signal::shared_ptr pToViewSignal;
+
+			c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("signal_id"));
+			if (iter != pSignal->end()) {
+				if (    (iter->second == c_DarwinetString("dM"))
+					 || (iter->second == c_DarwinetString("dI"))
+					 || (iter->second == c_DarwinetString("dV"))) {
+					pToViewSignal = boost::make_shared<c_Signal>(*pSignal); // Forward a copy to View
+				}
+				else {
+					c_LogString sMessage(c_LogString(__FUNCTION__" failed. Unknown Signal Id"));
+					sMessage += iter->second;
+					log::logDesignInsufficiency(*this,sMessage);
+				}
+			}
+			else {
+				log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No Signal Id"));
+			}
+
+			if (pToViewSignal) {
+				this->m_pToViewSignalQueue->push(pToViewSignal);
+			}
 		}
 
 		c_SignalQueue::shared_ptr c_TestDomain::getToOtherNodeSignalQueue() {
@@ -104,8 +285,29 @@ namespace seedsrc {
 
 		}
 		void c_TestNode::actOnSignalFromOtherNode(c_Signal::shared_ptr pSignal) {
-			LOG_NOT_IMPLEMENTED;
-			this->m_pToDomainSignalQueue->push(boost::make_shared<c_Signal>()); // Dummy
+			log::logInSignal(*this,pSignal);
+			c_Signal::shared_ptr pToDomainSignal;
+
+			c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("signal_id"));
+			if (iter != pSignal->end()) {
+				if (    (iter->second == c_DarwinetString("dM"))
+					 || (iter->second == c_DarwinetString("dI"))
+					 || (iter->second == c_DarwinetString("dV"))) {
+					pToDomainSignal = boost::make_shared<c_Signal>(*pSignal); // Forward a copy to View
+				}
+				else {
+					c_LogString sMessage(c_LogString(__FUNCTION__" failed. Unknown Signal Id"));
+					sMessage += iter->second;
+					log::logDesignInsufficiency(*this,sMessage);
+				}
+			}
+			else {
+				log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No Signal Id"));
+			}
+
+			if (pToDomainSignal) {
+				this->m_pToDomainSignalQueue->push(pToDomainSignal);
+			}
 		}
 
 		c_SignalQueue::shared_ptr c_TestNode::getToDomainSignalQueue() {
@@ -124,8 +326,11 @@ namespace seedsrc {
 		}
 
 		void c_TestPeerConfiguration::processSignals() {
-			bool there_are_more_signals_to_process = true;
-			while (there_are_more_signals_to_process) {
+			while (    (m_pTestClient->getToViewSignalQueue()->size() > 0)
+					|| (m_pTestView->getToDomainSignalQueue()->size() > 0)
+					|| (m_pTestNode->getToDomainSignalQueue()->size() > 0)
+					|| (m_pTestDomain->getToViewSignalQueue()->size() > 0)
+					|| (m_pTestView->getToClientSignalQueue()->size() > 0)) {
 				// Transfer from Client to View
 				if (m_pTestClient->getToViewSignalQueue()->size() > 0) {
 					c_Signal::shared_ptr pSignalFromClientToView = m_pTestClient->getToViewSignalQueue()->front();
@@ -157,10 +362,6 @@ namespace seedsrc {
 					m_pTestClient->actOnSignalFromView(pSignalFromViewToClient);
 				}
 
-				there_are_more_signals_to_process = (    (m_pTestClient->getToViewSignalQueue()->size() > 0)
-													  || (m_pTestView->getToDomainSignalQueue()->size() > 0)
-													  || (m_pTestNode->getToDomainSignalQueue()->size() > 0)
-													  || (m_pTestView->getToClientSignalQueue()->size() > 0));
 			}
 		}
 
@@ -180,6 +381,55 @@ namespace seedsrc {
 			return this->m_pTestNode;
 		}
 
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+		namespace log {
+			c_LogString logNAmeOfActor(const c_TestClient& actor) {
+				c_LogString result("CLIENT::");
+				result.anonymous() +=  (boost::format("%p") % &actor).str();
+				return result;
+			}
+
+			c_LogString logNAmeOfActor(const c_TestView& actor) {
+				c_LogString result("VIEW::");
+				result.anonymous() +=  (boost::format("%p") % &actor).str();
+				return result;
+			}
+
+			c_LogString logNAmeOfActor(const c_TestDomain& actor) {
+				c_LogString result("DOMAIN::");
+				result.anonymous() +=  (boost::format("%p") % &actor).str();
+				return result;
+			}
+
+			c_LogString logNAmeOfActor(const c_TestNode& actor) {
+				c_LogString result("NODE::");
+				result.anonymous() +=  (boost::format("%p") % &actor).str();
+				return result;
+			}
+
+			c_LogString toLogString(c_Signal::shared_ptr pSignal) {
+				c_LogString result;
+				if (pSignal) {
+					bool is_first_parameter = true;
+					for (c_Signal::const_iterator iter = pSignal->begin(); iter != pSignal->end(); ++iter) {
+						if (result.size() > 0) {
+							result += _UTF8sz(" "); // add separator
+						}
+						result += toLogString(iter->first);
+						result += _UTF8sz(":");
+						result += toLogString(iter->second);
+					}
+				}
+				else {
+					result = _UTF8sz("NULL");
+				}
+				return result;
+			}
+		}
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
 		void test() {
 			// 1. The Client requests the viewed MIV to be modified
 			// 2. The View produces a Delta that defines the change
@@ -191,12 +441,22 @@ namespace seedsrc {
 
 			pTestPeerConfiguration1->getTestClient()->performTestAction();
 			pTestPeerConfiguration1->processSignals();
-			if (pTestPeerConfiguration1->getTestDomain()->getToOtherNodeSignalQueue()->size() > 0) {
-				c_Signal::shared_ptr pSignalFromDomainToOtherNode = pTestPeerConfiguration1->getTestDomain()->getToOtherNodeSignalQueue()->front();
-				pTestPeerConfiguration1->getTestDomain()->getToOtherNodeSignalQueue()->pop();
-				pTestPeerConfiguration2->getTestNode()->actOnSignalFromOtherNode(pSignalFromDomainToOtherNode);
+
+			while (    (pTestPeerConfiguration1->getTestDomain()->getToOtherNodeSignalQueue()->size() > 0)
+					|| (pTestPeerConfiguration2->getTestDomain()->getToOtherNodeSignalQueue()->size() > 0)) {
+				if (pTestPeerConfiguration1->getTestDomain()->getToOtherNodeSignalQueue()->size() > 0) {
+					c_Signal::shared_ptr pSignalFromDomainToOtherNode = pTestPeerConfiguration1->getTestDomain()->getToOtherNodeSignalQueue()->front();
+					pTestPeerConfiguration1->getTestDomain()->getToOtherNodeSignalQueue()->pop();
+					pTestPeerConfiguration2->getTestNode()->actOnSignalFromOtherNode(boost::make_shared<c_Signal>(*pSignalFromDomainToOtherNode)); // Forward a copy
+				}
+				pTestPeerConfiguration2->processSignals();
+				if (pTestPeerConfiguration2->getTestDomain()->getToOtherNodeSignalQueue()->size() > 0) {
+					c_Signal::shared_ptr pSignalFromDomainToOtherNode = pTestPeerConfiguration2->getTestDomain()->getToOtherNodeSignalQueue()->front();
+					pTestPeerConfiguration2->getTestDomain()->getToOtherNodeSignalQueue()->pop();
+					pTestPeerConfiguration1->getTestNode()->actOnSignalFromOtherNode(boost::make_shared<c_Signal>(*pSignalFromDomainToOtherNode)); // Forward a copy
+				}
+				pTestPeerConfiguration1->processSignals();
 			}
-			pTestPeerConfiguration2->processSignals();
 		}
 	}
 

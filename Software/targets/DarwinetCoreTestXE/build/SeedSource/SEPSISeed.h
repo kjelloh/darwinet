@@ -51,9 +51,11 @@ namespace seedsrc {
 		};
 
 		//-------------------------------------------------------------------
-		class c_Signal : public std::map<std::string,std::string> {
+		class c_Signal : public std::map<c_DarwinetString,c_DarwinetString> {
 		public:
 			typedef boost::shared_ptr<c_Signal> shared_ptr;
+			typedef std::map<c_DarwinetString,c_DarwinetString>::iterator iterator;
+			typedef std::map<c_DarwinetString,c_DarwinetString>::const_iterator const_iterator;
 		};
 
 		//-------------------------------------------------------------------
@@ -73,6 +75,9 @@ namespace seedsrc {
 
 		private:
 			friend class c_TestPeerConfiguration;
+			static int m_class_state;
+
+
 			void actOnSignalFromView(c_Signal::shared_ptr pSignal);
 
 			c_SignalQueue::shared_ptr m_pToViewSignalQueue;
@@ -151,6 +156,49 @@ namespace seedsrc {
 			c_TestNode::shared_ptr m_pTestNode;
 
 		};
+		//-------------------------------------------------------------------
+		namespace log {
+			c_LogString logNAmeOfActor(const c_TestClient& actor);
+			c_LogString logNAmeOfActor(const c_TestView& actor);
+			c_LogString logNAmeOfActor(const c_TestDomain& actor);
+			c_LogString logNAmeOfActor(const c_TestNode& actor);
+
+			c_LogString toLogString(c_Signal::shared_ptr pSignal);
+
+			template <class _Actor>
+			void logBusiness(const _Actor& actor,const c_LogString& sMessageIn) {
+				c_LogString sMessage(logNAmeOfActor(actor));
+				sMessage += _UTF8sz(": ");
+				sMessage += sMessageIn;
+				LOG_BUSINESS(sMessage);
+			}
+
+			template <class _Actor>
+			void logDesignInsufficiency(const _Actor& actor,const c_LogString& sMessageIn) {
+				c_LogString sMessage(logNAmeOfActor(actor));
+				sMessage += _UTF8sz(": ");
+				sMessage += sMessageIn;
+				LOG_DESIGN_INSUFFICIENCY(sMessage);
+			}
+
+			template <class _Actor>
+			void logTrace(const _Actor& actor,const c_LogString& sMessageIn) {
+				c_LogString sMessage(logNAmeOfActor(actor));
+				sMessage += _UTF8sz(": ");
+				sMessage += sMessageIn;
+				LOG_DEVELOPMENT_TRACE(sMessage);
+			}
+
+			template <class _Actor>
+			void logInSignal(const _Actor& actor,c_Signal::shared_ptr pSignal) {
+				c_LogString sMessage;
+				sMessage += _UTF8sz(" Received Signal \"");
+				sMessage += toLogString(pSignal);
+				sMessage += _UTF8sz("\"");
+				log::logBusiness(actor,sMessage);
+			}
+
+		}
 
 		//-------------------------------------------------------------------
 		void test();
