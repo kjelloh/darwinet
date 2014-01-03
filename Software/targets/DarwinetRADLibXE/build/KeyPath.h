@@ -236,7 +236,7 @@ namespace oprime {
 		/**
 		  * path + node
 		  */
-		c_KeyPath operator+(const _Node& keyNode) {
+		c_KeyPath operator+(const _Node& keyNode) const {
 			c_KeyPath result(*this); // copy
 			result += keyNode;
 			return result;
