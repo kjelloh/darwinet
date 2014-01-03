@@ -28,6 +28,7 @@ namespace seedsrc {
 		typedef c_DarwinetString c_CaptionNode;
 		//-------------------------------------------------------------------
 		typedef oprime::c_KeyPath<c_CaptionNode> c_MIVPath;
+		typedef oprime::c_KeyPath<c_CaptionNode> c_StackActorPath;
 		typedef unsigned int t_DeltaProducerId;
 		typedef unsigned int t_DeltaSequenceNumber;
 
@@ -69,14 +70,15 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<c_TestClient> shared_ptr;
 
-			c_TestClient();
+			c_TestClient(const c_StackActorPath& stack_path);
+			const c_StackActorPath& getStackActorPath() const;
 
 			void performTestAction();
 
 		private:
 			friend class c_TestPeerConfiguration;
 			static int m_class_state;
-
+			c_StackActorPath m_stack_path;
 
 			void actOnSignalFromView(c_Signal::shared_ptr pSignal);
 
@@ -89,10 +91,13 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<c_TestView> shared_ptr;
 
-			c_TestView();
+			c_TestView(const c_StackActorPath& stack_path);
+			const c_StackActorPath& getStackActorPath() const;
 
 		private:
 			friend class c_TestPeerConfiguration;
+			c_StackActorPath m_stack_path;
+
 			void actOnSignalFromClient(c_Signal::shared_ptr pSignal);
 			void actOnSignalFromDomain(c_Signal::shared_ptr pSignal);
 			c_SignalQueue::shared_ptr m_pToDomainSignalQueue;
@@ -106,10 +111,14 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<c_TestDomain> shared_ptr;
 
-			c_TestDomain();
+			c_TestDomain(const c_StackActorPath& stack_path);
+			const c_StackActorPath& getStackActorPath() const;
+
 		private:
 			friend class c_TestPeerConfiguration;
 			friend void test();
+			c_StackActorPath m_stack_path;
+
 			void actOnSignalFromView(c_Signal::shared_ptr pSignal);
 			void actOnSignalFromNode(c_Signal::shared_ptr pSignal);
 			c_SignalQueue::shared_ptr m_pToOtherNodeSignalQueue;
@@ -123,11 +132,14 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<c_TestNode> shared_ptr;
 
-			c_TestNode();
+			c_TestNode(const c_StackActorPath& stack_path);
+			const c_StackActorPath& getStackActorPath() const;
 
 		private:
 			friend class c_TestPeerConfiguration;
 			friend void test();
+			c_StackActorPath m_stack_path;
+
 			void actOnSignalFromOtherNode(c_Signal::shared_ptr pSignal);
 			c_SignalQueue::shared_ptr m_pToDomainSignalQueue;
 			c_SignalQueue::shared_ptr getToDomainSignalQueue();
@@ -138,7 +150,7 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<c_TestPeerConfiguration> shared_ptr;
 
-			c_TestPeerConfiguration();
+			c_TestPeerConfiguration(const c_StackActorPath& stack_path);
 
 			void processSignals();
 
@@ -158,16 +170,11 @@ namespace seedsrc {
 		};
 		//-------------------------------------------------------------------
 		namespace log {
-			c_LogString logNAmeOfActor(const c_TestClient& actor);
-			c_LogString logNAmeOfActor(const c_TestView& actor);
-			c_LogString logNAmeOfActor(const c_TestDomain& actor);
-			c_LogString logNAmeOfActor(const c_TestNode& actor);
-
 			c_LogString toLogString(c_Signal::shared_ptr pSignal);
 
 			template <class _Actor>
 			void logBusiness(const _Actor& actor,const c_LogString& sMessageIn) {
-				c_LogString sMessage(logNAmeOfActor(actor));
+				c_LogString sMessage(actor.getStackActorPath().toString<c_LogString>());
 				sMessage += _UTF8sz(": ");
 				sMessage += sMessageIn;
 				LOG_BUSINESS(sMessage);
@@ -175,7 +182,7 @@ namespace seedsrc {
 
 			template <class _Actor>
 			void logDesignInsufficiency(const _Actor& actor,const c_LogString& sMessageIn) {
-				c_LogString sMessage(logNAmeOfActor(actor));
+				c_LogString sMessage(actor.getStackActorPath().toString<c_LogString>());
 				sMessage += _UTF8sz(": ");
 				sMessage += sMessageIn;
 				LOG_DESIGN_INSUFFICIENCY(sMessage);
@@ -183,7 +190,7 @@ namespace seedsrc {
 
 			template <class _Actor>
 			void logTrace(const _Actor& actor,const c_LogString& sMessageIn) {
-				c_LogString sMessage(logNAmeOfActor(actor));
+				c_LogString sMessage(actor.getStackActorPath().toString<c_LogString>());
 				sMessage += _UTF8sz(": ");
 				sMessage += sMessageIn;
 				LOG_DEVELOPMENT_TRACE(sMessage);
@@ -192,7 +199,7 @@ namespace seedsrc {
 			template <class _Actor>
 			void logInSignal(const _Actor& actor,c_Signal::shared_ptr pSignal) {
 				c_LogString sMessage;
-				sMessage += _UTF8sz(" Received Signal \"");
+				sMessage += _UTF8sz(" Rx \"");
 				sMessage += toLogString(pSignal);
 				sMessage += _UTF8sz("\"");
 				log::logBusiness(actor,sMessage);

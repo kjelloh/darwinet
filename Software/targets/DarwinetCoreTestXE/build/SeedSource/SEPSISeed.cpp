@@ -27,43 +27,48 @@ namespace seedsrc {
 
 		int c_TestClient::m_class_state = 0;
 
-		c_TestClient::c_TestClient()
-			:  m_pToViewSignalQueue(boost::make_shared<c_SignalQueue>())
+		c_TestClient::c_TestClient(const c_StackActorPath& stack_path)
+			:  m_stack_path(stack_path)
+			  ,m_pToViewSignalQueue(boost::make_shared<c_SignalQueue>())
 		{
 
 		}
 
+		const c_StackActorPath& c_TestClient::getStackActorPath() const {
+			return m_stack_path;
+		}
+
 		void c_TestClient::performTestAction() {
-			// target:MODEL operation:ADD member:myArray type:ARRAY
-			// target:MODEL operation ADD member:myArray.myString type:STRING
-			// target:INSTANCE operation CREATE member:myArray
-			// target:INSTANCE operation CREATE member:myArray.myString
-			// target:VALUE operation SET member:myArray.myString value:"Hello World"
+			// target:MODEL operation:ADD member:myRecord model:RECORD
+			// target:MODEL operation ADD member:myRecord.myString model:STRING
+			// target:INSTANCE operation CREATE member:myRecord
+			// target:INSTANCE operation CREATE member:myRecord.myString
+			// target:VALUE operation SET member:myRecord.myString value:"Hello World"
 
 			c_Signal::shared_ptr pToViewSignal;
 			switch (m_class_state) {
 			case 0:
-				// target:MODEL operation:ADD member:myArray type:ARRAY
+				// target:MODEL operation:ADD member:myRecord model:RECORD
 				pToViewSignal = boost::make_shared<c_Signal>();
 				pToViewSignal->insert(std::make_pair(c_DarwinetString("target"),c_DarwinetString("MODEL")));
 				pToViewSignal->insert(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("ADD")));
-				pToViewSignal->insert(std::make_pair(c_DarwinetString("member"),c_DarwinetString("myArray")));
-				pToViewSignal->insert(std::make_pair(c_DarwinetString("type"),c_DarwinetString("ARRAY")));
+				pToViewSignal->insert(std::make_pair(c_DarwinetString("member"),c_DarwinetString("myRecord")));
+				pToViewSignal->insert(std::make_pair(c_DarwinetString("model"),c_DarwinetString("RECORD")));
 				break;
 			case 1:
-				// target:MODEL operation ADD member:myArray.myString type:STRING
+				// target:MODEL operation ADD member:myRecord.myString model:STRING
 				pToViewSignal = boost::make_shared<c_Signal>();
 				pToViewSignal->insert(std::make_pair(c_DarwinetString("target"),c_DarwinetString("MODEL")));
 				pToViewSignal->insert(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("ADD")));
-				pToViewSignal->insert(std::make_pair(c_DarwinetString("member"),c_DarwinetString("myArray.myString")));
-				pToViewSignal->insert(std::make_pair(c_DarwinetString("type"),c_DarwinetString("STRING")));
+				pToViewSignal->insert(std::make_pair(c_DarwinetString("member"),c_DarwinetString("myRecord.myString")));
+				pToViewSignal->insert(std::make_pair(c_DarwinetString("model"),c_DarwinetString("STRING")));
 				break;
 			case 2:
-				// target:INSTANCE operation CREATE member:myArray
+				// target:INSTANCE operation CREATE member:myRecord
 				pToViewSignal = boost::make_shared<c_Signal>();
 				pToViewSignal->insert(std::make_pair(c_DarwinetString("target"),c_DarwinetString("INSTANCE")));
 				pToViewSignal->insert(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("CREATE")));
-				pToViewSignal->insert(std::make_pair(c_DarwinetString("member"),c_DarwinetString("myArray")));
+				pToViewSignal->insert(std::make_pair(c_DarwinetString("member"),c_DarwinetString("myRecord")));
 				break;
 
 			default:
@@ -87,11 +92,16 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
-		c_TestView::c_TestView()
-			:  m_pToDomainSignalQueue(boost::make_shared<c_SignalQueue>())
+		c_TestView::c_TestView(const c_StackActorPath& stack_path)
+			:  m_stack_path(stack_path)
+			  ,m_pToDomainSignalQueue(boost::make_shared<c_SignalQueue>())
 			  ,m_pToClientSignalQueue(boost::make_shared<c_SignalQueue>())
 		{
 
+		}
+
+		const c_StackActorPath& c_TestView::getStackActorPath() const {
+			return m_stack_path;
 		}
 
 		void c_TestView::actOnSignalFromClient(c_Signal::shared_ptr pSignal) {
@@ -112,7 +122,7 @@ namespace seedsrc {
 								c_MIVPath miv_member_id = c_MIVPath::fromString(sMember);
 								if (miv_member_id.size() > 0) {
 									// We have a reference to a miv
-									c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("type"));
+									c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("model"));
 									if (iter != pSignal->end()) {
 										c_DarwinetString sType = iter->second;
 										pToDomainSignal = boost::make_shared<c_Signal>();
@@ -210,11 +220,16 @@ namespace seedsrc {
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
-		c_TestDomain::c_TestDomain()
-			:  m_pToOtherNodeSignalQueue(boost::make_shared<c_SignalQueue>())
+		c_TestDomain::c_TestDomain(const c_StackActorPath& stack_path)
+			:  m_stack_path(stack_path)
+			  ,m_pToOtherNodeSignalQueue(boost::make_shared<c_SignalQueue>())
 			  ,m_pToViewSignalQueue(boost::make_shared<c_SignalQueue>())
 		{
 
+		}
+
+		const c_StackActorPath& c_TestDomain::getStackActorPath() const {
+			return m_stack_path;
 		}
 
 		void c_TestDomain::actOnSignalFromView(c_Signal::shared_ptr pSignal) {
@@ -279,11 +294,17 @@ namespace seedsrc {
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
-		c_TestNode::c_TestNode()
-			:  m_pToDomainSignalQueue(boost::make_shared<c_SignalQueue>())
+		c_TestNode::c_TestNode(const c_StackActorPath& stack_path)
+			:  m_stack_path(stack_path)
+			  ,m_pToDomainSignalQueue(boost::make_shared<c_SignalQueue>())
 		{
 
 		}
+
+		const c_StackActorPath& c_TestNode::getStackActorPath() const {
+			return m_stack_path;
+		}
+
 		void c_TestNode::actOnSignalFromOtherNode(c_Signal::shared_ptr pSignal) {
 			log::logInSignal(*this,pSignal);
 			c_Signal::shared_ptr pToDomainSignal;
@@ -316,11 +337,11 @@ namespace seedsrc {
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
-		c_TestPeerConfiguration::c_TestPeerConfiguration()
-			:  m_pTestClient(boost::make_shared<c_TestClient>())
-			  ,m_pTestView(boost::make_shared<c_TestView>())
-			  ,m_pTestDomain(boost::make_shared<c_TestDomain>())
-			  ,m_pTestNode(boost::make_shared<c_TestNode>())
+		c_TestPeerConfiguration::c_TestPeerConfiguration(const c_StackActorPath& stack_path)
+			:  m_pTestClient(boost::make_shared<c_TestClient>(stack_path + c_StackActorPath::Node("CLIENT")))
+			  ,m_pTestView(boost::make_shared<c_TestView>(stack_path + c_StackActorPath::Node("VIEW")))
+			  ,m_pTestDomain(boost::make_shared<c_TestDomain>(stack_path + c_StackActorPath::Node("DOMAIN")))
+			  ,m_pTestNode(boost::make_shared<c_TestNode>(stack_path + c_StackActorPath::Node("NODE")))
 		{
 
 		}
@@ -384,29 +405,6 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 		namespace log {
-			c_LogString logNAmeOfActor(const c_TestClient& actor) {
-				c_LogString result("CLIENT::");
-				result.anonymous() +=  (boost::format("%p") % &actor).str();
-				return result;
-			}
-
-			c_LogString logNAmeOfActor(const c_TestView& actor) {
-				c_LogString result("VIEW::");
-				result.anonymous() +=  (boost::format("%p") % &actor).str();
-				return result;
-			}
-
-			c_LogString logNAmeOfActor(const c_TestDomain& actor) {
-				c_LogString result("DOMAIN::");
-				result.anonymous() +=  (boost::format("%p") % &actor).str();
-				return result;
-			}
-
-			c_LogString logNAmeOfActor(const c_TestNode& actor) {
-				c_LogString result("NODE::");
-				result.anonymous() +=  (boost::format("%p") % &actor).str();
-				return result;
-			}
 
 			c_LogString toLogString(c_Signal::shared_ptr pSignal) {
 				c_LogString result;
@@ -436,8 +434,8 @@ namespace seedsrc {
 			// 3. The Domain distributes the Delta within the Domain
 			// 4. The View applies the distributed Delta and reports the change to the Client
 
-			c_TestPeerConfiguration::shared_ptr pTestPeerConfiguration1 = boost::make_shared<c_TestPeerConfiguration>();
-			c_TestPeerConfiguration::shared_ptr pTestPeerConfiguration2 = boost::make_shared<c_TestPeerConfiguration>();
+			c_TestPeerConfiguration::shared_ptr pTestPeerConfiguration1 = boost::make_shared<c_TestPeerConfiguration>(c_StackActorPath::fromString(c_DarwinetString("P1")));
+			c_TestPeerConfiguration::shared_ptr pTestPeerConfiguration2 = boost::make_shared<c_TestPeerConfiguration>(c_StackActorPath::fromString(c_DarwinetString("P2")));
 
 			pTestPeerConfiguration1->getTestClient()->performTestAction();
 			pTestPeerConfiguration1->processSignals();
@@ -447,12 +445,17 @@ namespace seedsrc {
 				if (pTestPeerConfiguration1->getTestDomain()->getToOtherNodeSignalQueue()->size() > 0) {
 					c_Signal::shared_ptr pSignalFromDomainToOtherNode = pTestPeerConfiguration1->getTestDomain()->getToOtherNodeSignalQueue()->front();
 					pTestPeerConfiguration1->getTestDomain()->getToOtherNodeSignalQueue()->pop();
+					// Forward the signal both to "self" and other nodes in the domain
+					pTestPeerConfiguration1->getTestNode()->actOnSignalFromOtherNode(pSignalFromDomainToOtherNode);
 					pTestPeerConfiguration2->getTestNode()->actOnSignalFromOtherNode(boost::make_shared<c_Signal>(*pSignalFromDomainToOtherNode)); // Forward a copy
 				}
 				pTestPeerConfiguration2->processSignals();
 				if (pTestPeerConfiguration2->getTestDomain()->getToOtherNodeSignalQueue()->size() > 0) {
 					c_Signal::shared_ptr pSignalFromDomainToOtherNode = pTestPeerConfiguration2->getTestDomain()->getToOtherNodeSignalQueue()->front();
 					pTestPeerConfiguration2->getTestDomain()->getToOtherNodeSignalQueue()->pop();
+
+					// Forward the signal both to "self" and other nodes in the domain
+					pTestPeerConfiguration2->getTestNode()->actOnSignalFromOtherNode(pSignalFromDomainToOtherNode);
 					pTestPeerConfiguration1->getTestNode()->actOnSignalFromOtherNode(boost::make_shared<c_Signal>(*pSignalFromDomainToOtherNode)); // Forward a copy
 				}
 				pTestPeerConfiguration1->processSignals();
