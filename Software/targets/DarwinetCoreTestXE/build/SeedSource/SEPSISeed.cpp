@@ -9,6 +9,7 @@
 # pragma warn -8072 // Seems to be a known Issue for  boost in Borland CPP 101112/KoH
 #include <boost/format.hpp>
 # pragma warn +8072 // Enable again. See above
+#include <algorithm> // std::find_if
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 
@@ -21,6 +22,24 @@ namespace seedsrc {
 	namespace miv4 {
 
 
+		struct is_parameter_key {
+			is_parameter_key(const c_DarwinetString& sKey)
+				: m_sKey(sKey)
+			{
+			};
+
+			bool operator()(const c_Signal::Pair& pair) {
+				return (pair.first == m_sKey);
+			};
+
+			c_DarwinetString m_sKey;
+
+		};
+
+		c_Signal::const_iterator c_Signal::find(const c_DarwinetString& sKey) {
+			c_Signal::const_iterator result = std::find_if(this->begin(),this->end(),is_parameter_key(sKey));
+			return result;
+		}
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
@@ -39,36 +58,45 @@ namespace seedsrc {
 		}
 
 		void c_TestClient::performTestAction() {
-			// target:MODEL operation:ADD member:myRecord model:RECORD
-			// target:MODEL operation ADD member:myRecord.myString model:STRING
-			// target:INSTANCE operation CREATE member:myRecord
-			// target:INSTANCE operation CREATE member:myRecord.myString
-			// target:VALUE operation SET member:myRecord.myString value:"Hello World"
 
 			c_Signal::shared_ptr pToViewSignal;
 			switch (m_class_state) {
 			case 0:
-				// target:MODEL operation:ADD member:myRecord model:RECORD
 				pToViewSignal = boost::make_shared<c_Signal>();
-				pToViewSignal->insert(std::make_pair(c_DarwinetString("target"),c_DarwinetString("MODEL")));
-				pToViewSignal->insert(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("ADD")));
-				pToViewSignal->insert(std::make_pair(c_DarwinetString("member"),c_DarwinetString("myRecord")));
-				pToViewSignal->insert(std::make_pair(c_DarwinetString("model"),c_DarwinetString("RECORD")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("miv_class"),c_DarwinetString("MODEL")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("target"),c_DarwinetString("root")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("ADD")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("model"),c_DarwinetString("RECORD")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("member"),c_DarwinetString("myRecord")));
 				break;
 			case 1:
-				// target:MODEL operation ADD member:myRecord.myString model:STRING
 				pToViewSignal = boost::make_shared<c_Signal>();
-				pToViewSignal->insert(std::make_pair(c_DarwinetString("target"),c_DarwinetString("MODEL")));
-				pToViewSignal->insert(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("ADD")));
-				pToViewSignal->insert(std::make_pair(c_DarwinetString("member"),c_DarwinetString("myRecord.myString")));
-				pToViewSignal->insert(std::make_pair(c_DarwinetString("model"),c_DarwinetString("STRING")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("miv_class"),c_DarwinetString("MODEL")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("target"),c_DarwinetString("root.myRecord")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("ADD")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("model"),c_DarwinetString("STRING")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("member"),c_DarwinetString("myString")));
 				break;
 			case 2:
-				// target:INSTANCE operation CREATE member:myRecord
 				pToViewSignal = boost::make_shared<c_Signal>();
-				pToViewSignal->insert(std::make_pair(c_DarwinetString("target"),c_DarwinetString("INSTANCE")));
-				pToViewSignal->insert(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("CREATE")));
-				pToViewSignal->insert(std::make_pair(c_DarwinetString("member"),c_DarwinetString("myRecord")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("miv_class"),c_DarwinetString("INSTANCE")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("target"),c_DarwinetString("root")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("CREATE")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("member"),c_DarwinetString("myRecord")));
+				break;
+			case 3:
+				pToViewSignal = boost::make_shared<c_Signal>();
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("miv_class"),c_DarwinetString("INSTANCE")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("target"),c_DarwinetString("root.myRecord")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("CREATE")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("member"),c_DarwinetString("myString")));
+				break;
+			case 4:
+				pToViewSignal = boost::make_shared<c_Signal>();
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("miv_class"),c_DarwinetString("VALUE")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("target"),c_DarwinetString("root.myRecord.myString")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("SET")));
+				pToViewSignal->push_back(std::make_pair(c_DarwinetString("value"),c_DarwinetString("Hello Darwinet World!")));
 				break;
 
 			default:
@@ -94,6 +122,7 @@ namespace seedsrc {
 
 		c_TestView::c_TestView(const c_StackActorPath& stack_path)
 			:  m_stack_path(stack_path)
+			  ,m_last_used_seq_no(-1)
 			  ,m_pToDomainSignalQueue(boost::make_shared<c_SignalQueue>())
 			  ,m_pToClientSignalQueue(boost::make_shared<c_SignalQueue>())
 		{
@@ -104,66 +133,183 @@ namespace seedsrc {
 			return m_stack_path;
 		}
 
+		unsigned int c_TestView::reserveSeqNo() {
+			return m_last_used_seq_no+1;
+		}
+
+		void c_TestView::allocateSeqNo(unsigned int seq_no) {
+			if (seq_no != static_cast<unsigned int>(m_last_used_seq_no+1)) {
+				c_LogString sMessage(__FUNCTION__" failed. m_last_used_seq_no=");
+				sMessage += c_DataRepresentationFramework::intToDecimalString(m_last_used_seq_no);
+				sMessage += _UTF8sz(" and provided seq_no=");
+				sMessage += c_DataRepresentationFramework::intToDecimalString(seq_no);
+				sMessage += _UTF8sz(" is not in seqeunce. Will set new seq_no anyhow.");
+				LOG_DESIGN_INSUFFICIENCY(sMessage);
+			}
+			m_last_used_seq_no = seq_no;
+		};
+
 		void c_TestView::actOnSignalFromClient(c_Signal::shared_ptr pSignal) {
 			log::logInSignal(*this,pSignal);
 			c_Signal::shared_ptr pToDomainSignal;
 
-			c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("target"));
+			c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("miv_class"));
 			if (iter != pSignal->end()) {
 				if (iter->second == c_DarwinetString("MODEL")) {
 					// A Model modification request
-					c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("operation"));
+					c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("target"));
 					if (iter != pSignal->end()) {
-						if (iter->second == c_DarwinetString("ADD")) {
-							// An ADD to Model request
-							c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("member"));
-							if (iter != pSignal->end()) {
-								c_DarwinetString sMember = iter->second;
-								c_MIVPath miv_member_id = c_MIVPath::fromString(sMember);
-								if (miv_member_id.size() > 0) {
-									// We have a reference to a miv
-									c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("model"));
+						c_DarwinetString sTarget = iter->second;
+						c_MIVPath miv_target_path = c_MIVPath::fromString(sTarget);
+						c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("operation"));
+						if (iter != pSignal->end()) {
+							if (iter->second == c_DarwinetString("ADD")) {
+								// An ADD to Model request
+								c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("model"));
+								if (iter != pSignal->end()) {
+									c_DarwinetString sModel = iter->second;
+									c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("member"));
 									if (iter != pSignal->end()) {
-										c_DarwinetString sType = iter->second;
+										{
+											c_LogString sMessage(__FUNCTION__" failed. Not fully implemented for creating a true dM");
+											LOG_DESIGN_INSUFFICIENCY(sMessage);
+										}
+										c_DarwinetString sMember = iter->second;
+										unsigned int seq_no = this->reserveSeqNo(); // Start transaction
 										pToDomainSignal = boost::make_shared<c_Signal>();
-										pToDomainSignal->insert(std::make_pair(c_DarwinetString("signal_id"),c_DarwinetString("dM")));
-										pToDomainSignal->insert(std::make_pair(c_DarwinetString("target"),miv_member_id.getParentPath().toString<c_DarwinetString>()));
-										pToDomainSignal->insert(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("ADD")));
-										pToDomainSignal->insert(std::make_pair(c_DarwinetString("member"),miv_member_id.back()));
+										pToDomainSignal->push_back(std::make_pair(c_DarwinetString("producer"),this->getStackActorPath().toString<c_DarwinetString>()));
+										pToDomainSignal->push_back(std::make_pair(c_DarwinetString("seq_no"),c_DataRepresentationFramework::intToDecimalString(seq_no)));
+										pToDomainSignal->push_back(std::make_pair(c_DarwinetString("signal_id"),c_DarwinetString("dM")));
+										pToDomainSignal->push_back(std::make_pair(c_DarwinetString("target"),miv_target_path.toString<c_DarwinetString>()));
+										pToDomainSignal->push_back(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("ADD")));
+										pToDomainSignal->push_back(std::make_pair(c_DarwinetString("model"),sModel));
+										pToDomainSignal->push_back(std::make_pair(c_DarwinetString("member"),sMember));
+										this->allocateSeqNo(seq_no); // End transaction
 									}
 									else {
-										log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No MODEL ADD Member Type"));
+										log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No MODEL ADD Member"));
 									}
 								}
 								else {
-									log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. Empty MODEL ADD Member"));
+									log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No MODEL ADD Model"));
 								}
 							}
 							else {
-								log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No MODEL ADD Member"));
+								c_LogString sMessage(__FUNCTION__" failed. Unknown Model Operation \"");
+								sMessage += toLogString(iter->second);
+								sMessage += _UTF8sz("\"");
+								log::logDesignInsufficiency(*this,sMessage);
 							}
 						}
 						else {
-							c_LogString sMessage(__FUNCTION__" failed. Unknown Model Operation \"");
-							sMessage += toLogString(iter->second);
-							sMessage += _UTF8sz("\"");
-							log::logDesignInsufficiency(*this,sMessage);
+							log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No MODEL target operation"));
 						}
 					}
 					else {
-						log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No Signal Operation"));
+						log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No Model target"));
 					}
 				}
 				else if (iter->second == c_DarwinetString("INSTANCE")) {
 					// An Instance Set Modifiation Request
-					log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. Target INSTANCE not implemented"));
+					c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("target"));
+					if (iter != pSignal->end()) {
+						c_DarwinetString sTarget = iter->second;
+						c_MIVPath miv_target_path = c_MIVPath::fromString(sTarget);
+						c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("operation"));
+						if (iter != pSignal->end()) {
+							if (iter->second == c_DarwinetString("CREATE")) {
+								c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("member"));
+								if (iter != pSignal->end()) {
+									{
+										c_LogString sMessage(__FUNCTION__" failed. Not fully implemented for creating a true dI");
+										LOG_DESIGN_INSUFFICIENCY(sMessage);
+									}
+									c_DarwinetString sMember = iter->second;
+									unsigned int seq_no = this->reserveSeqNo(); // Start transaction
+									pToDomainSignal = boost::make_shared<c_Signal>();
+									pToDomainSignal->push_back(std::make_pair(c_DarwinetString("producer"),this->getStackActorPath().toString<c_DarwinetString>()));
+									pToDomainSignal->push_back(std::make_pair(c_DarwinetString("seq_no"),c_DataRepresentationFramework::intToDecimalString(seq_no)));
+									pToDomainSignal->push_back(std::make_pair(c_DarwinetString("signal_id"),c_DarwinetString("dI")));
+									pToDomainSignal->push_back(std::make_pair(c_DarwinetString("target"),miv_target_path.toString<c_DarwinetString>()));
+									pToDomainSignal->push_back(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("CREATE")));
+									pToDomainSignal->push_back(std::make_pair(c_DarwinetString("member"),sMember));
+									this->allocateSeqNo(seq_no); // End transaction
+								}
+								else {
+									log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No INSTANCE target member"));
+								}
+							}
+							else {
+								c_LogString sMessage(__FUNCTION__" failed. Unknown Instance Operation \"");
+								sMessage += toLogString(iter->second);
+								sMessage += _UTF8sz("\"");
+								log::logDesignInsufficiency(*this,sMessage);
+							}
+						}
+						else {
+							log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No INSTANCE target operation"));
+						}
+					}
+					else {
+						log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No INSTANCE target"));
+					}
 				}
 				else if (iter->second == c_DarwinetString("VALUE")) {
 					// An Instance Value Modifiation Request
 					log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. Target VALUE not implemented"));
+					/*
+					pToViewSignal->push_back(std::make_pair(c_DarwinetString("miv_class"),c_DarwinetString("VALUE")));
+					pToViewSignal->push_back(std::make_pair(c_DarwinetString("target"),c_DarwinetString("root.myRecord.myString")));
+					pToViewSignal->push_back(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("SET")));
+					pToViewSignal->push_back(std::make_pair(c_DarwinetString("value"),c_DarwinetString("Hello Darwinet World!")));
+					*/
+					c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("target"));
+					if (iter != pSignal->end()) {
+						c_DarwinetString sTarget = iter->second;
+						c_MIVPath miv_target_path = c_MIVPath::fromString(sTarget);
+						c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("operation"));
+						if (iter != pSignal->end()) {
+							if (iter->second == c_DarwinetString("SET")) {
+								c_Signal::const_iterator iter = pSignal->find(c_DarwinetString("value"));
+								if (iter != pSignal->end()) {
+									{
+										c_LogString sMessage(__FUNCTION__" failed. Not fully implemented for creating a true dV");
+										LOG_DESIGN_INSUFFICIENCY(sMessage);
+									}
+									c_DarwinetString sValue = iter->second;
+									c_DarwinetString sDelta("??=>");
+									sDelta += sValue;
+									unsigned int seq_no = this->reserveSeqNo(); // Start transaction
+									pToDomainSignal = boost::make_shared<c_Signal>();
+									pToDomainSignal->push_back(std::make_pair(c_DarwinetString("producer"),this->getStackActorPath().toString<c_DarwinetString>()));
+									pToDomainSignal->push_back(std::make_pair(c_DarwinetString("seq_no"),c_DataRepresentationFramework::intToDecimalString(seq_no)));
+									pToDomainSignal->push_back(std::make_pair(c_DarwinetString("signal_id"),c_DarwinetString("dV")));
+									pToDomainSignal->push_back(std::make_pair(c_DarwinetString("target"),miv_target_path.toString<c_DarwinetString>()));
+									pToDomainSignal->push_back(std::make_pair(c_DarwinetString("operation"),c_DarwinetString("STRING_PATCH")));
+									pToDomainSignal->push_back(std::make_pair(c_DarwinetString("delta"),sDelta));
+									this->allocateSeqNo(seq_no); // End transaction
+								}
+								else {
+									log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No VALUE target value"));
+								}
+							}
+							else {
+								c_LogString sMessage(__FUNCTION__" failed. Unknown Value Operation \"");
+								sMessage += toLogString(iter->second);
+								sMessage += _UTF8sz("\"");
+								log::logDesignInsufficiency(*this,sMessage);
+							}
+						}
+						else {
+							log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No VALUE target operation"));
+						}
+					}
+					else {
+						log::logDesignInsufficiency(*this,c_LogString(__FUNCTION__" failed. No VALUE target"));
+					}
 				}
 				else {
-					c_LogString sMessage(__FUNCTION__" failed. Unknown Target \"");
+					c_LogString sMessage(__FUNCTION__" failed. Unknown MIV Class \"");
 					sMessage += toLogString(iter->second);
 					sMessage += _UTF8sz("\"");
 					log::logDesignInsufficiency(*this,sMessage);
@@ -185,15 +331,15 @@ namespace seedsrc {
 			if (iter != pSignal->end()) {
 				if (iter->second == c_DarwinetString("dM")) {
 					pToClientSignal = boost::make_shared<c_Signal>();
-					pToClientSignal->insert(std::make_pair(c_DarwinetString("signal_id"),c_DarwinetString("onModelChange")));
+					pToClientSignal->push_back(std::make_pair(c_DarwinetString("signal_id"),c_DarwinetString("onModelChange")));
 				}
 				else if (iter->second == c_DarwinetString("dI")) {
 					pToClientSignal = boost::make_shared<c_Signal>();
-					pToClientSignal->insert(std::make_pair(c_DarwinetString("signal_id"),c_DarwinetString("onInstanceChange")));
+					pToClientSignal->push_back(std::make_pair(c_DarwinetString("signal_id"),c_DarwinetString("onInstanceChange")));
 				}
 				else if (iter->second == c_DarwinetString("dV")) {
 					pToClientSignal = boost::make_shared<c_Signal>();
-					pToClientSignal->insert(std::make_pair(c_DarwinetString("signal_id"),c_DarwinetString("onValueChange")));
+					pToClientSignal->push_back(std::make_pair(c_DarwinetString("signal_id"),c_DarwinetString("onValueChange")));
 				}
 				else {
 					c_LogString sMessage(c_LogString(__FUNCTION__" failed. Unknown Signal Id"));
@@ -414,8 +560,8 @@ namespace seedsrc {
 						if (result.size() > 0) {
 							result += _UTF8sz(" "); // add separator
 						}
-						result += toLogString(iter->first);
-						result += _UTF8sz(":");
+//						result += toLogString(iter->first);
+//						result += _UTF8sz(":");
 						result += toLogString(iter->second);
 					}
 				}

@@ -52,11 +52,16 @@ namespace seedsrc {
 		};
 
 		//-------------------------------------------------------------------
-		class c_Signal : public std::map<c_DarwinetString,c_DarwinetString> {
+		class c_Signal : public std::vector<std::pair<c_DarwinetString,c_DarwinetString> > {
+		private:
+			typedef std::vector<std::pair<c_DarwinetString,c_DarwinetString> > _Base;
 		public:
 			typedef boost::shared_ptr<c_Signal> shared_ptr;
-			typedef std::map<c_DarwinetString,c_DarwinetString>::iterator iterator;
-			typedef std::map<c_DarwinetString,c_DarwinetString>::const_iterator const_iterator;
+			typedef _Base::iterator iterator;
+			typedef _Base::const_iterator const_iterator;
+			typedef std::pair<c_DarwinetString,c_DarwinetString> Pair;
+
+			const_iterator find(const c_DarwinetString& sKey);
 		};
 
 		//-------------------------------------------------------------------
@@ -97,6 +102,10 @@ namespace seedsrc {
 		private:
 			friend class c_TestPeerConfiguration;
 			c_StackActorPath m_stack_path;
+
+			int m_last_used_seq_no;
+			unsigned int reserveSeqNo();
+			void allocateSeqNo(unsigned int seq_no);
 
 			void actOnSignalFromClient(c_Signal::shared_ptr pSignal);
 			void actOnSignalFromDomain(c_Signal::shared_ptr pSignal);
