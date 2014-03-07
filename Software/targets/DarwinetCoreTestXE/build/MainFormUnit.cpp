@@ -29,6 +29,7 @@ __fastcall TMainForm::TMainForm(TComponent* Owner)
 //	seedsrc::miv1::test();
 //	seedsrc::miv2::test();
 //	seedsrc::miv3::test();
-	seedsrc::miv4::test();
+//	seedsrc::miv4::test();
+	seedsrc::miv5::test();
 }
 //---------------------------------------------------------------------------

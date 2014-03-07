@@ -19,6 +19,158 @@
   */
 
 namespace seedsrc {
+
+	namespace miv5 {
+		// Iteration 8. Here we go again. Iteration 7 proved to be still to complicated
+		//              for core MIV testing. Now we will simply focusing on
+		//              having MIV's exchanging deltas!
+
+		/**
+		  *
+		  * Consider to model members according to "UML in color" (http://en.wikipedia.org/wiki/UML_colors)
+		  * 1. moment-interval — Does it represent a moment or interval of time
+		  *    that we need to remember and work with for legal or business
+		  *    reasons? Examples in business systems generally model activities
+		  *    involving people, places and things such as a sale, an order,
+		  *    a rental, an employment, making a journey, etc.
+		  * 2. roles — Is it a way of participating in an activity
+		  *   (by either a person, place, or thing)? A person playing the role
+		  *   of an employee in an employment, a thing playing the role of a
+		  *   product in a sale, a location playing the role of a classroom for
+		  *   a training course, are examples of roles.
+		  * 3. description — Is it simply a catalog-entry-like description which
+		  *    classifies or 'labels' an object? For example, the make and
+		  *    model of a car categorises or describes a number of physical
+		  *    vehicles. The relationship between the blue description and
+		  *    green party, place or thing is a type-instance relationship based
+		  *    on differences in the values of data items held in the 'type' object.
+		  * 4. party, place, or thing — Something tangible, uniquely identifiable.
+		  *    Typically the role-players in a system. People are green.
+		  *    Organizations are green. The physical objects involved in a rental
+		  *    such as the physical DVDs are green things. Normally, if you get
+		  *    through the above three questions and end up here,
+		  *    your class is a "green."
+		  */
+		//-------------------------------------------------------------------
+		typedef c_DataRepresentationFramework::c_UTF8String c_DarwinetString;
+		typedef c_DarwinetString c_CaptionNode;
+		//-------------------------------------------------------------------
+		typedef oprime::c_KeyPath<c_CaptionNode> c_MIVPath;
+		typedef c_DarwinetString c_MIVsIdentitier;
+		typedef c_DarwinetString c_DeltaBranchIdentifier;
+		typedef unsigned int t_DeltaSeqNo;
+		//-------------------------------------------------------------------
+		//
+
+		/**
+		  * Moment
+		  */
+		class c_DeltaIndex {
+		private:
+			c_MIVsIdentitier m_Producer;
+			c_DeltaBranchIdentifier m_Branch;
+			t_DeltaSeqNo m_SeqNo;
+		};
+
+		//-------------------------------------------------------------------
+		/**
+		  * Description
+		  */
+		class c_MIVtarget {
+		private:
+			c_DeltaIndex m_State;
+			c_MIVPath m_MIVId;
+		};
+
+		//-------------------------------------------------------------------
+		class c_Delta {
+		private:
+			c_DeltaIndex m_Predecessor;
+			c_MIVtarget m_Target;
+			c_DeltaIndex m_Index;
+		};
+		//-------------------------------------------------------------------
+
+		class c_MIVs {
+		public:
+			typedef boost::shared_ptr<c_MIVs> shared_ptr;
+		private:
+			c_DeltaIndex m_LastCreatedDeltaIndex;
+		};
+
+		class c_MIVsHandler {
+		public:
+			typedef boost::shared_ptr<c_MIVsHandler> shared_ptr;
+		private:
+			c_MIVs::shared_ptr m_pMIVs;
+		};
+
+		class c_MIVsView {
+		private:
+			c_DeltaIndex m_ViewPoint;
+		};
+
+		class c_ViewHandler {
+		public:
+			typedef boost::shared_ptr<c_ViewHandler> shared_ptr;
+		private:
+			c_MIVsView m_MIVsView;
+			c_MIVsHandler::shared_ptr m_pMIVsHandler;
+		};
+
+		typedef std::map<int,c_ViewHandler::shared_ptr> c_ViewHandlers;
+
+		class c_DomainHandler {
+		public:
+			typedef boost::shared_ptr<c_DomainHandler> shared_ptr;
+
+			c_ViewHandler::shared_ptr getViewHandler(int view_index);
+		private:
+			c_ViewHandlers m_ViewHandlers;
+		};
+
+		class c_DarwinetEngine {
+		public:
+			typedef boost::shared_ptr<c_DarwinetEngine> shared_ptr;
+
+			c_DomainHandler::shared_ptr getDomainHandler(int domain_index);
+		private:
+			c_DomainHandler::shared_ptr m_pDomainHandler;
+		};
+		//-------------------------------------------------------------------
+		// Test clients
+
+		class c_TestClient {
+		public:
+			typedef boost::shared_ptr<c_TestClient> shared_ptr;
+		};
+
+		typedef std::map<int,c_TestClient::shared_ptr> c_TestClients;
+
+		//-------------------------------------------------------------------
+		class c_Signal : public std::vector<std::pair<c_DarwinetString,c_DarwinetString> > {
+		private:
+			typedef std::vector<std::pair<c_DarwinetString,c_DarwinetString> > _Base;
+		public:
+			typedef boost::shared_ptr<c_Signal> shared_ptr;
+			typedef _Base::iterator iterator;
+			typedef _Base::const_iterator const_iterator;
+			typedef std::pair<c_DarwinetString,c_DarwinetString> Pair;
+
+			const_iterator find(const c_DarwinetString& sKey);
+		};
+
+		//-------------------------------------------------------------------
+		class c_SignalQueue : public std::queue<c_Signal::shared_ptr> {
+		public:
+			typedef boost::shared_ptr<c_SignalQueue> shared_ptr;
+		};
+
+		//-------------------------------------------------------------------
+		void test();
+
+	}
+
 	namespace miv4 {
 		// Iteration 7. Going for the Delta with {Predecessor, Producer, Target, Index} properties.
 		//              Focusing on getting the synchronizarion to work.

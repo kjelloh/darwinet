@@ -19,6 +19,39 @@
   */
 namespace seedsrc {
 
+	namespace miv5 {
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+		c_ViewHandler::shared_ptr c_DomainHandler::getViewHandler(int view_index) {
+			return m_ViewHandlers[view_index];
+		};
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+		c_DomainHandler::shared_ptr c_DarwinetEngine::getDomainHandler(int domain_index) {
+			if (!m_pDomainHandler) {
+				m_pDomainHandler = boost::make_shared<c_DomainHandler>();
+			}
+			return m_pDomainHandler;
+		};
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+		void test() {
+			c_DarwinetEngine::shared_ptr pEngine = boost::make_shared<c_DarwinetEngine>();
+			pEngine->getDomainHandler(1)->getViewHandler(1);
+			pEngine->getDomainHandler(1)->getViewHandler(2);
+			pEngine->getDomainHandler(1)->getViewHandler(3);
+
+			c_TestClients testClients;
+
+			// TODO 140307 - Implement a signaling system client <-> View and View <-> Domain <-> View
+
+		}
+	}
+
+
 	namespace miv4 {
 
 
