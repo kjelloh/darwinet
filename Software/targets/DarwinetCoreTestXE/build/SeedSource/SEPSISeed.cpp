@@ -20,10 +20,35 @@
 namespace seedsrc {
 
 	namespace miv5 {
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+
+		void c_SignalQueue::actOnInSignal(const c_Signal::shared_ptr& pSignal) {
+			this->push(pSignal);
+		};
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+
+		void c_MIVsHandler::actOnSignalFromClient(const c_Signal::shared_ptr& pSignal) {
+			LOG_NOT_IMPLEMENTED;
+		}
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+
+		c_MIVsHandler::shared_ptr c_ViewHandler::getMIVs() {
+			if (!this->m_pMIVsHandler) {
+				this->m_pMIVsHandler = boost::make_shared<c_MIVsHandler>();
+			}
+			return this->m_pMIVsHandler;
+		}
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 		c_ViewHandler::shared_ptr c_DomainHandler::getViewHandler(int view_index) {
+			if (m_ViewHandlers.count(view_index) == 0) {
+				m_ViewHandlers[view_index] = boost::make_shared<c_ViewHandler>();
+			}
 			return m_ViewHandlers[view_index];
 		};
 
@@ -38,16 +63,37 @@ namespace seedsrc {
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
+
+		void c_TestClient::actOnSignalFromMIVs(const c_Signal::shared_ptr& pSignal) {
+			LOG_NOT_IMPLEMENTED;
+		}
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
 		void test() {
 			c_DarwinetEngine::shared_ptr pEngine = boost::make_shared<c_DarwinetEngine>();
-			pEngine->getDomainHandler(1)->getViewHandler(1);
-			pEngine->getDomainHandler(1)->getViewHandler(2);
-			pEngine->getDomainHandler(1)->getViewHandler(3);
+			c_TestClient::shared_ptr pClient1 = boost::make_shared<c_TestClient>();
+			c_TestClient::shared_ptr pClient2 = boost::make_shared<c_TestClient>();
 
-			c_TestClients testClients;
+			c_SignalQueues::shared_ptr pMessenger = boost::make_shared<c_SignalQueues>();
 
-			// TODO 140307 - Implement a signaling system client <-> View and View <-> Domain <-> View
+			// About function pointers; See http://stackoverflow.com/questions/15323299/passing-function-pointer-arguments-with-boost
 
+			// Bind Client -> MIVs Queue -> MIVs
+			c_SignalQueue::shared_ptr pClientToMIVs1SignalQueue = boost::make_shared<c_SignalQueue>();
+			// Bind Client -> MIVs Queue
+			pClient1->onSignalToMIVs = boost::bind(&c_SignalQueue::actOnInSignal,*pClientToMIVs1SignalQueue,_1);
+			// Bind           MIVs Queue -> MIVs
+			pClientToMIVs1SignalQueue->onSignalToTarget = boost::bind(&c_MIVsHandler::actOnSignalFromClient,*pEngine->getDomainHandler(1)->getViewHandler(1)->getMIVs(),_1);
+			// Bind MIVs -> Client Queue -> Client
+			c_SignalQueue::shared_ptr pMIVsToClient1SignalQueue = boost::make_shared<c_SignalQueue>();
+			// Bind MIVs -> Client Queue
+			pEngine->getDomainHandler(1)->getViewHandler(1)->getMIVs()->onSignalToClient
+				= boost::bind(&c_SignalQueue::actOnInSignal,*pMIVsToClient1SignalQueue,_1);
+			// Bind         Client Queue -> Client
+			pMIVsToClient1SignalQueue->onSignalToTarget = boost::bind(&c_TestClient::actOnSignalFromMIVs,*pClient1,_1);
+
+			// TODO 140310: Engage queues to transfer piped messages
 		}
 	}
 

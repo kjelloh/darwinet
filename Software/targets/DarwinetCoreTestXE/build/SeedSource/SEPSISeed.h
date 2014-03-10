@@ -11,6 +11,7 @@
 #include <map>
 #include <list>
 #include <queue>
+#include <boost/function.hpp>
 //---------------------------------------------------------------------------
 
 /**
@@ -60,7 +61,51 @@ namespace seedsrc {
 		typedef c_DarwinetString c_DeltaBranchIdentifier;
 		typedef unsigned int t_DeltaSeqNo;
 		//-------------------------------------------------------------------
-		//
+		class c_Signal : public std::vector<std::pair<c_DarwinetString,c_DarwinetString> > {
+		private:
+			typedef std::vector<std::pair<c_DarwinetString,c_DarwinetString> > _Base;
+		public:
+			typedef boost::shared_ptr<c_Signal> shared_ptr;
+			typedef _Base::iterator iterator;
+			typedef _Base::const_iterator const_iterator;
+			typedef std::pair<c_DarwinetString,c_DarwinetString> Pair;
+
+			const_iterator find(const c_DarwinetString& sKey);
+		};
+		//-------------------------------------------------------------------
+//		class c_SignalSinkIfc {
+//		public:
+//			typedef boost::shared_ptr<c_SignalSinkIfc> shared_ptr;
+//
+//			// Begin c_SignalSinkIfc
+//
+//			virtual void actOnSignal(const c_Signal::shared_ptr& pSignal) = 0;
+//
+//			// End c_SignalSinkIfc
+//		private:
+//
+//			c_SignalSinkIfc::shared_ptr m_pSignalTarget;
+//		};
+		//-------------------------------------------------------------------
+		class c_SignalQueue :
+			 public std::queue<c_Signal::shared_ptr>
+		{
+		public:
+			typedef boost::shared_ptr<c_SignalQueue> shared_ptr;
+
+			virtual void actOnInSignal(const c_Signal::shared_ptr& pSignal);
+
+			boost::function<void (const c_Signal::shared_ptr& pSignal)> onSignalToTarget;
+
+		};
+
+		//-------------------------------------------------------------------
+		class c_SignalQueues : public std::map<int,c_SignalQueue::shared_ptr> {
+		public:
+			typedef boost::shared_ptr<c_SignalQueues> shared_ptr;
+
+		};
+		//-------------------------------------------------------------------
 
 		/**
 		  * Moment
@@ -90,7 +135,6 @@ namespace seedsrc {
 			c_DeltaIndex m_Index;
 		};
 		//-------------------------------------------------------------------
-
 		class c_MIVs {
 		public:
 			typedef boost::shared_ptr<c_MIVs> shared_ptr;
@@ -101,6 +145,11 @@ namespace seedsrc {
 		class c_MIVsHandler {
 		public:
 			typedef boost::shared_ptr<c_MIVsHandler> shared_ptr;
+
+			virtual void actOnSignalFromClient(const c_Signal::shared_ptr& pSignal);
+
+			boost::function<void (const c_Signal::shared_ptr& pSignal)> onSignalToClient;
+
 		private:
 			c_MIVs::shared_ptr m_pMIVs;
 		};
@@ -113,6 +162,8 @@ namespace seedsrc {
 		class c_ViewHandler {
 		public:
 			typedef boost::shared_ptr<c_ViewHandler> shared_ptr;
+
+			c_MIVsHandler::shared_ptr getMIVs();
 		private:
 			c_MIVsView m_MIVsView;
 			c_MIVsHandler::shared_ptr m_pMIVsHandler;
@@ -143,33 +194,20 @@ namespace seedsrc {
 		class c_TestClient {
 		public:
 			typedef boost::shared_ptr<c_TestClient> shared_ptr;
+
+			boost::function<void (const c_Signal::shared_ptr& pSignal)> onSignalToMIVs;
+
+			void actOnSignalFromMIVs(const c_Signal::shared_ptr& pSignal);
+
+		private:
+
 		};
 
 		typedef std::map<int,c_TestClient::shared_ptr> c_TestClients;
 
-		//-------------------------------------------------------------------
-		class c_Signal : public std::vector<std::pair<c_DarwinetString,c_DarwinetString> > {
-		private:
-			typedef std::vector<std::pair<c_DarwinetString,c_DarwinetString> > _Base;
-		public:
-			typedef boost::shared_ptr<c_Signal> shared_ptr;
-			typedef _Base::iterator iterator;
-			typedef _Base::const_iterator const_iterator;
-			typedef std::pair<c_DarwinetString,c_DarwinetString> Pair;
-
-			const_iterator find(const c_DarwinetString& sKey);
-		};
-
-		//-------------------------------------------------------------------
-		class c_SignalQueue : public std::queue<c_Signal::shared_ptr> {
-		public:
-			typedef boost::shared_ptr<c_SignalQueue> shared_ptr;
-		};
-
-		//-------------------------------------------------------------------
 		void test();
 
-	}
+	} // namespace miv5
 
 	namespace miv4 {
 		// Iteration 7. Going for the Delta with {Predecessor, Producer, Target, Index} properties.
