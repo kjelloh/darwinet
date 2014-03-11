@@ -91,9 +91,16 @@ namespace seedsrc {
 			 public std::queue<c_Signal::shared_ptr>
 		{
 		public:
+
+			c_SignalQueue() {
+				LOG_METHOD_SCOPE;
+			}
+
 			typedef boost::shared_ptr<c_SignalQueue> shared_ptr;
 
 			virtual void actOnInSignal(const c_Signal::shared_ptr& pSignal);
+
+			void process();
 
 			boost::function<void (const c_Signal::shared_ptr& pSignal)> onSignalToTarget;
 
@@ -198,6 +205,8 @@ namespace seedsrc {
 			boost::function<void (const c_Signal::shared_ptr& pSignal)> onSignalToMIVs;
 
 			void actOnSignalFromMIVs(const c_Signal::shared_ptr& pSignal);
+
+			void testMIVChange();
 
 		private:
 

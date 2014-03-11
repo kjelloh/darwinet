@@ -13,6 +13,81 @@
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 
+namespace lessons_learnt {
+
+		class X {
+		public:
+
+			X() {
+				LOG_METHOD_SCOPE;
+			}
+
+			void MemberDoIt(int x) {
+				LOG_METHOD_SCOPE;
+			}
+
+			boost::function<void (int)> onX;
+
+		};
+
+		void test() {
+
+			{
+				// Test of boost function pointer
+
+				X x;
+				/**
+				  * Bind to the pointer to instance x.
+				  * bind copies all provided parameters. By providing
+				  * the &x pointer the function will be bound to
+				  * the x instance.
+				  */
+				x.onX = boost::bind(&X::MemberDoIt,&x,_1);
+				/**
+				  * Bind to a copy of x.
+				  * bind copies all provided parameters. By providing
+				  * the x reference the function will be bound to
+				  * an x copy instance!
+				  */
+				x.onX = boost::bind(&X::MemberDoIt,x,_1);
+
+				x.onX(1);
+
+			}
+
+			{
+				// Test of boost function pointer
+
+				{
+					X x;
+					/**
+					  * Bind to the pointer to instance x.
+					  * bind copies all provided parameters. By providing
+					  * the &x pointer the function will be bound to
+					  * the x instance.
+					  */
+					x.onX = boost::bind(&X::MemberDoIt,&x,_1);
+
+					x.onX(1);
+				}
+				{
+					X x;
+
+					/**
+					  * Bind to a copy of x.
+					  * bind copies all provided parameters. By providing
+					  * the x reference the function will be bound to
+					  * an x copy instance!
+					  */
+					x.onX = boost::bind(&X::MemberDoIt,x,_1);
+
+					x.onX(1);
+				}
+
+			}
+		}
+}
+
 /**
   * Seed Source namespace. This is working source that
   * are candiates to become part of the Darwinet framework
@@ -24,7 +99,19 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 
 		void c_SignalQueue::actOnInSignal(const c_Signal::shared_ptr& pSignal) {
+			LOG_METHOD_SCOPE;
 			this->push(pSignal);
+		};
+
+		void c_SignalQueue::process() {
+			LOG_METHOD_SCOPE;
+			if (this->size() > 0) {
+				c_Signal::shared_ptr pSignal = this->front();
+				if (onSignalToTarget) {
+					onSignalToTarget(this->front());
+					this->pop();
+				}
+			}
 		};
 
 		//-------------------------------------------------------------------
@@ -68,9 +155,43 @@ namespace seedsrc {
 			LOG_NOT_IMPLEMENTED;
 		}
 
+		void c_TestClient::testMIVChange() {
+			if (onSignalToMIVs) {
+				c_Signal::shared_ptr pSignal = boost::make_shared<c_Signal>();
+				onSignalToMIVs(pSignal);
+			}
+		};
+
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
+
+//		class X {
+//		public:
+//
+//			X() {
+//				LOG_METHOD_SCOPE;
+//			}
+//
+//			void MemberDoIt(int x) {
+//				LOG_METHOD_SCOPE;
+//			}
+//
+//			boost::function<void (int)> onX;
+//
+//		};
+
 		void test() {
+
+//			{
+//				// Test of boost function pointer
+//
+//				X x;
+//				x.onX = boost::bind(&X::MemberDoIt,&x,_1);
+//
+//				x.onX(1);
+//
+//			}
+
 			c_DarwinetEngine::shared_ptr pEngine = boost::make_shared<c_DarwinetEngine>();
 			c_TestClient::shared_ptr pClient1 = boost::make_shared<c_TestClient>();
 			c_TestClient::shared_ptr pClient2 = boost::make_shared<c_TestClient>();
@@ -78,22 +199,28 @@ namespace seedsrc {
 			c_SignalQueues::shared_ptr pMessenger = boost::make_shared<c_SignalQueues>();
 
 			// About function pointers; See http://stackoverflow.com/questions/15323299/passing-function-pointer-arguments-with-boost
+			// Note: boost::bind stores copies of all provided parameters. But as we provide a smart pointer as the object pointer
+			//       the copied smart pointer still refers to the same object :)
+			//       I make this node because I tried providing *pSmartPointer as secon parameter to bind. But
+			//       then bind stored and called a copy (!) of the provided instance (took me a while to realize)
 
 			// Bind Client -> MIVs Queue -> MIVs
 			c_SignalQueue::shared_ptr pClientToMIVs1SignalQueue = boost::make_shared<c_SignalQueue>();
 			// Bind Client -> MIVs Queue
-			pClient1->onSignalToMIVs = boost::bind(&c_SignalQueue::actOnInSignal,*pClientToMIVs1SignalQueue,_1);
+			pClient1->onSignalToMIVs = boost::bind(&c_SignalQueue::actOnInSignal,pClientToMIVs1SignalQueue,_1);
 			// Bind           MIVs Queue -> MIVs
-			pClientToMIVs1SignalQueue->onSignalToTarget = boost::bind(&c_MIVsHandler::actOnSignalFromClient,*pEngine->getDomainHandler(1)->getViewHandler(1)->getMIVs(),_1);
+			pClientToMIVs1SignalQueue->onSignalToTarget = boost::bind(&c_MIVsHandler::actOnSignalFromClient,pEngine->getDomainHandler(1)->getViewHandler(1)->getMIVs(),_1);
 			// Bind MIVs -> Client Queue -> Client
 			c_SignalQueue::shared_ptr pMIVsToClient1SignalQueue = boost::make_shared<c_SignalQueue>();
 			// Bind MIVs -> Client Queue
 			pEngine->getDomainHandler(1)->getViewHandler(1)->getMIVs()->onSignalToClient
-				= boost::bind(&c_SignalQueue::actOnInSignal,*pMIVsToClient1SignalQueue,_1);
+				= boost::bind(&c_SignalQueue::actOnInSignal,pMIVsToClient1SignalQueue,_1);
 			// Bind         Client Queue -> Client
-			pMIVsToClient1SignalQueue->onSignalToTarget = boost::bind(&c_TestClient::actOnSignalFromMIVs,*pClient1,_1);
+			pMIVsToClient1SignalQueue->onSignalToTarget = boost::bind(&c_TestClient::actOnSignalFromMIVs,pClient1,_1);
 
-			// TODO 140310: Engage queues to transfer piped messages
+
+			pClient1->testMIVChange();
+			pClientToMIVs1SignalQueue->process();
 		}
 	}
 
