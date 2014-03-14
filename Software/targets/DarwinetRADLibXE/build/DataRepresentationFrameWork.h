@@ -92,10 +92,36 @@ public:
 		explicit T(const C* sz) : m_sz(sz) {;} \
 		\
 		const C* ref() const {return m_sz;}\
+		\
 	private: \
 		  /* Private storage of pointer to actual array */ \
 		const C* m_sz; \
 	};
+
+// 140314 - Seems to work but removed for now
+// 140314 - TODO - Consider to use this apporiach to solve the __FUNCTION__
+//                 problem in logging fo bcc64 (it is no longer a string literal but a const char*
+//                 requiring run-time concatination as opposed to prevously possible preprocessor concatination __FUNCTION" text ".
+//		/* Append anynomous const array of characters */\
+//		T operator+(const C* sz) {\
+//			T result(NULL);\
+//			unsigned int left_size = 0;\
+//			const C* szLeft = m_sz;\
+//			while (*(szLeft++) != 0) ++left_size;\
+//			const C* szRight = sz;\
+//			unsigned int right_size = 0;\
+//			while (*(szRight++) != 0) ++right_size;\
+//			C* szConcatenated = new C[left_size + right_size + 1];\
+//			if (szConcatenated != NULL) {\
+//				int target_i = 0;\
+//				for (unsigned int i = 0; i<left_size;++i) szConcatenated[target_i++] = m_sz[i];\
+//				for (unsigned int i = 0; i<right_size;++i) szConcatenated[target_i++] = sz[i];\
+//				szConcatenated[target_i] = 0;\
+//				result = T(szConcatenated);\
+//				\
+//			}\
+//			return result;\
+//		}\
 
 	/**
 	  * Wrapper for anonymous char arrays.

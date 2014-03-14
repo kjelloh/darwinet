@@ -95,7 +95,8 @@ namespace oprime {
 		typedef c_KeyPath<_Node> _Self;
 	public:
 
-		typedef typename _Node Node;
+//		typedef typename _Node Node;
+		typedef _Node Node;
 		typedef boost::shared_ptr<_Self> shared_ptr;
 		typedef boost::weak_ptr<_Self> weak_ptr;
 		typedef boost::shared_ptr<const _Self> shared_ptr_const;
@@ -104,12 +105,12 @@ namespace oprime {
 		/**
 		  * Conveniant declaration of iterator to path tags
 		  */
-		typedef _Base::const_iterator const_iterator;
+		typedef typename _Base::const_iterator const_iterator;
 
 		/**
 		  * Conveniant declaration of iterator to path tags
 		  */
-		typedef _Base::iterator iterator;
+		typedef typename _Base::iterator iterator;
 
 		/**
 		  * Creates an empty path
@@ -308,14 +309,14 @@ namespace oprime {
 
 		template <typename _StringRepresentation>
 		_StringRepresentation toString() const {
-			detail::c_DefaultPathToStringVisitor<_StringRepresentation> toStringVisitor;
+			detail::c_DefaultPathToStringVisitor<typename _StringRepresentation> toStringVisitor;
 			this->visitAll(toStringVisitor);
 			return toStringVisitor.toString();
 		}
 
 		template <typename _StringRepresentation, class _Stringilizer>
 		_StringRepresentation toString(const _Stringilizer& stringilizer) const {
-			detail::c_DefaultPathToStringVisitor<_StringRepresentation,_Stringilizer> toStringVisitor(stringilizer);
+			detail::c_DefaultPathToStringVisitor<typename _StringRepresentation,typename _Stringilizer> toStringVisitor(stringilizer);
 			this->visitAll(toStringVisitor);
 			return toStringVisitor.toString();
 		}
@@ -335,7 +336,7 @@ namespace oprime {
 			  * a string class for _StringRepresentation;
 			  */
 			BOOST_STATIC_ASSERT(! boost::has_trivial_destructor<_StringRepresentation>::value );
-			return c_KeyPath<_Node>(tokeyPath<c_KeyPath,_StringRepresentation>(sPath));
+			return c_KeyPath<_Node>(tokeyPath<typename c_KeyPath,typename _StringRepresentation>(sPath));
 		}
 
 		template <typename _Visitor>
@@ -476,7 +477,7 @@ namespace oprime {
 
 		template <typename _StringRepresentation>
 		_StringRepresentation toString() const {
-			_StringRepresentation result(detail::nodeToString<_Key,_StringRepresentation>(this->key()));
+			_StringRepresentation result(detail::nodeToString<typename _Key,typename _StringRepresentation>(this->key()));
 			result += _Asciic(':');
 			result += DataRepresentationFramework::toOtherString<_StringRepresentation>(c_DataRepresentationFramework::intToDecimalString(this->index()));
 			return result;
@@ -485,9 +486,9 @@ namespace oprime {
 		template <typename _StringRepresentation>
 		static c_IndexedKeyNode fromString(const _StringRepresentation& sNode) {
 			// Split on ":"
-			_StringRepresentation::const_iterator startIter = sNode.begin();
-			_StringRepresentation::const_iterator endIter = std::find(startIter,sNode.end(),':');
-			_StringRepresentation sKey(startIter,endIter);
+			typename _StringRepresentation::const_iterator startIter = sNode.begin();
+			typename _StringRepresentation::const_iterator endIter = std::find(startIter,sNode.end(),':');
+			typename _StringRepresentation sKey(startIter,endIter);
 			_Key key = c_DataRepresentationFramework::intValueOfHexString(sKey);
 			_StringRepresentation sIndex(endIter+1,sNode.end());
 			int index = c_DataRepresentationFramework::intValueOfDecimalString(sIndex);
@@ -739,7 +740,7 @@ namespace oprime {
 
 		template <typename _StringRepresentation>
 		_StringRepresentation toString() const {
-			detail::c_DefaultPathToStringVisitor<_StringRepresentation> toStringVisitor;
+			detail::c_DefaultPathToStringVisitor<typename _StringRepresentation> toStringVisitor;
 			this->visitAll(toStringVisitor);
 			return toStringVisitor.toString();
 		}
@@ -752,8 +753,8 @@ namespace oprime {
 		template <typename _StringRepresentation>
 		static c_TypedKeyPath fromString(const _StringRepresentation& sPath) {
 			// 1.Get hold of our type
-			_StringRepresentation::const_iterator startIter = sPath.begin()+1; // past '['
-			_StringRepresentation::const_iterator endIter = std::find(startIter,sPath.end(),']');
+			typename _StringRepresentation::const_iterator startIter = sPath.begin()+1; // past '['
+			typename _StringRepresentation::const_iterator endIter = std::find(startIter,sPath.end(),']');
 			_StringRepresentation sType(startIter,endIter);
 			_Type type = c_DataRepresentationFramework::intValueOfHexString(sType);
 			// 2. Create path from string nodes
@@ -1148,7 +1149,7 @@ namespace oprime {
 				  * Note: If you get a compiler error here it is because the _Node
 				  * provided here does not have a static fromString<> defined.
 				  */
-				return _Node::fromString<_StringRepresentation>(sNode);
+				return _Node::fromString<typename _StringRepresentation>(sNode);
 			}
 		};
 
@@ -1198,8 +1199,8 @@ namespace oprime {
 			// Find the string up to the next '.' or end of string
 			// Note: If you get a compiler error here it is because the _StringRepresentation
 			// you have provided does not have an iterator defined. See above.
-			_StringRepresentation::const_iterator startIter = sPath.begin();
-			_StringRepresentation::const_iterator endIter = std::find(startIter,sPath.end(),'.');
+			typename _StringRepresentation::const_iterator startIter = sPath.begin();
+			typename _StringRepresentation::const_iterator endIter = std::find(startIter,sPath.end(),'.');
 			while (startIter != endIter) {
 				_StringRepresentation sNode(startIter,endIter);
 
@@ -1219,21 +1220,23 @@ namespace oprime {
 			}
 		}
 		catch (std::exception& e) {
-			c_LogString sMessage(__FUNCTION__"  failed. sPath = ");
+//			c_LogString sMessage(_UTF8sz(__func__) + "  failed. sPath = ");
+			c_LogString sMessage(__func__"  failed. sPath = ");
 			sMessage += toLogString(sPath);
 			sMessage += _UTF8sz(". Exception=");
 			sMessage += _UTF8sz(e.what());
 			LOG_DESIGN_INSUFFICIENCY(sMessage);
 		}
 		catch (Exception& e) {
-			c_LogString sMessage(__FUNCTION__"  failed. sPath = ");
+//			c_LogString sMessage(_UTF8sz(__func__) + "  failed. sPath = ");
+			c_LogString sMessage(__func__"  failed. sPath = ");
 			sMessage += toLogString(sPath);
 			sMessage += _UTF8sz(". Exception=");
 			sMessage += toLogString(e.Message.c_str());
 			LOG_DESIGN_INSUFFICIENCY(sMessage);
 		}
 		catch (...) {
-			c_LogString sMessage(__FUNCTION__"  failed. sPath = ");
+			c_LogString sMessage(__func__"  failed. sPath = ");
 			sMessage += toLogString(sPath);
 			sMessage += _UTF8sz(". Anonymous excpetion cought.");
 			LOG_DESIGN_INSUFFICIENCY(sMessage);
@@ -1490,7 +1493,7 @@ namespace deprecated {
 		/**
 		  * Conveniant declaration of iterator to path tags
 		  */
-		typedef std::vector<T>::const_iterator iterator;
+		typedef typename std::vector<T>::const_iterator iterator;
 
 	private:
 

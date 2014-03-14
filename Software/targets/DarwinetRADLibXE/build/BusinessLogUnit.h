@@ -399,7 +399,8 @@ private:
 		c_DevelopmentLogTraceIndentator DevelopmentLogTraceIndentator(sFunctionEntryString);
 	#define LOG_METHOD_SCOPE \
 		c_LogString sFunctionEntryString(c_DataRepresentationFramework::intToHexString(reinterpret_cast<unsigned int>(this))); \
-		sFunctionEntryString += _UTF8sz("::"__FUNCTION__);\
+		sFunctionEntryString += _UTF8sz("::");\
+		sFunctionEntryString += _UTF8sz(__FUNCTION__);\
 		c_DevelopmentLogTraceIndentator DevelopmentLogTraceIndentator(sFunctionEntryString);
 
 	#define LOG_SCOPE_S(S) c_DevelopmentLogTraceIndentator DevelopmentLogTraceIndentator(S);

@@ -13,80 +13,6 @@
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 
-namespace lessons_learnt {
-
-		class X {
-		public:
-
-			X() {
-				LOG_METHOD_SCOPE;
-			}
-
-			void MemberDoIt(int x) {
-				LOG_METHOD_SCOPE;
-			}
-
-			boost::function<void (int)> onX;
-
-		};
-
-		void test() {
-
-			{
-				// Test of boost function pointer
-
-				X x;
-				/**
-				  * Bind to the pointer to instance x.
-				  * bind copies all provided parameters. By providing
-				  * the &x pointer the function will be bound to
-				  * the x instance.
-				  */
-				x.onX = boost::bind(&X::MemberDoIt,&x,_1);
-				/**
-				  * Bind to a copy of x.
-				  * bind copies all provided parameters. By providing
-				  * the x reference the function will be bound to
-				  * an x copy instance!
-				  */
-				x.onX = boost::bind(&X::MemberDoIt,x,_1);
-
-				x.onX(1);
-
-			}
-
-			{
-				// Test of boost function pointer
-
-				{
-					X x;
-					/**
-					  * Bind to the pointer to instance x.
-					  * bind copies all provided parameters. By providing
-					  * the &x pointer the function will be bound to
-					  * the x instance.
-					  */
-					x.onX = boost::bind(&X::MemberDoIt,&x,_1);
-
-					x.onX(1);
-				}
-				{
-					X x;
-
-					/**
-					  * Bind to a copy of x.
-					  * bind copies all provided parameters. By providing
-					  * the x reference the function will be bound to
-					  * an x copy instance!
-					  */
-					x.onX = boost::bind(&X::MemberDoIt,x,_1);
-
-					x.onX(1);
-				}
-
-			}
-		}
-}
 
 /**
   * Seed Source namespace. This is working source that
@@ -95,15 +21,67 @@ namespace lessons_learnt {
 namespace seedsrc {
 
 	namespace miv5 {
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+//		c_SignalFieldMapper::shared_ptr instance() {
+//			if (!m_pInstance) {
+//				m_pInstance.reset(new c_SignalFieldMapper());
+//			}
+//			return m_pInstance;
+//		}
+//
+//		c_SignalFieldMapper::c_SignalFieldMapper()
+//		{
+//			// Fill the map
+//			for (e_SignalField i = eSignalField_Undefined+1; i < eSignalFieldUnknown; ++i) {
+//				(*this)[i] = this->getSignalFieldIdStringOfEnum(i);
+//			}
+//		}
+//
+//		c_SignalFieldMapper::shared_ptr c_SignalFieldMapper::m_pInstance;
+
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
-		void c_SignalQueue::actOnInSignal(const c_Signal::shared_ptr& pSignal) {
+		struct is_parameter_key {
+			is_parameter_key(const c_DarwinetString& sKey)
+				: m_sKey(sKey)
+			{
+			};
+
+			bool operator()(const c_Signal::Pair& pair) {
+				return (pair.first == m_sKey);
+			};
+
+			c_DarwinetString m_sKey;
+
+		};
+
+		c_Signal::const_iterator c_Signal::find(const c_DarwinetString& sKey) {
+			c_Signal::const_iterator result = std::find_if(this->begin(),this->end(),is_parameter_key(sKey));
+			return result;
+		}
+
+		c_MessageTargetId c_Signal::getTargetId() {
+			c_MessageTargetId result("??Signal Target??");
+			c_Signal::const_iterator iter = this->find(c_DarwinetString("header.target"));
+			if (iter != this->end()) {
+				result = iter->second;
+
+			}
+			return result;
+		};
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+
+		void c_SignalPipe::actOnInSignal(const c_Signal::shared_ptr& pSignal) {
 			LOG_METHOD_SCOPE;
 			this->push(pSignal);
 		};
 
-		void c_SignalQueue::process() {
+		void c_SignalPipe::process() {
 			LOG_METHOD_SCOPE;
 			if (this->size() > 0) {
 				c_Signal::shared_ptr pSignal = this->front();
@@ -116,6 +94,79 @@ namespace seedsrc {
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
+		void c_Messenger::send(c_Signal::shared_ptr pSignal) {
+			if (pSignal) {
+				this->m_SignalQueue.push(pSignal);
+			}
+		}
+
+		void c_Messenger::send(c_SignalQueue::shared_ptr pSignals) {
+			if (pSignals) {
+				while (pSignals->size() > 0) {
+					this->m_SignalQueue.push(pSignals->front());
+					pSignals->pop();
+				}
+			}
+		}
+
+		void c_Messenger::connect(c_SignalSinkIfc::weak_ptr pSignalSink) {
+			c_SignalSinkIfc::shared_ptr pLockedSignalSink = pSignalSink.lock();
+			if (pLockedSignalSink) {
+				if (!m_SignalSinks[pLockedSignalSink->getId()].lock()) {
+					m_SignalSinks[pLockedSignalSink->getId()] = pSignalSink;
+				}
+				else {
+					// A target with the same ID already exists
+					c_LogString sMessage("Failed to connect Target=");
+					sMessage += pLockedSignalSink->getId();
+					sMessage += _UTF8sz(". Taregt with the same ID already exists. Target discarded.");
+					LOG_DESIGN_INSUFFICIENCY(sMessage);
+				}
+			}
+			else {
+				c_LogString sMessage("Failed to connect NULL target");
+				LOG_DESIGN_INSUFFICIENCY(sMessage);
+			};
+		}
+
+		void c_Messenger::process() {
+			LOG_NOT_IMPLEMENTED;
+			if (this->m_SignalQueue.size() > 0) {
+				c_Signal::shared_ptr pSignal(this->m_SignalQueue.front());
+				this->m_SignalQueue.pop();
+				c_SignalSinkIfc::shared_ptr pSignalSink = m_SignalSinks[pSignal->getTargetId()].lock();
+				if (pSignalSink) {
+					pSignalSink->actOnSignal(pSignal);
+				}
+				else {
+					c_LogString sMessage("Failed to send signal. Target=");
+					sMessage += pSignal->getTargetId();
+					sMessage += _UTF8sz(" doed not exist. Signal discarded");
+					LOG_DESIGN_INSUFFICIENCY(sMessage);
+				};
+			}
+		}
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+		c_MIVsHandler::c_MIVsHandler(c_MessageTargetId sId)
+			: m_sId(sId)
+		{
+		}
+
+		// Begin c_SignalSinkIfc
+
+		c_MessageTargetId c_MIVsHandler::getId() {
+			return m_sId;
+		}
+
+		c_SignalQueue::shared_ptr c_MIVsHandler::actOnSignal(const c_Signal::shared_ptr& pSignal) {
+			c_SignalQueue::shared_ptr result;
+			LOG_NOT_IMPLEMENTED;
+			return result;
+		}
+
+		// End c_SignalSinkIfc
 
 		void c_MIVsHandler::actOnSignalFromClient(const c_Signal::shared_ptr& pSignal) {
 			LOG_NOT_IMPLEMENTED;
@@ -123,27 +174,79 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
-		c_MIVsHandler::shared_ptr c_ViewHandler::getMIVs() {
+		c_ViewHandler::c_ViewHandler(c_MessageTargetId sId)
+			: m_sId(sId)
+		{
+		}
+
+		// Begin c_SignalSinkIfc
+
+		c_MessageTargetId c_ViewHandler::getId() {
+			return m_sId;
+		}
+
+		c_SignalQueue::shared_ptr c_ViewHandler::actOnSignal(const c_Signal::shared_ptr& pSignal) {
+			c_SignalQueue::shared_ptr result;
+			LOG_NOT_IMPLEMENTED;
+			return result;
+		}
+
+		// End c_SignalSinkIfc
+
+		c_MIVsHandler::shared_ptr c_ViewHandler::getMIVsHandler() {
 			if (!this->m_pMIVsHandler) {
-				this->m_pMIVsHandler = boost::make_shared<c_MIVsHandler>();
+				c_MessageTargetPath MIVsHandlerId(this->getId()+c_MessageTargetPath::Node(c_DarwinetString("MIVs1")));
+				this->m_pMIVsHandler = boost::make_shared<c_MIVsHandler>(MIVsHandlerId.toString<c_DarwinetString>());
 			}
 			return this->m_pMIVsHandler;
 		}
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
+
+		c_DomainHandler::c_DomainHandler(c_MessageTargetId sId)
+			: m_sId(sId)
+		{
+		}
+
+		// Begin c_SignalSinkIfc
+
+		c_MessageTargetId c_DomainHandler::getId() {
+			return m_sId;
+		}
+
+		c_SignalQueue::shared_ptr c_DomainHandler::actOnSignal(const c_Signal::shared_ptr& pSignal) {
+			c_SignalQueue::shared_ptr result;
+			LOG_NOT_IMPLEMENTED;
+			return result;
+		}
+
+		// End c_SignalSinkIfc
+
 		c_ViewHandler::shared_ptr c_DomainHandler::getViewHandler(int view_index) {
 			if (m_ViewHandlers.count(view_index) == 0) {
-				m_ViewHandlers[view_index] = boost::make_shared<c_ViewHandler>();
+				c_MessageTargetPath ViewHandlerId(this->getId()+c_MessageTargetPath::Node(c_DarwinetString("View")+c_DataRepresentationFramework::intToDecimalString(view_index)));
+				m_ViewHandlers[view_index] = boost::make_shared<c_ViewHandler>(ViewHandlerId.toString<c_DarwinetString>());
 			}
 			return m_ViewHandlers[view_index];
 		};
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
+
+		c_DarwinetEngine::c_DarwinetEngine(c_MessageTargetId sId)
+			: m_sId(sId)
+		{
+		}
+
+		c_MessageTargetId c_DarwinetEngine::getId() {
+			return m_sId;
+		}
+
 		c_DomainHandler::shared_ptr c_DarwinetEngine::getDomainHandler(int domain_index) {
 			if (!m_pDomainHandler) {
-				m_pDomainHandler = boost::make_shared<c_DomainHandler>();
+				c_MessageTargetPath DomainHandlerId(this->getId()+c_MessageTargetPath::Node(c_DarwinetString("Domain")+c_DataRepresentationFramework::intToDecimalString(domain_index)));
+				m_pDomainHandler = boost::make_shared<c_DomainHandler>(DomainHandlerId.toString<c_DarwinetString>());
 			}
 			return m_pDomainHandler;
 		};
@@ -151,76 +254,142 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
+		c_TestClient::c_TestClient(c_MessageTargetId sId)
+			: m_sId(sId)
+		{
+		}
+
+		c_MessageTargetId c_TestClient::getId() {
+			return m_sId;
+		}
+
+		// Begin c_SignalSinkIfc
+
+		c_SignalQueue::shared_ptr c_TestClient::actOnSignal(const c_Signal::shared_ptr& pSignal) {
+			c_SignalQueue::shared_ptr result;
+			LOG_NOT_IMPLEMENTED;
+			return result;
+		}
+
+		// End c_SignalSinkIfc
+
 		void c_TestClient::actOnSignalFromMIVs(const c_Signal::shared_ptr& pSignal) {
 			LOG_NOT_IMPLEMENTED;
 		}
 
-		void c_TestClient::testMIVChange() {
-			if (onSignalToMIVs) {
+		c_SignalQueue::shared_ptr c_TestClient::testMIVChange() {
+			c_SignalQueue::shared_ptr result = boost::make_shared<c_SignalQueue>();
+			if (true) {
 				c_Signal::shared_ptr pSignal = boost::make_shared<c_Signal>();
-				onSignalToMIVs(pSignal);
+				c_DarwinetTestBench::instance()->createSignal(this->getId(),c_DarwinetTestBench::instance()->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(1)->getMIVsHandler()->getId());
+				result->push(pSignal);
 			}
+			else {
+				if (onSignalToMIVs) {
+					c_Signal::shared_ptr pSignal = boost::make_shared<c_Signal>();
+					onSignalToMIVs(pSignal);
+				}
+			}
+			return result;
 		};
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
-//		class X {
-//		public:
-//
-//			X() {
-//				LOG_METHOD_SCOPE;
-//			}
-//
-//			void MemberDoIt(int x) {
-//				LOG_METHOD_SCOPE;
-//			}
-//
-//			boost::function<void (int)> onX;
-//
-//		};
+		c_DarwinetTestBench::shared_ptr c_DarwinetTestBench::instance() {
+			if (!m_pSharedInstance) {
+				m_pSharedInstance.reset(new c_DarwinetTestBench());
+			}
+			return m_pSharedInstance;
+		}
 
+		c_DarwinetEngine::shared_ptr c_DarwinetTestBench::getDarwinetEngine() {
+			if (!m_pDarwinetEngine) {
+				m_pDarwinetEngine = boost::make_shared<c_DarwinetEngine>(_UTF8sz("Engine1"));
+			}
+			return m_pDarwinetEngine;
+		};
+
+		c_Signal::shared_ptr c_DarwinetTestBench::createSignal(c_MessageTargetId senderMessageTargetId,c_MessageTargetId receiverMessageTargetId) {
+			c_Signal::shared_ptr result = boost::make_shared<c_Signal>();
+			LOG_NOT_IMPLEMENTED;
+			return result;
+		}
+
+		c_DarwinetTestBench::c_DarwinetTestBench()
+		{
+		}
+
+		c_DarwinetTestBench::shared_ptr c_DarwinetTestBench::m_pSharedInstance;
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
 		void test() {
 
-//			{
-//				// Test of boost function pointer
-//
-//				X x;
-//				x.onX = boost::bind(&X::MemberDoIt,&x,_1);
-//
-//				x.onX(1);
-//
-//			}
+			c_TestClient::shared_ptr pClient1 = boost::make_shared<c_TestClient>(_UTF8sz("Client1"));
+			c_TestClient::shared_ptr pClient2 = boost::make_shared<c_TestClient>(_UTF8sz("Client2"));
 
-			c_DarwinetEngine::shared_ptr pEngine = boost::make_shared<c_DarwinetEngine>();
-			c_TestClient::shared_ptr pClient1 = boost::make_shared<c_TestClient>();
-			c_TestClient::shared_ptr pClient2 = boost::make_shared<c_TestClient>();
-
-			c_SignalQueues::shared_ptr pMessenger = boost::make_shared<c_SignalQueues>();
-
-			// About function pointers; See http://stackoverflow.com/questions/15323299/passing-function-pointer-arguments-with-boost
-			// Note: boost::bind stores copies of all provided parameters. But as we provide a smart pointer as the object pointer
-			//       the copied smart pointer still refers to the same object :)
-			//       I make this node because I tried providing *pSmartPointer as secon parameter to bind. But
-			//       then bind stored and called a copy (!) of the provided instance (took me a while to realize)
-
-			// Bind Client -> MIVs Queue -> MIVs
-			c_SignalQueue::shared_ptr pClientToMIVs1SignalQueue = boost::make_shared<c_SignalQueue>();
-			// Bind Client -> MIVs Queue
-			pClient1->onSignalToMIVs = boost::bind(&c_SignalQueue::actOnInSignal,pClientToMIVs1SignalQueue,_1);
-			// Bind           MIVs Queue -> MIVs
-			pClientToMIVs1SignalQueue->onSignalToTarget = boost::bind(&c_MIVsHandler::actOnSignalFromClient,pEngine->getDomainHandler(1)->getViewHandler(1)->getMIVs(),_1);
-			// Bind MIVs -> Client Queue -> Client
-			c_SignalQueue::shared_ptr pMIVsToClient1SignalQueue = boost::make_shared<c_SignalQueue>();
-			// Bind MIVs -> Client Queue
-			pEngine->getDomainHandler(1)->getViewHandler(1)->getMIVs()->onSignalToClient
-				= boost::bind(&c_SignalQueue::actOnInSignal,pMIVsToClient1SignalQueue,_1);
-			// Bind         Client Queue -> Client
-			pMIVsToClient1SignalQueue->onSignalToTarget = boost::bind(&c_TestClient::actOnSignalFromMIVs,pClient1,_1);
+// 140314 Test of _UTF8sz::operator+ to solvle __func__ being a char* in BCC64.
+//			c_LogString sMessage(__func__) + " Called :)");
+//			LOG_BUSINESS(sMessage);
 
 
-			pClient1->testMIVChange();
-			pClientToMIVs1SignalQueue->process();
+			/** TODO 140314
+			  *
+			  * Do not use boost::bimap for enum <-> string of Signal key values.
+			  * Use an ordinary map to get the String value from the enum value.
+			  * (BCC32 boost 1.39 does not contain the boost::bimap)
+			  *
+			  * Make a go at making the Win64 platform to compile.
+			  * 1. __FUNCTION__" text" preprocessor concatination does not work in BCC64
+			  *    (__FUNCTION__ is not a string literal but a char* calling for runtime concatination)
+			  * 2. c_DarwinetString + c_AsciiString causes ambiguity in operator+ in BCC64 (Why? only operator+ for the same type is defined!)
+			  * 3. Will a Win64 app link with win32 DarwinetRADLib? (Do we have to convert the Lib to?)
+			  *
+			  */
+
+			if (true) {
+
+				c_Messenger Messenger;
+				Messenger.connect(pClient1);
+				Messenger.connect(pClient2);
+				Messenger.connect(c_DarwinetTestBench::instance()->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(1)->getMIVsHandler());
+				Messenger.connect(c_DarwinetTestBench::instance()->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(2)->getMIVsHandler());
+				Messenger.connect(c_DarwinetTestBench::instance()->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(1));
+				Messenger.connect(c_DarwinetTestBench::instance()->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(2));
+				Messenger.connect(c_DarwinetTestBench::instance()->getDarwinetEngine()->getDomainHandler(1));
+
+				Messenger.send(pClient1->testMIVChange());
+				Messenger.process();
+			}
+			else {
+				c_DarwinetEngine::shared_ptr pEngine = boost::make_shared<c_DarwinetEngine>(_UTF8sz("Engine1"));
+
+				c_SignalPipes::shared_ptr pMessenger = boost::make_shared<c_SignalPipes>();
+
+				// About function pointers; See http://stackoverflow.com/questions/15323299/passing-function-pointer-arguments-with-boost
+				// Note: boost::bind stores copies of all provided parameters. But as we provide a smart pointer as the object pointer
+				//       the copied smart pointer still refers to the same object :)
+				//       I make this node because I tried providing *pSmartPointer as second parameter to bind. But
+				//       then bind stored and called a copy (!) of the provided instance (took me a while to realize)
+
+				// Bind Client -> MIVs Queue -> MIVs
+				c_SignalPipe::shared_ptr pClientToMIVs1SignalPipe = boost::make_shared<c_SignalPipe>();
+				// Bind Client -> MIVs Queue
+				pClient1->onSignalToMIVs = boost::bind(&c_SignalPipe::actOnInSignal,pClientToMIVs1SignalPipe,_1);
+				// Bind           MIVs Queue -> MIVs
+				pClientToMIVs1SignalPipe->onSignalToTarget = boost::bind(&c_MIVsHandler::actOnSignalFromClient,pEngine->getDomainHandler(1)->getViewHandler(1)->getMIVsHandler(),_1);
+				// Bind MIVs -> Client Queue -> Client
+				c_SignalPipe::shared_ptr pMIVsToClient1SignalPipe = boost::make_shared<c_SignalPipe>();
+				// Bind MIVs -> Client Queue
+				pEngine->getDomainHandler(1)->getViewHandler(1)->getMIVsHandler()->onSignalToClient
+					= boost::bind(&c_SignalPipe::actOnInSignal,pMIVsToClient1SignalPipe,_1);
+				// Bind         Client Queue -> Client
+				pMIVsToClient1SignalPipe->onSignalToTarget = boost::bind(&c_TestClient::actOnSignalFromMIVs,pClient1,_1);
+
+				pClient1->testMIVChange();
+				pClientToMIVs1SignalPipe->process();
+			}
 		}
 	}
 
@@ -1999,3 +2168,80 @@ namespace seedsrc {
 		}
 	}
 }
+
+namespace lessons_learnt {
+
+		class X {
+		public:
+
+			X() {
+				LOG_METHOD_SCOPE;
+			}
+
+			void MemberDoIt(int x) {
+				LOG_METHOD_SCOPE;
+			}
+
+			boost::function<void (int)> onX;
+
+		};
+
+		void test() {
+
+			{
+				// Test of boost function pointer and bind
+				// http://www.boost.org/doc/libs/1_34_0/libs/bind/bind.html
+
+				X x;
+				/**
+				  * Bind to the pointer to instance x.
+				  * Note that Bind copies all provided parameters. By providing
+				  * the &x pointer the function will be bound to
+				  * the x instance.
+				  */
+				x.onX = boost::bind(&X::MemberDoIt,&x,_1);
+				/**
+				  * Bind to a copy of x.
+				  * Note that Bind copies all provided parameters. By providing
+				  * the x reference the function will be bound to
+				  * an x copy instance! (not what you want if you want to bind to an existing object instance!)
+				  */
+				x.onX = boost::bind(&X::MemberDoIt,x,_1);
+
+				x.onX(1);
+
+			}
+
+			{
+				// Test of boost function pointer
+
+				{
+					X x;
+					/**
+					  * Bind to the pointer to instance x.
+					  * bind copies all provided parameters. By providing
+					  * the &x pointer the function will be bound to
+					  * the x instance.
+					  */
+					x.onX = boost::bind(&X::MemberDoIt,&x,_1);
+
+					x.onX(1);
+				}
+				{
+					X x;
+
+					/**
+					  * Bind to a copy of x.
+					  * bind copies all provided parameters. By providing
+					  * the x reference the function will be bound to
+					  * an x copy instance!
+					  */
+					x.onX = boost::bind(&X::MemberDoIt,x,_1);
+
+					x.onX(1);
+				}
+
+			}
+		}
+}
+

@@ -12,6 +12,7 @@
 #include <list>
 #include <queue>
 #include <boost/function.hpp>
+//#include <boost/bimap.hpp>
 //---------------------------------------------------------------------------
 
 /**
@@ -61,6 +62,31 @@ namespace seedsrc {
 		typedef c_DarwinetString c_DeltaBranchIdentifier;
 		typedef unsigned int t_DeltaSeqNo;
 		//-------------------------------------------------------------------
+		typedef c_DarwinetString c_MessageTargetId;
+		typedef oprime::c_KeyPath<c_CaptionNode> c_MessageTargetPath;
+		//-------------------------------------------------------------------
+//		enum e_SignalField {
+//			 eSignalField_Undefined
+//			,eSignalField_Sender
+//			,eSignalField_Receiver
+//			,eSignalFieldUnknown
+//		};
+//
+//		class c_SignalFieldMapper
+//			: public boost::bimap<e_SignalField,c_DarwinetString>
+//		{
+//		public:
+//			typedef boost::shared_ptr<c_SignalFieldMapper> shared_ptr;
+//
+//			static c_SignalFieldMapper::shared_ptr instance();
+//
+//		private:
+//			c_SignalFieldMapper();
+//
+//			static c_SignalFieldMapper::shared_ptr m_pInstance;
+//		};
+
+		//-------------------------------------------------------------------
 		class c_Signal : public std::vector<std::pair<c_DarwinetString,c_DarwinetString> > {
 		private:
 			typedef std::vector<std::pair<c_DarwinetString,c_DarwinetString> > _Base;
@@ -71,32 +97,65 @@ namespace seedsrc {
 			typedef std::pair<c_DarwinetString,c_DarwinetString> Pair;
 
 			const_iterator find(const c_DarwinetString& sKey);
+
+			c_MessageTargetId getTargetId();
+
 		};
 		//-------------------------------------------------------------------
-//		class c_SignalSinkIfc {
-//		public:
-//			typedef boost::shared_ptr<c_SignalSinkIfc> shared_ptr;
-//
-//			// Begin c_SignalSinkIfc
-//
-//			virtual void actOnSignal(const c_Signal::shared_ptr& pSignal) = 0;
-//
-//			// End c_SignalSinkIfc
-//		private:
-//
-//			c_SignalSinkIfc::shared_ptr m_pSignalTarget;
-//		};
+		class c_SignalQueue
+			: public std::queue<c_Signal::shared_ptr>
+		{
+		public:
+			typedef boost::shared_ptr<c_SignalQueue> shared_ptr;
+
+		};
 		//-------------------------------------------------------------------
-		class c_SignalQueue :
+		class c_SignalSinkIfc {
+		public:
+			typedef boost::shared_ptr<c_SignalSinkIfc> shared_ptr;
+			typedef boost::weak_ptr<c_SignalSinkIfc> weak_ptr;
+
+			// Begin c_SignalSinkIfc
+
+			virtual c_MessageTargetId getId() = 0;
+
+			virtual c_SignalQueue::shared_ptr actOnSignal(const c_Signal::shared_ptr& pSignal) = 0;
+
+			// End c_SignalSinkIfc
+
+		private:
+
+			c_SignalSinkIfc::shared_ptr m_pSignalTarget;
+		};
+		//-------------------------------------------------------------------
+		class c_Messenger {
+		public:
+
+			void send(c_Signal::shared_ptr pSignal);
+
+			void send(c_SignalQueue::shared_ptr pSignals);
+
+			void connect(c_SignalSinkIfc::weak_ptr pSignalSink);
+
+			void process();
+
+		private:
+
+			std::map<c_MessageTargetId,c_SignalSinkIfc::weak_ptr> m_SignalSinks;
+			c_SignalQueue m_SignalQueue;
+
+		};
+		//-------------------------------------------------------------------
+		class c_SignalPipe :
 			 public std::queue<c_Signal::shared_ptr>
 		{
 		public:
 
-			c_SignalQueue() {
+			c_SignalPipe() {
 				LOG_METHOD_SCOPE;
 			}
 
-			typedef boost::shared_ptr<c_SignalQueue> shared_ptr;
+			typedef boost::shared_ptr<c_SignalPipe> shared_ptr;
 
 			virtual void actOnInSignal(const c_Signal::shared_ptr& pSignal);
 
@@ -107,9 +166,9 @@ namespace seedsrc {
 		};
 
 		//-------------------------------------------------------------------
-		class c_SignalQueues : public std::map<int,c_SignalQueue::shared_ptr> {
+		class c_SignalPipes : public std::map<int,c_SignalPipe::shared_ptr> {
 		public:
-			typedef boost::shared_ptr<c_SignalQueues> shared_ptr;
+			typedef boost::shared_ptr<c_SignalPipes> shared_ptr;
 
 		};
 		//-------------------------------------------------------------------
@@ -149,70 +208,158 @@ namespace seedsrc {
 			c_DeltaIndex m_LastCreatedDeltaIndex;
 		};
 
-		class c_MIVsHandler {
+		//-------------------------------------------------------------------
+		class c_MIVsHandler
+			: public c_SignalSinkIfc
+		{
 		public:
 			typedef boost::shared_ptr<c_MIVsHandler> shared_ptr;
+
+			c_MIVsHandler(c_MessageTargetId sId);
+
+			// Begin c_SignalSinkIfc
+
+			virtual c_MessageTargetId getId();
+
+			virtual c_SignalQueue::shared_ptr actOnSignal(const c_Signal::shared_ptr& pSignal);
+
+			// End c_SignalSinkIfc
+
 
 			virtual void actOnSignalFromClient(const c_Signal::shared_ptr& pSignal);
 
 			boost::function<void (const c_Signal::shared_ptr& pSignal)> onSignalToClient;
 
 		private:
+			c_MessageTargetId m_sId;
 			c_MIVs::shared_ptr m_pMIVs;
 		};
 
+		//-------------------------------------------------------------------
 		class c_MIVsView {
 		private:
 			c_DeltaIndex m_ViewPoint;
 		};
 
-		class c_ViewHandler {
+		class c_ViewHandler
+			: public c_SignalSinkIfc
+		{
 		public:
 			typedef boost::shared_ptr<c_ViewHandler> shared_ptr;
 
-			c_MIVsHandler::shared_ptr getMIVs();
+			c_ViewHandler(c_MessageTargetId sId);
+
+			// Begin c_SignalSinkIfc
+
+			virtual c_MessageTargetId getId();
+
+			virtual c_SignalQueue::shared_ptr actOnSignal(const c_Signal::shared_ptr& pSignal);
+
+			// End c_SignalSinkIfc
+
+			c_MIVsHandler::shared_ptr getMIVsHandler();
+
 		private:
+			c_MessageTargetId m_sId;
 			c_MIVsView m_MIVsView;
 			c_MIVsHandler::shared_ptr m_pMIVsHandler;
 		};
-
+		//-------------------------------------------------------------------
 		typedef std::map<int,c_ViewHandler::shared_ptr> c_ViewHandlers;
-
-		class c_DomainHandler {
+		//-------------------------------------------------------------------
+		class c_DomainHandler
+			: public c_SignalSinkIfc
+		{
 		public:
 			typedef boost::shared_ptr<c_DomainHandler> shared_ptr;
 
+			c_DomainHandler(c_MessageTargetId sId);
+
+			// Begin c_SignalSinkIfc
+
+			virtual c_MessageTargetId getId();
+
+			virtual c_SignalQueue::shared_ptr actOnSignal(const c_Signal::shared_ptr& pSignal);
+
+			// End c_SignalSinkIfc
+
 			c_ViewHandler::shared_ptr getViewHandler(int view_index);
+
 		private:
+			c_MessageTargetId m_sId;
 			c_ViewHandlers m_ViewHandlers;
 		};
 
+		//-------------------------------------------------------------------
 		class c_DarwinetEngine {
 		public:
 			typedef boost::shared_ptr<c_DarwinetEngine> shared_ptr;
 
+			c_DarwinetEngine(c_MessageTargetId sId);
+
+			virtual c_MessageTargetId getId();
+
 			c_DomainHandler::shared_ptr getDomainHandler(int domain_index);
 		private:
+
+			c_MessageTargetId m_sId;
+
 			c_DomainHandler::shared_ptr m_pDomainHandler;
 		};
 		//-------------------------------------------------------------------
 		// Test clients
 
-		class c_TestClient {
+		class c_TestClient
+			: public c_SignalSinkIfc
+		{
 		public:
 			typedef boost::shared_ptr<c_TestClient> shared_ptr;
+
+			c_TestClient(c_MessageTargetId sId);
+
+			// Begin c_SignalSinkIfc
+
+			c_MessageTargetId getId();
+
+			virtual c_SignalQueue::shared_ptr actOnSignal(const c_Signal::shared_ptr& pSignal);
+
+			// End c_SignalSinkIfc
 
 			boost::function<void (const c_Signal::shared_ptr& pSignal)> onSignalToMIVs;
 
 			void actOnSignalFromMIVs(const c_Signal::shared_ptr& pSignal);
 
-			void testMIVChange();
+			c_SignalQueue::shared_ptr testMIVChange();
 
 		private:
+
+			c_MessageTargetId m_sId;
 
 		};
 
 		typedef std::map<int,c_TestClient::shared_ptr> c_TestClients;
+
+		/**
+		  * The c_DarwinetTestBench singleton
+		  */
+		class c_DarwinetTestBench {
+		public:
+			typedef boost::shared_ptr<c_DarwinetTestBench> shared_ptr;
+
+			static c_DarwinetTestBench::shared_ptr instance();
+
+			c_DarwinetEngine::shared_ptr getDarwinetEngine();
+
+			c_Signal::shared_ptr createSignal(c_MessageTargetId senderMessageTargetId,c_MessageTargetId receiverMessageTargetId);
+
+		private:
+
+			c_DarwinetTestBench();
+
+			static c_DarwinetTestBench::shared_ptr m_pSharedInstance;
+
+			c_DarwinetEngine::shared_ptr m_pDarwinetEngine;
+		};
 
 		void test();
 
@@ -382,7 +529,7 @@ namespace seedsrc {
 
 			template <class _Actor>
 			void logBusiness(const _Actor& actor,const c_LogString& sMessageIn) {
-				c_LogString sMessage(actor.getStackActorPath().toString<c_LogString>());
+				c_LogString sMessage(actor.getStackActorPath().toString<typename c_LogString>());
 				sMessage += _UTF8sz(": ");
 				sMessage += sMessageIn;
 				LOG_BUSINESS(sMessage);
