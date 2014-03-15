@@ -12,7 +12,6 @@
 #include <list>
 #include <queue>
 #include <boost/function.hpp>
-//#include <boost/bimap.hpp>
 //---------------------------------------------------------------------------
 
 /**
@@ -62,29 +61,26 @@ namespace seedsrc {
 		typedef c_DarwinetString c_DeltaBranchIdentifier;
 		typedef unsigned int t_DeltaSeqNo;
 		//-------------------------------------------------------------------
-		typedef c_DarwinetString c_MessageTargetId;
-		typedef oprime::c_KeyPath<c_CaptionNode> c_MessageTargetPath;
+//		typedef oprime::c_KeyPath<c_CaptionNode> c_MessageTargetPath;
+//		typedef c_DarwinetString c_MessageTargetId;
+//		typedef oprime::c_KeyPath<oprime::c_IndexedKeyNode<c_CaptionNode> > c_MessageTargetId;
+		typedef oprime::c_KeyPath<oprime::c_IndexedKeyNode<c_DataRepresentationFramework::c_AsciiString> > c_MessageTargetId;
 		//-------------------------------------------------------------------
-//		enum e_SignalField {
-//			 eSignalField_Undefined
-//			,eSignalField_Sender
-//			,eSignalField_Receiver
-//			,eSignalFieldUnknown
-//		};
-//
-//		class c_SignalFieldMapper
-//			: public boost::bimap<e_SignalField,c_DarwinetString>
-//		{
-//		public:
-//			typedef boost::shared_ptr<c_SignalFieldMapper> shared_ptr;
-//
-//			static c_SignalFieldMapper::shared_ptr instance();
-//
-//		private:
-//			c_SignalFieldMapper();
-//
-//			static c_SignalFieldMapper::shared_ptr m_pInstance;
-//		};
+		enum e_SignalField {
+			 eSignalField_Undefined
+			,eSignalField_Sender
+			,eSignalField_Receiver
+			,eSignalFieldUnknown
+		};
+
+		class c_SignalFieldMapper
+			: public std::map<e_SignalField,c_DarwinetString>
+		{
+		public:
+			typedef boost::shared_ptr<c_SignalFieldMapper> shared_ptr;
+
+			c_SignalFieldMapper();
+		};
 
 		//-------------------------------------------------------------------
 		class c_Signal : public std::vector<std::pair<c_DarwinetString,c_DarwinetString> > {
@@ -97,6 +93,8 @@ namespace seedsrc {
 			typedef std::pair<c_DarwinetString,c_DarwinetString> Pair;
 
 			const_iterator find(const c_DarwinetString& sKey);
+
+			c_DarwinetString getValue(c_DarwinetString sKey);
 
 			c_MessageTargetId getTargetId();
 
@@ -215,7 +213,7 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<c_MIVsHandler> shared_ptr;
 
-			c_MIVsHandler(c_MessageTargetId sId);
+			c_MIVsHandler(c_MessageTargetId id);
 
 			// Begin c_SignalSinkIfc
 
@@ -231,7 +229,7 @@ namespace seedsrc {
 			boost::function<void (const c_Signal::shared_ptr& pSignal)> onSignalToClient;
 
 		private:
-			c_MessageTargetId m_sId;
+			c_MessageTargetId m_id;
 			c_MIVs::shared_ptr m_pMIVs;
 		};
 
@@ -247,7 +245,7 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<c_ViewHandler> shared_ptr;
 
-			c_ViewHandler(c_MessageTargetId sId);
+			c_ViewHandler(c_MessageTargetId id);
 
 			// Begin c_SignalSinkIfc
 
@@ -260,7 +258,7 @@ namespace seedsrc {
 			c_MIVsHandler::shared_ptr getMIVsHandler();
 
 		private:
-			c_MessageTargetId m_sId;
+			c_MessageTargetId m_id;
 			c_MIVsView m_MIVsView;
 			c_MIVsHandler::shared_ptr m_pMIVsHandler;
 		};
@@ -273,7 +271,7 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<c_DomainHandler> shared_ptr;
 
-			c_DomainHandler(c_MessageTargetId sId);
+			c_DomainHandler(c_MessageTargetId id);
 
 			// Begin c_SignalSinkIfc
 
@@ -286,7 +284,7 @@ namespace seedsrc {
 			c_ViewHandler::shared_ptr getViewHandler(int view_index);
 
 		private:
-			c_MessageTargetId m_sId;
+			c_MessageTargetId m_id;
 			c_ViewHandlers m_ViewHandlers;
 		};
 
@@ -295,14 +293,14 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<c_DarwinetEngine> shared_ptr;
 
-			c_DarwinetEngine(c_MessageTargetId sId);
+			c_DarwinetEngine(c_MessageTargetId id);
 
 			virtual c_MessageTargetId getId();
 
 			c_DomainHandler::shared_ptr getDomainHandler(int domain_index);
 		private:
 
-			c_MessageTargetId m_sId;
+			c_MessageTargetId m_id;
 
 			c_DomainHandler::shared_ptr m_pDomainHandler;
 		};
@@ -315,7 +313,7 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<c_TestClient> shared_ptr;
 
-			c_TestClient(c_MessageTargetId sId);
+			c_TestClient(c_MessageTargetId id);
 
 			// Begin c_SignalSinkIfc
 
@@ -333,7 +331,7 @@ namespace seedsrc {
 
 		private:
 
-			c_MessageTargetId m_sId;
+			c_MessageTargetId m_id;
 
 		};
 
@@ -360,6 +358,12 @@ namespace seedsrc {
 
 			c_DarwinetEngine::shared_ptr m_pDarwinetEngine;
 		};
+
+		namespace log {
+			c_LogString toLogString(c_Signal::shared_ptr pSignal);
+
+			void logSignalTransfer(c_Signal::shared_ptr pSignal);
+		}
 
 		void test();
 

@@ -24,22 +24,26 @@ namespace seedsrc {
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
-//		c_SignalFieldMapper::shared_ptr instance() {
-//			if (!m_pInstance) {
-//				m_pInstance.reset(new c_SignalFieldMapper());
-//			}
-//			return m_pInstance;
-//		}
-//
-//		c_SignalFieldMapper::c_SignalFieldMapper()
-//		{
-//			// Fill the map
-//			for (e_SignalField i = eSignalField_Undefined+1; i < eSignalFieldUnknown; ++i) {
-//				(*this)[i] = this->getSignalFieldIdStringOfEnum(i);
-//			}
-//		}
-//
-//		c_SignalFieldMapper::shared_ptr c_SignalFieldMapper::m_pInstance;
+
+		c_SignalFieldMapper::c_SignalFieldMapper()
+		{
+			// Fill the map
+			for (int i = eSignalField_Undefined+1; i < eSignalFieldUnknown; ++i) {
+				c_DarwinetString sSignalFieldIdString;
+				e_SignalField eField = static_cast<e_SignalField>(i);
+				switch (eField) {
+					case eSignalField_Undefined: sSignalFieldIdString = _UTF8sz("Undefined"); break;
+					case eSignalField_Sender: sSignalFieldIdString = _UTF8sz("head.sender"); break;
+					case eSignalField_Receiver: sSignalFieldIdString = _UTF8sz("head.receiver"); break;
+					case eSignalFieldUnknown: sSignalFieldIdString = _UTF8sz("Unknown"); break;
+				default:
+					sSignalFieldIdString = _UTF8sz("??Signal Field??");
+				}
+				(*this)[eField] = sSignalFieldIdString;
+			}
+		}
+
+		c_SignalFieldMapper SIGNAL_FIELD_MAPPER;
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
@@ -63,15 +67,23 @@ namespace seedsrc {
 			return result;
 		}
 
-		c_MessageTargetId c_Signal::getTargetId() {
-			c_MessageTargetId result("??Signal Target??");
-			c_Signal::const_iterator iter = this->find(c_DarwinetString("header.target"));
+		c_DarwinetString c_Signal::getValue(c_DarwinetString sKey) {
+			c_DarwinetString result = c_DarwinetString("??") + sKey + c_DarwinetString("??");
+			c_Signal::const_iterator iter = this->find(sKey);
 			if (iter != this->end()) {
 				result = iter->second;
-
 			}
 			return result;
-		};
+		}
+
+		c_MessageTargetId c_Signal::getTargetId() {
+			c_MessageTargetId result(c_MessageTargetId::Node(c_MessageTargetId::Node::t_key("??Signal Target??")));
+			c_Signal::const_iterator iter = this->find(SIGNAL_FIELD_MAPPER[eSignalField_Receiver]);
+			if (iter != this->end()) {
+				result = c_MessageTargetId::fromString(iter->second);
+			}
+			return result;
+		}
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
@@ -79,7 +91,7 @@ namespace seedsrc {
 		void c_SignalPipe::actOnInSignal(const c_Signal::shared_ptr& pSignal) {
 			LOG_METHOD_SCOPE;
 			this->push(pSignal);
-		};
+		}
 
 		void c_SignalPipe::process() {
 			LOG_METHOD_SCOPE;
@@ -118,7 +130,7 @@ namespace seedsrc {
 				else {
 					// A target with the same ID already exists
 					c_LogString sMessage("Failed to connect Target=");
-					sMessage += pLockedSignalSink->getId();
+					sMessage += pLockedSignalSink->getId().toString<c_LogString>();
 					sMessage += _UTF8sz(". Taregt with the same ID already exists. Target discarded.");
 					LOG_DESIGN_INSUFFICIENCY(sMessage);
 				}
@@ -130,18 +142,19 @@ namespace seedsrc {
 		}
 
 		void c_Messenger::process() {
-			LOG_NOT_IMPLEMENTED;
+			LOG_METHOD_SCOPE;
 			if (this->m_SignalQueue.size() > 0) {
 				c_Signal::shared_ptr pSignal(this->m_SignalQueue.front());
 				this->m_SignalQueue.pop();
 				c_SignalSinkIfc::shared_ptr pSignalSink = m_SignalSinks[pSignal->getTargetId()].lock();
 				if (pSignalSink) {
-					pSignalSink->actOnSignal(pSignal);
+					log::logSignalTransfer(pSignal);
+					this->send(pSignalSink->actOnSignal(pSignal));
 				}
 				else {
-					c_LogString sMessage("Failed to send signal. Target=");
-					sMessage += pSignal->getTargetId();
-					sMessage += _UTF8sz(" doed not exist. Signal discarded");
+					c_LogString sMessage("Failed to send signal={");
+					sMessage += log::toLogString(pSignal);
+					sMessage += _UTF8sz("}. Receiver does not exist.");
 					LOG_DESIGN_INSUFFICIENCY(sMessage);
 				};
 			}
@@ -149,15 +162,15 @@ namespace seedsrc {
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
-		c_MIVsHandler::c_MIVsHandler(c_MessageTargetId sId)
-			: m_sId(sId)
+		c_MIVsHandler::c_MIVsHandler(c_MessageTargetId id)
+			: m_id(id)
 		{
 		}
 
 		// Begin c_SignalSinkIfc
 
 		c_MessageTargetId c_MIVsHandler::getId() {
-			return m_sId;
+			return m_id;
 		}
 
 		c_SignalQueue::shared_ptr c_MIVsHandler::actOnSignal(const c_Signal::shared_ptr& pSignal) {
@@ -174,15 +187,15 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
-		c_ViewHandler::c_ViewHandler(c_MessageTargetId sId)
-			: m_sId(sId)
+		c_ViewHandler::c_ViewHandler(c_MessageTargetId id)
+			: m_id(id)
 		{
 		}
 
 		// Begin c_SignalSinkIfc
 
 		c_MessageTargetId c_ViewHandler::getId() {
-			return m_sId;
+			return m_id;
 		}
 
 		c_SignalQueue::shared_ptr c_ViewHandler::actOnSignal(const c_Signal::shared_ptr& pSignal) {
@@ -195,8 +208,8 @@ namespace seedsrc {
 
 		c_MIVsHandler::shared_ptr c_ViewHandler::getMIVsHandler() {
 			if (!this->m_pMIVsHandler) {
-				c_MessageTargetPath MIVsHandlerId(this->getId()+c_MessageTargetPath::Node(c_DarwinetString("MIVs1")));
-				this->m_pMIVsHandler = boost::make_shared<c_MIVsHandler>(MIVsHandlerId.toString<c_DarwinetString>());
+				c_MessageTargetId MIVsHandlerId = this->getId()+ c_MessageTargetId::Node(c_MessageTargetId::Node::t_key("MIVs1"));
+				this->m_pMIVsHandler = boost::make_shared<c_MIVsHandler>(MIVsHandlerId);
 			}
 			return this->m_pMIVsHandler;
 		}
@@ -204,15 +217,15 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
-		c_DomainHandler::c_DomainHandler(c_MessageTargetId sId)
-			: m_sId(sId)
+		c_DomainHandler::c_DomainHandler(c_MessageTargetId id)
+			: m_id(id)
 		{
 		}
 
 		// Begin c_SignalSinkIfc
 
 		c_MessageTargetId c_DomainHandler::getId() {
-			return m_sId;
+			return m_id;
 		}
 
 		c_SignalQueue::shared_ptr c_DomainHandler::actOnSignal(const c_Signal::shared_ptr& pSignal) {
@@ -225,8 +238,8 @@ namespace seedsrc {
 
 		c_ViewHandler::shared_ptr c_DomainHandler::getViewHandler(int view_index) {
 			if (m_ViewHandlers.count(view_index) == 0) {
-				c_MessageTargetPath ViewHandlerId(this->getId()+c_MessageTargetPath::Node(c_DarwinetString("View")+c_DataRepresentationFramework::intToDecimalString(view_index)));
-				m_ViewHandlers[view_index] = boost::make_shared<c_ViewHandler>(ViewHandlerId.toString<c_DarwinetString>());
+				c_MessageTargetId ViewHandlerId = this->getId() + c_MessageTargetId::Node(c_MessageTargetId::Node::t_key("View"),view_index);
+				m_ViewHandlers[view_index] = boost::make_shared<c_ViewHandler>(ViewHandlerId);
 			}
 			return m_ViewHandlers[view_index];
 		};
@@ -234,19 +247,19 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
-		c_DarwinetEngine::c_DarwinetEngine(c_MessageTargetId sId)
-			: m_sId(sId)
+		c_DarwinetEngine::c_DarwinetEngine(c_MessageTargetId id)
+			: m_id(id)
 		{
 		}
 
 		c_MessageTargetId c_DarwinetEngine::getId() {
-			return m_sId;
+			return m_id;
 		}
 
 		c_DomainHandler::shared_ptr c_DarwinetEngine::getDomainHandler(int domain_index) {
 			if (!m_pDomainHandler) {
-				c_MessageTargetPath DomainHandlerId(this->getId()+c_MessageTargetPath::Node(c_DarwinetString("Domain")+c_DataRepresentationFramework::intToDecimalString(domain_index)));
-				m_pDomainHandler = boost::make_shared<c_DomainHandler>(DomainHandlerId.toString<c_DarwinetString>());
+				c_MessageTargetId DomainHandlerId = this->getId() + c_MessageTargetId::Node(c_MessageTargetId::Node::t_key("Domain"),domain_index);
+				m_pDomainHandler = boost::make_shared<c_DomainHandler>(DomainHandlerId);
 			}
 			return m_pDomainHandler;
 		};
@@ -254,13 +267,13 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
-		c_TestClient::c_TestClient(c_MessageTargetId sId)
-			: m_sId(sId)
+		c_TestClient::c_TestClient(c_MessageTargetId id)
+			: m_id(id)
 		{
 		}
 
 		c_MessageTargetId c_TestClient::getId() {
-			return m_sId;
+			return m_id;
 		}
 
 		// Begin c_SignalSinkIfc
@@ -280,8 +293,7 @@ namespace seedsrc {
 		c_SignalQueue::shared_ptr c_TestClient::testMIVChange() {
 			c_SignalQueue::shared_ptr result = boost::make_shared<c_SignalQueue>();
 			if (true) {
-				c_Signal::shared_ptr pSignal = boost::make_shared<c_Signal>();
-				c_DarwinetTestBench::instance()->createSignal(this->getId(),c_DarwinetTestBench::instance()->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(1)->getMIVsHandler()->getId());
+				c_Signal::shared_ptr pSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),c_DarwinetTestBench::instance()->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(1)->getMIVsHandler()->getId());
 				result->push(pSignal);
 			}
 			else {
@@ -305,13 +317,15 @@ namespace seedsrc {
 
 		c_DarwinetEngine::shared_ptr c_DarwinetTestBench::getDarwinetEngine() {
 			if (!m_pDarwinetEngine) {
-				m_pDarwinetEngine = boost::make_shared<c_DarwinetEngine>(_UTF8sz("Engine1"));
+				m_pDarwinetEngine = boost::make_shared<c_DarwinetEngine>(c_MessageTargetId(c_MessageTargetId::Node(c_MessageTargetId::Node::t_key("Engine"),1)));
 			}
 			return m_pDarwinetEngine;
 		};
 
 		c_Signal::shared_ptr c_DarwinetTestBench::createSignal(c_MessageTargetId senderMessageTargetId,c_MessageTargetId receiverMessageTargetId) {
 			c_Signal::shared_ptr result = boost::make_shared<c_Signal>();
+			result->push_back(std::make_pair(SIGNAL_FIELD_MAPPER[eSignalField_Sender],senderMessageTargetId.toString<c_DarwinetString>()));
+			result->push_back(std::make_pair(SIGNAL_FIELD_MAPPER[eSignalField_Receiver],receiverMessageTargetId.toString<c_DarwinetString>()));
 			LOG_NOT_IMPLEMENTED;
 			return result;
 		}
@@ -324,10 +338,44 @@ namespace seedsrc {
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
+		namespace log {
+
+			c_LogString toLogString(c_Signal::shared_ptr pSignal) {
+				c_LogString result;
+				if (pSignal) {
+					for (c_Signal::const_iterator iter = pSignal->begin(); iter != pSignal->end(); ++iter) {
+						if (result.size() > 0) {
+							result += _UTF8sz("\n"); // add separator
+						}
+						result += toLogString(iter->first);
+						result += _UTF8sz("=");
+						result += toLogString(iter->second);
+					}
+				}
+				else {
+					result = _UTF8sz("NULL");
+				}
+				return result;
+			}
+
+			void logSignalTransfer(c_Signal::shared_ptr pSignal) {
+				c_LogString sMessage("NULL Signal");
+				if (pSignal) {
+					sMessage = pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_Sender]);
+					sMessage += _UTF8sz(" ==> ");
+					sMessage += pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_Receiver]);
+				}
+				LOG_BUSINESS(sMessage);
+			}
+
+		}
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
 		void test() {
 
-			c_TestClient::shared_ptr pClient1 = boost::make_shared<c_TestClient>(_UTF8sz("Client1"));
-			c_TestClient::shared_ptr pClient2 = boost::make_shared<c_TestClient>(_UTF8sz("Client2"));
+			c_TestClient::shared_ptr pClient1 = boost::make_shared<c_TestClient>(c_MessageTargetId(c_MessageTargetId::Node(c_MessageTargetId::Node::t_key("Client"),1)));
+			c_TestClient::shared_ptr pClient2 = boost::make_shared<c_TestClient>(c_MessageTargetId(c_MessageTargetId::Node(c_MessageTargetId::Node::t_key("Client"),2)));
 
 // 140314 Test of _UTF8sz::operator+ to solvle __func__ being a char* in BCC64.
 //			c_LogString sMessage(__func__) + " Called :)");
@@ -360,10 +408,12 @@ namespace seedsrc {
 				Messenger.connect(c_DarwinetTestBench::instance()->getDarwinetEngine()->getDomainHandler(1));
 
 				Messenger.send(pClient1->testMIVChange());
-				Messenger.process();
+				for (int i = 0; i < 10; i++) {
+					Messenger.process();
+				}
 			}
 			else {
-				c_DarwinetEngine::shared_ptr pEngine = boost::make_shared<c_DarwinetEngine>(_UTF8sz("Engine1"));
+				c_DarwinetEngine::shared_ptr pEngine = boost::make_shared<c_DarwinetEngine>(c_MessageTargetId(c_MessageTargetId::Node(c_MessageTargetId::Node::t_key("Engine"),1)));
 
 				c_SignalPipes::shared_ptr pMessenger = boost::make_shared<c_SignalPipes>();
 

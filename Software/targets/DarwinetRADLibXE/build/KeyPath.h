@@ -489,7 +489,14 @@ namespace oprime {
 			typename _StringRepresentation::const_iterator startIter = sNode.begin();
 			typename _StringRepresentation::const_iterator endIter = std::find(startIter,sNode.end(),':');
 			typename _StringRepresentation sKey(startIter,endIter);
-			_Key key = c_DataRepresentationFramework::intValueOfHexString(sKey);
+//			_Key key = c_DataRepresentationFramework::intValueOfHexString(sKey);
+			/**
+			  * Note 140315 - Added handling of indexed _Key being any of the allowed top level Node types. I.e. an Indexed Node
+			  *               may have _Key beging any of the allowed un-indexed nodes (integral, string, wrapped).
+			  *               Seems to work for indexed string nodes.
+			  *               have NOT tested for indexed indexed nodes (recursive wrapping) but should potentially work?
+			  */
+			_Key key = stringToNode<_Key,_StringRepresentation>(sKey);
 			_StringRepresentation sIndex(endIter+1,sNode.end());
 			int index = c_DataRepresentationFramework::intValueOfDecimalString(sIndex);
 			c_IndexedKeyNode result(key,index);
@@ -1173,6 +1180,7 @@ namespace oprime {
 		  * The second boolean is used to determine if the provided node type is a string class os not.
 		  * We use pre-defined templates in the boost namespace to map the aspects
 		  * to a booelan value type.
+		  * If neither of these are true the StringToNodeTrait<*,*,false,false> will asume a wrapped Node type
 		  */
 		return detail::StringToNodeTrait<
 			 _Node
