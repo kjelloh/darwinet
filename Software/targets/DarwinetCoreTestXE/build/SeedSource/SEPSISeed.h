@@ -12,6 +12,7 @@
 #include <list>
 #include <queue>
 #include <boost/function.hpp>
+//#include <windows.h>
 //---------------------------------------------------------------------------
 
 /**
@@ -63,8 +64,8 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 //		typedef oprime::c_KeyPath<c_CaptionNode> c_MessageTargetPath;
 //		typedef c_DarwinetString c_MessageTargetId;
-//		typedef oprime::c_KeyPath<oprime::c_IndexedKeyNode<c_CaptionNode> > c_MessageTargetId;
-		typedef oprime::c_KeyPath<oprime::c_IndexedKeyNode<c_DataRepresentationFramework::c_AsciiString> > c_MessageTargetId;
+		typedef oprime::c_KeyPath<oprime::c_IndexedKeyNode<c_CaptionNode> > c_MessageTargetId;
+//		typedef oprime::c_KeyPath<oprime::c_IndexedKeyNode<c_DataRepresentationFramework::c_AsciiString> > c_MessageTargetId;
 		//-------------------------------------------------------------------
 		enum e_SignalField {
 			 eSignalField_Undefined
@@ -367,6 +368,40 @@ namespace seedsrc {
 
 		void test();
 
+		class c_GUIClientproxy {
+		public:
+			typedef boost::shared_ptr<c_GUIClientproxy> shared_ptr;
+			typedef std::string c_MIVsIdentitier;
+			typedef std::string c_MIVsValue;
+
+			c_GUIClientproxy() : m_pGUIWindow(NULL) {};
+
+			void setMIVsValue(c_GUIClientproxy::c_MIVsIdentitier MIVsId,c_GUIClientproxy::c_MIVsValue value);
+
+			void setGUIWindowhandle(HWND pGUIWindow);
+
+		private:
+			HWND m_pGUIWindow;
+		};
+
+		/**
+		  * helper class to interface client side with server side Testbench
+		  */
+		class c_TestBenchClientSideProxy {
+		public:
+			typedef boost::shared_ptr<c_TestBenchClientSideProxy> shared_ptr;
+
+			c_TestBenchClientSideProxy();
+
+			c_GUIClientproxy::shared_ptr getGUIClientproxy(int index);
+
+			HWND m_pGUIWindow;
+
+		private:
+
+			std::map<unsigned int,c_GUIClientproxy::shared_ptr> m_GUIClientproxies;
+
+		};
 	} // namespace miv5
 
 	namespace miv4 {
@@ -1841,5 +1876,9 @@ namespace seedsrc {
 
 }
 
+/**
+  * Tie the GUI with the current iteration code
+  */
+typedef seedsrc::miv5::c_TestBenchClientSideProxy c_TestBenchClientSideProxy;
 
 #endif

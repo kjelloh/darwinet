@@ -441,6 +441,32 @@ namespace seedsrc {
 				pClientToMIVs1SignalPipe->process();
 			}
 		}
+
+		void c_GUIClientproxy::setMIVsValue(c_GUIClientproxy::c_MIVsIdentitier MIVsId,c_GUIClientproxy::c_MIVsValue value) {
+			LOG_NOT_IMPLEMENTED;
+			if (this->m_pGUIWindow) {
+				PostMessage(this->m_pGUIWindow,WM_USER+1,0,NULL);
+			}
+		};
+
+		void c_GUIClientproxy::setGUIWindowhandle(HWND pGUIWindow) {
+			LOG_METHOD_SCOPE;
+			this->m_pGUIWindow = pGUIWindow;
+		}
+
+		c_TestBenchClientSideProxy::c_TestBenchClientSideProxy()
+			:  m_pGUIWindow(NULL)
+		{
+			LOG_METHOD_SCOPE;
+		};
+
+		c_GUIClientproxy::shared_ptr c_TestBenchClientSideProxy::getGUIClientproxy(int index) {
+			if (!m_GUIClientproxies[index]) {
+				m_GUIClientproxies[index] = boost::make_shared<c_GUIClientproxy>();
+			}
+			return m_GUIClientproxies[index];
+		};
+
 	}
 
 

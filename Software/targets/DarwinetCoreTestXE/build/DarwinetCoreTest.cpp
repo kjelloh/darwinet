@@ -11,6 +11,7 @@
 
 
 USEFORM("MainFormUnit.cpp", MainForm);
+USEFORM("MIVsViewFrameUnit.cpp", MIVsViewFrame); /* TFrame: File Type */
 //---------------------------------------------------------------------------
 WINAPI _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int)
 {

@@ -98,6 +98,7 @@ public:
 		const C* m_sz; \
 	};
 
+#pragma warn -8010
 // 140314 - Seems to work but removed for now
 // 140314 - TODO - Consider to use this apporiach to solve the __FUNCTION__
 //                 problem in logging fo bcc64 (it is no longer a string literal but a const char*
@@ -122,6 +123,7 @@ public:
 //			}\
 //			return result;\
 //		}\
+#pragma warn .8010
 
 	/**
 	  * Wrapper for anonymous char arrays.
