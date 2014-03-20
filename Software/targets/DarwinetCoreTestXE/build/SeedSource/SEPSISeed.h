@@ -71,6 +71,8 @@ namespace seedsrc {
 			 eSignalField_Undefined
 			,eSignalField_Sender
 			,eSignalField_Receiver
+			,eMIVElementId
+			,eMIVValue
 			,eSignalFieldUnknown
 		};
 
@@ -79,9 +81,15 @@ namespace seedsrc {
 		{
 		public:
 			typedef boost::shared_ptr<c_SignalFieldMapper> shared_ptr;
+			typedef std::map<e_SignalField,c_DarwinetString> _Base;
 
 			c_SignalFieldMapper();
+
+			virtual c_DarwinetString& operator[](e_SignalField eKey);
+
 		};
+
+		static c_SignalFieldMapper SIGNAL_FIELD_MAPPER;
 
 		//-------------------------------------------------------------------
 		class c_Signal : public std::vector<std::pair<c_DarwinetString,c_DarwinetString> > {
@@ -96,6 +104,9 @@ namespace seedsrc {
 			const_iterator find(const c_DarwinetString& sKey);
 
 			c_DarwinetString getValue(c_DarwinetString sKey);
+
+//			void addElement(const c_DarwinetString& sKey,const c_DarwinetString& sValue);
+			void addElement(e_SignalField eKey,const c_DarwinetString& sValue);
 
 			c_MessageTargetId getTargetId();
 
@@ -170,6 +181,19 @@ namespace seedsrc {
 			typedef boost::shared_ptr<c_SignalPipes> shared_ptr;
 
 		};
+		//-------------------------------------------------------------------
+
+		class c_IllformedSignalStringException
+			: public std::runtime_error
+		{
+		public:
+			c_IllformedSignalStringException(const c_LogString& sMessage) : std::runtime_error(sMessage.c_str()) {};
+		};
+
+		//-------------------------------------------------------------------
+		c_DarwinetString toString(const c_Signal& signal);
+		//-------------------------------------------------------------------
+		c_Signal createSignalFromString(const c_DarwinetString& sSignal);
 		//-------------------------------------------------------------------
 
 		/**
@@ -371,8 +395,11 @@ namespace seedsrc {
 		class c_GUIClientproxy {
 		public:
 			typedef boost::shared_ptr<c_GUIClientproxy> shared_ptr;
-			typedef std::string c_MIVsIdentitier;
-			typedef std::string c_MIVsValue;
+//			typedef std::string c_MIVsIdentitier;
+//			typedef std::string c_MIVsValue;
+			typedef c_DarwinetString c_SignalString;
+			typedef c_DarwinetString c_MIVsIdentitier;
+			typedef c_DarwinetString c_MIVsValue;
 
 			c_GUIClientproxy() : m_pGUIWindow(NULL) {};
 
@@ -1879,6 +1906,6 @@ namespace seedsrc {
 /**
   * Tie the GUI with the current iteration code
   */
-typedef seedsrc::miv5::c_TestBenchClientSideProxy c_TestBenchClientSideProxy;
+namespace darwinet_seed = seedsrc::miv5;
 
 #endif

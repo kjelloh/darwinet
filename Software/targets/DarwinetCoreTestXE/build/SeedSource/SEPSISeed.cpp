@@ -10,6 +10,7 @@
 #include <boost/format.hpp>
 # pragma warn +8072 // Enable again. See above
 #include <algorithm> // std::find_if
+#include <boost/algorithm/string.hpp>
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 
@@ -35,15 +36,25 @@ namespace seedsrc {
 					case eSignalField_Undefined: sSignalFieldIdString = _UTF8sz("Undefined"); break;
 					case eSignalField_Sender: sSignalFieldIdString = _UTF8sz("head.sender"); break;
 					case eSignalField_Receiver: sSignalFieldIdString = _UTF8sz("head.receiver"); break;
+					case eMIVElementId: sSignalFieldIdString = _UTF8sz("MIVElementId"); break;
+					case eMIVValue: sSignalFieldIdString = _UTF8sz("MIVValue"); break;
 					case eSignalFieldUnknown: sSignalFieldIdString = _UTF8sz("Unknown"); break;
 				default:
-					sSignalFieldIdString = _UTF8sz("??Signal Field??");
+					;
 				}
 				(*this)[eField] = sSignalFieldIdString;
 			}
 		}
 
-		c_SignalFieldMapper SIGNAL_FIELD_MAPPER;
+		c_DarwinetString& c_SignalFieldMapper::operator[](e_SignalField eKey) {
+			if (_Base::operator [](eKey).length() == 0) {
+				c_DarwinetString sName("??");
+				sName += c_DataRepresentationFramework::intToDecimalString(eKey);
+				sName += _UTF8sz("??");
+				_Base::operator [](eKey) = sName;
+			}
+			return _Base::operator [](eKey);
+		}
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
@@ -76,6 +87,13 @@ namespace seedsrc {
 			return result;
 		}
 
+//		void c_Signal::addElement(const c_DarwinetString& sKey,const c_DarwinetString& sValue) {
+//			this->push_back(std::make_pair(sKey,sValue));
+//		}
+		void c_Signal::addElement(e_SignalField eKey,const c_DarwinetString& sValue) {
+			this->push_back(std::make_pair(SIGNAL_FIELD_MAPPER[eKey],sValue));
+		}
+
 		c_MessageTargetId c_Signal::getTargetId() {
 			c_MessageTargetId result(c_MessageTargetId::Node(c_MessageTargetId::Node::t_key("??Signal Target??")));
 			c_Signal::const_iterator iter = this->find(SIGNAL_FIELD_MAPPER[eSignalField_Receiver]);
@@ -103,6 +121,43 @@ namespace seedsrc {
 				}
 			}
 		};
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+
+		c_DarwinetString toString(const c_Signal& signal) {
+			c_DarwinetString result;
+			for (c_Signal::const_iterator iter = signal.begin(); iter != signal.end(); ++iter) {
+				if (result.size() > 0) {
+					result += _UTF8sz("\n"); // Separate lines
+				}
+				result += iter->first;
+				result += _UTF8sz("=");
+				result += iter->second;
+			}
+			return result;
+		}
+
+		c_Signal createSignalFromString(const c_DarwinetString& sSignal) {
+			c_Signal result;
+			std::vector<c_DarwinetString> value_pairs;
+			boost::split(value_pairs,sSignal,boost::is_any_of("\n"));
+			for (std::vector<c_DarwinetString>::const_iterator iter = value_pairs.begin(); iter != value_pairs.end(); ++iter) {
+				std::vector<c_DarwinetString> value_pair;
+				boost::split(value_pair,*iter,boost::is_any_of("="));
+				if (value_pair.size() == 2) {
+					result.push_back(std::make_pair(value_pair[0],value_pair[1]));
+				}
+				else {
+					// Wrong format
+					c_LogString sMessage("Failed to create Signal from string=\"");
+					sMessage += _UTF8sz("\". Wrong format found in value pair string = \"");
+					sMessage += *iter;
+					sMessage += _UTF8sz("\"");
+					throw c_IllformedSignalStringException(sMessage);
+				}
+			}
+			return result;
+		}
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
@@ -444,8 +499,23 @@ namespace seedsrc {
 
 		void c_GUIClientproxy::setMIVsValue(c_GUIClientproxy::c_MIVsIdentitier MIVsId,c_GUIClientproxy::c_MIVsValue value) {
 			LOG_NOT_IMPLEMENTED;
-			if (this->m_pGUIWindow) {
-				PostMessage(this->m_pGUIWindow,WM_USER+1,0,NULL);
+			if (false) {
+
+
+			}
+			else {
+				if (this->m_pGUIWindow) {
+					// Short cut the call-back for test
+					c_Signal::shared_ptr pSignal = boost::make_shared<c_Signal>();
+//					pSignal->addElement(_UTF8sz("MIV_Element"),MIVsId);
+//					pSignal->addElement(_UTF8sz("Value"),_UTF8sz("23"));
+					pSignal->addElement(eMIVElementId,MIVsId);
+					pSignal->addElement(eMIVValue,_UTF8sz("23"));
+					c_DarwinetString sSignal(toString(*pSignal));
+					char* szRawSignalString = new char[sSignal.length()+1];
+					strcpy(szRawSignalString,sSignal.c_str());
+					PostMessage(this->m_pGUIWindow,WM_USER+1,0,reinterpret_cast<LPARAM>(szRawSignalString));
+				}
 			}
 		};
 

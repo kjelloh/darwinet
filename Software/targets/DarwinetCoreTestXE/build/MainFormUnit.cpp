@@ -15,13 +15,13 @@
 TMainForm *MainForm;
 //---------------------------------------------------------------------------
 
-c_TestBenchClientSideProxy::shared_ptr pTestBenchClientSideProxy;
+darwinet_seed::c_TestBenchClientSideProxy::shared_ptr pTestBenchClientSideProxy;
 //---------------------------------------------------------------------------
 __fastcall TMainForm::TMainForm(TComponent* Owner)
 	: TForm(Owner)
 {
 	if (!pTestBenchClientSideProxy) {
-		pTestBenchClientSideProxy.reset(new c_TestBenchClientSideProxy());
+		pTestBenchClientSideProxy.reset(new darwinet_seed::c_TestBenchClientSideProxy());
 		pTestBenchClientSideProxy->m_pGUIWindow = this->Handle;
 	}
 	// Dock the Business Log form to our main windows

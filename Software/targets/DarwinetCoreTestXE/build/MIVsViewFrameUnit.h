@@ -19,9 +19,11 @@ private:	// User declarations
 	static unsigned int m_instanceCount;
 	unsigned int m_index;
 
-	void __fastcall CMOnMIVsChange(TWMNoParams Message);
+//	void __fastcall CMOnMIVsChange(TWMNoParams Message);
+	void __fastcall CMOnMIVsChange(TMessage Message);
 	BEGIN_MESSAGE_MAP
-	   MESSAGE_HANDLER(WM_USER+1, TWMNoParams, CMOnMIVsChange)
+//	   MESSAGE_HANDLER(WM_USER+1, TWMNoParams, CMOnMIVsChange)
+	   MESSAGE_HANDLER(WM_USER+1, TMessage, CMOnMIVsChange)
 	END_MESSAGE_MAP(TFrame)
 	// Note that END_MESSAGE_MAP needs parameter to B a s e class (not to us). See http://stackoverflow.com/questions/10059559/stack-overflow-when-trying-to-set-up-user-defined-message-handler
 
