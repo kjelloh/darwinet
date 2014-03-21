@@ -32,7 +32,7 @@ __fastcall TMainForm::TMainForm(TComponent* Owner)
 	LOG_BUSINESS(_UTF8sz("Application Started!"));
 
 	this->GridPanel1->Caption = "";
-	for (int i = 0; i < 4; ++i) {
+	for (int i = 1; i < 4; ++i) {
 		TMIVsViewFrame* pTMIVsViewFrame = new TMIVsViewFrame(this,i);
 		m_MIVsViewFrames.push_back(pTMIVsViewFrame);
 		pTMIVsViewFrame->Visible = true;
@@ -50,3 +50,11 @@ __fastcall TMainForm::TMainForm(TComponent* Owner)
 	seedsrc::miv5::test();
 }
 //---------------------------------------------------------------------------
+void __fastcall TMainForm::Timer1Timer(TObject *Sender)
+{
+	if (pTestBenchClientSideProxy) {
+        pTestBenchClientSideProxy->processMessages();
+	}
+}
+//---------------------------------------------------------------------------
+

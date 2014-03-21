@@ -67,18 +67,28 @@ void __fastcall TMIVsViewFrame::CMOnMIVsChange(TMessage Message) {
 			ShowMessage(sMessage);
 
 			darwinet_seed::c_Signal signal(darwinet_seed::createSignalFromString(sSignal));
-			darwinet_seed::c_GUIClientproxy::c_SignalString sMIV_Element = signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eMIVElementId]);
-			if (sMIV_Element == _UTF8sz("myInt")) {
-				String sValue(signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eMIVValue]).c_str());
-//				InhibitGUIOnchangeHandler[this->MyIntSpinEdit] = true;
-				SCOPED_ONCHANGE_INHIBIT(this->MyIntSpinEdit);
-				this->MyIntSpinEdit->Value = sValue.ToInt();
-//				InhibitGUIOnchangeHandler[this->MyIntSpinEdit] = false;
+			darwinet_seed::c_GUIClientproxy::c_SignalString sEventId = signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventId]);
+			if (sEventId == _UTF8sz("OnMIVValue")) {
+				darwinet_seed::c_GUIClientproxy::c_SignalString sMIV_Element = signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventSourceId]);
+				if (sMIV_Element == _UTF8sz("myInt")) {
+					String sValue(signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventValue]).c_str());
+	//				InhibitGUIOnchangeHandler[this->MyIntSpinEdit] = true;
+					SCOPED_ONCHANGE_INHIBIT(this->MyIntSpinEdit);
+					this->MyIntSpinEdit->Value = sValue.ToInt();
+	//				InhibitGUIOnchangeHandler[this->MyIntSpinEdit] = false;
+				}
+				else {
+					// Not myInt
+				}
 			}
 			else {
-				// Not myInt
-			}
+				// Unhandled signal
+				c_LogString sMessage(__FUNCTION__);
+				sMessage += _UTF8sz(" unhandled event ");
+				sMessage += sEventId;
+				LOG_DESIGN_INSUFFICIENCY(sMessage);
 
+            }
 		}
 		else {
 			ShowMessage("TMIVsViewFrame::CMOnMIVsChange received NULL signal");

@@ -31,7 +31,6 @@ object MainForm: TMainForm
     Align = alBottom
     Caption = 'Business log goes here at run-time'
     TabOrder = 0
-    ExplicitTop = 232
   end
   object GridPanel1: TGridPanel
     Left = 0
@@ -56,9 +55,11 @@ object MainForm: TMainForm
         Value = 50.000000000000000000
       end>
     TabOrder = 1
-    ExplicitLeft = 336
-    ExplicitTop = 112
-    ExplicitWidth = 185
-    ExplicitHeight = 41
+  end
+  object Timer1: TTimer
+    Interval = 100
+    OnTimer = Timer1Timer
+    Left = 776
+    Top = 24
   end
 end

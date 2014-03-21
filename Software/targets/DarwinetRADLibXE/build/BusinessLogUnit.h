@@ -363,6 +363,8 @@ private:
 
 };
 
+#define METHOD_NAME c_LogString(__func__)
+
 // Log a design insufficiency
 
 // Log a design insufficiency about current function not implemented

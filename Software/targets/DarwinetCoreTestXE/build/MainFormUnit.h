@@ -17,6 +17,8 @@ __published:	// IDE-managed Components
 	TSplitter *Splitter1;
 	TPanel *BottomPanel;
 	TGridPanel *GridPanel1;
+	TTimer *Timer1;
+	void __fastcall Timer1Timer(TObject *Sender);
 private:	// User declarations
 
 	std::vector<TMIVsViewFrame*> m_MIVsViewFrames;

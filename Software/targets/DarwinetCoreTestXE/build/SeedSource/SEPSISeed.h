@@ -69,11 +69,27 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		enum e_SignalField {
 			 eSignalField_Undefined
-			,eSignalField_Sender
-			,eSignalField_Receiver
-			,eMIVElementId
-			,eMIVValue
-			,eSignalFieldUnknown
+			 // Signal header elements
+			,eSignalField_SignalSender
+			,eSignalField_SignalReceiver
+			,eSignalField_SignalIdentifier
+			// Client to MIVs signal fields
+			,eSignalField_MIVsOperationId
+			,eSignalField_MIVsOperationTargetId
+			,eSignalField_MIVsOperationNewValue
+			,eSignalField_MIVsEventId
+			,eSignalField_MIVsEventSourceId
+			,eSignalField_MIVsEventValue
+			// Delta Signal elements
+			,eSignalField_DeltaPredecessorIx
+			,eSignalField_DeltaIx
+			,eSignalField_DeltaProducerId
+			,eSignalField_DeltaBranchId
+			,eSignalField_DeltaTargetMIVId
+			,eSignalField_DeltaTargetMIVState
+			,eSignalField_DeltaOperationId
+			,eSignalField_DeltaOperationValue
+			,eSignalField_Unknown
 		};
 
 		class c_SignalFieldMapper
@@ -183,12 +199,17 @@ namespace seedsrc {
 		};
 		//-------------------------------------------------------------------
 
-		class c_IllformedSignalStringException
+		class c_DarwinetException
 			: public std::runtime_error
 		{
 		public:
-			c_IllformedSignalStringException(const c_LogString& sMessage) : std::runtime_error(sMessage.c_str()) {};
+			c_DarwinetException(const c_LogString& sMessage) : std::runtime_error(sMessage.c_str()) {};
 		};
+
+		#define DARWINET_EXCEPTION_CLASS(X) class X : public c_DarwinetException {public: X(const c_LogString& sMessage): c_DarwinetException(sMessage) {};}
+
+		DARWINET_EXCEPTION_CLASS(c_InvalidActorIdException);
+		DARWINET_EXCEPTION_CLASS(c_IllformedSignalStringException);
 
 		//-------------------------------------------------------------------
 		c_DarwinetString toString(const c_Signal& signal);
@@ -332,13 +353,18 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		// Test clients
 
+		class c_GUIClientproxy; // Forward
+
 		class c_TestClient
 			: public c_SignalSinkIfc
 		{
 		public:
 			typedef boost::shared_ptr<c_TestClient> shared_ptr;
+			typedef c_DarwinetString c_MIVsValue;
 
 			c_TestClient(c_MessageTargetId id);
+
+			void connect(boost::shared_ptr<c_GUIClientproxy> pClientProxy);
 
 			// Begin c_SignalSinkIfc
 
@@ -354,13 +380,20 @@ namespace seedsrc {
 
 			c_SignalQueue::shared_ptr testMIVChange();
 
+			void setMIVsValue(c_MIVPath MIVsId,c_TestClient::c_MIVsValue value);
+
+
 		private:
 
 			c_MessageTargetId m_id;
+			boost::shared_ptr<c_GUIClientproxy> m_pClientProxy;
 
+			c_MessageTargetId m_MIVsHandlerId;
+
+			c_MessageTargetId getMIVsHandlerId();
 		};
 
-		typedef std::map<int,c_TestClient::shared_ptr> c_TestClients;
+		typedef std::map<unsigned int,c_TestClient::shared_ptr> c_TestClients;
 
 		/**
 		  * The c_DarwinetTestBench singleton
@@ -375,6 +408,12 @@ namespace seedsrc {
 
 			c_Signal::shared_ptr createSignal(c_MessageTargetId senderMessageTargetId,c_MessageTargetId receiverMessageTargetId);
 
+			c_TestClient::shared_ptr getTestClient(unsigned int index);
+
+			void sendMessage(c_Signal::shared_ptr pSignal);
+
+			void processMessages();
+
 		private:
 
 			c_DarwinetTestBench();
@@ -382,6 +421,11 @@ namespace seedsrc {
 			static c_DarwinetTestBench::shared_ptr m_pSharedInstance;
 
 			c_DarwinetEngine::shared_ptr m_pDarwinetEngine;
+
+			c_TestClients m_TestCients;
+
+			c_Messenger m_Messenger;
+
 		};
 
 		namespace log {
@@ -392,7 +436,9 @@ namespace seedsrc {
 
 		void test();
 
-		class c_GUIClientproxy {
+		class c_GUIClientproxy
+			: public c_SignalSinkIfc
+		{
 		public:
 			typedef boost::shared_ptr<c_GUIClientproxy> shared_ptr;
 //			typedef std::string c_MIVsIdentitier;
@@ -401,14 +447,24 @@ namespace seedsrc {
 			typedef c_DarwinetString c_MIVsIdentitier;
 			typedef c_DarwinetString c_MIVsValue;
 
-			c_GUIClientproxy() : m_pGUIWindow(NULL) {};
+			c_GUIClientproxy(c_TestClient::shared_ptr pClient);
 
 			void setMIVsValue(c_GUIClientproxy::c_MIVsIdentitier MIVsId,c_GUIClientproxy::c_MIVsValue value);
 
 			void setGUIWindowhandle(HWND pGUIWindow);
 
+			// Begin c_SignalSinkIfc
+
+			c_MessageTargetId getId();
+
+			virtual c_SignalQueue::shared_ptr actOnSignal(const c_Signal::shared_ptr& pSignal);
+
+			// End c_SignalSinkIfc
+
 		private:
 			HWND m_pGUIWindow;
+
+			c_TestClient::shared_ptr m_pClient;
 		};
 
 		/**
@@ -423,6 +479,8 @@ namespace seedsrc {
 			c_GUIClientproxy::shared_ptr getGUIClientproxy(int index);
 
 			HWND m_pGUIWindow;
+
+			void processMessages();
 
 		private:
 
