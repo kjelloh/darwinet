@@ -19,9 +19,11 @@ __published:	// IDE-managed Components
 	TGridPanel *GridPanel1;
 	TTimer *Timer1;
 	void __fastcall Timer1Timer(TObject *Sender);
+	void __fastcall FormShow(TObject *Sender);
 private:	// User declarations
 
-	std::vector<TMIVsViewFrame*> m_MIVsViewFrames;
+	typedef std::vector<TMIVsViewFrame*> c_MIVsViewFrames;
+	c_MIVsViewFrames m_MIVsViewFrames;
 
 public:		// User declarations
 	__fastcall TMainForm(TComponent* Owner);

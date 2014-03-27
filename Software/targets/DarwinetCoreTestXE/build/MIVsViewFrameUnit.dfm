@@ -1,12 +1,12 @@
 object MIVsViewFrame: TMIVsViewFrame
   Left = 0
   Top = 0
-  Width = 148
-  Height = 53
+  Width = 144
+  Height = 52
   TabOrder = 0
   object MyIntSpinEdit: TSpinEdit
-    Left = 16
-    Top = 16
+    Left = 12
+    Top = 17
     Width = 121
     Height = 22
     MaxValue = 0

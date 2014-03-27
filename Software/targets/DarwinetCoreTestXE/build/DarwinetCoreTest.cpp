@@ -10,8 +10,8 @@
 
 
 
-USEFORM("MainFormUnit.cpp", MainForm);
 USEFORM("MIVsViewFrameUnit.cpp", MIVsViewFrame); /* TFrame: File Type */
+USEFORM("MainFormUnit.cpp", MainForm);
 //---------------------------------------------------------------------------
 WINAPI _tWinMain(HINSTANCE, HINSTANCE, LPTSTR, int)
 {

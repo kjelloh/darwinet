@@ -38,6 +38,7 @@ unsigned int TMIVsViewFrame::m_instanceCount = 0;
 typedef std::map<TComponent*,bool> c_InhibitGUIOnchangeHandler;
 c_InhibitGUIOnchangeHandler InhibitGUIOnchangeHandler;
 
+//---------------------------------------------------------------------------
 class c_ScopedGUIOnChangeInhibiter {
 public:
 	c_ScopedGUIOnChangeInhibiter(TComponent* pComponent)
@@ -54,9 +55,9 @@ private:
 	TComponent* m_pComponent;
 };
 
+//---------------------------------------------------------------------------
 #define SCOPED_ONCHANGE_INHIBIT(X) c_ScopedGUIOnChangeInhibiter ScopedGUIOnChangeInhibiter(X)
-
-//void __fastcall TMIVsViewFrame::CMOnMIVsChange(TWMNoParams Message) {
+//---------------------------------------------------------------------------
 void __fastcall TMIVsViewFrame::CMOnMIVsChange(TMessage Message) {
 	try {
 		if (Message.LParam != NULL) {
@@ -68,14 +69,12 @@ void __fastcall TMIVsViewFrame::CMOnMIVsChange(TMessage Message) {
 
 			darwinet_seed::c_Signal signal(darwinet_seed::createSignalFromString(sSignal));
 			darwinet_seed::c_GUIClientproxy::c_SignalString sEventId = signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventId]);
-			if (sEventId == _UTF8sz("OnMIVValue")) {
+			if (sEventId == darwinet_seed::MIVS_EVENT_MAPPER[darwinet_seed::eMIVsEventId_OnMIVValueChanged]) {
 				darwinet_seed::c_GUIClientproxy::c_SignalString sMIV_Element = signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventSourceId]);
 				if (sMIV_Element == _UTF8sz("myInt")) {
 					String sValue(signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventValue]).c_str());
-	//				InhibitGUIOnchangeHandler[this->MyIntSpinEdit] = true;
 					SCOPED_ONCHANGE_INHIBIT(this->MyIntSpinEdit);
 					this->MyIntSpinEdit->Value = sValue.ToInt();
-	//				InhibitGUIOnchangeHandler[this->MyIntSpinEdit] = false;
 				}
 				else {
 					// Not myInt
@@ -88,14 +87,28 @@ void __fastcall TMIVsViewFrame::CMOnMIVsChange(TMessage Message) {
 				sMessage += sEventId;
 				LOG_DESIGN_INSUFFICIENCY(sMessage);
 
-            }
+			}
 		}
 		else {
 			ShowMessage("TMIVsViewFrame::CMOnMIVsChange received NULL signal");
 		}
 	}
 	CATCH_AND_LOG_IDE_STD_AND_GENERAL_EXCEPTION_DESIGN_INSUFFICIENCY;
+	this->updateGUIToReflectChanges();
 }
+
+//---------------------------------------------------------------------------
+void TMIVsViewFrame::updateGUIToReflectChanges() {
+	this->MyIntSpinEdit->Enabled = getTestBenchClientSideProxy(this)->getGUIClientproxy(m_index)->isOpen();
+}
+
+
+//---------------------------------------------------------------------------
+void TMIVsViewFrame::open() {
+	getTestBenchClientSideProxy(this)->getGUIClientproxy(m_index)->setGUIWindowhandle(this->WindowHandle);
+	getTestBenchClientSideProxy(this)->getGUIClientproxy(m_index)->open();
+}
+
 //---------------------------------------------------------------------------
 __fastcall TMIVsViewFrame::TMIVsViewFrame(TComponent* Owner,unsigned int index)
 	: TFrame(Owner)
@@ -103,6 +116,7 @@ __fastcall TMIVsViewFrame::TMIVsViewFrame(TComponent* Owner,unsigned int index)
 {
 	++m_instanceCount;
 	this->Name = String("MIVsViewFrame") + String(m_instanceCount);
+	this->updateGUIToReflectChanges();
 }
 
 //---------------------------------------------------------------------------
@@ -112,9 +126,10 @@ void __fastcall TMIVsViewFrame::MyIntSpinEditChange(TObject *Sender)
 		// Update our Viewed MIVs with the new value
 		LOG_DESIGN_INSUFFICIENCY(c_LogString("TMIVsViewFrame::MyIntSpinEditChange sets Proxy callback windows handle at each call."));
 		// TODO: Find a better way to report our windows handle to the GUI Client Proxy.
-		//       Note: We canät do it in the constructor as we have not yet been assigned our final windos hanlder there!
+		//       Note: We can't do it in the constructor as we have not yet been assigned our final windos hanlder there!
 		getTestBenchClientSideProxy(this)->getGUIClientproxy(m_index)->setGUIWindowhandle(this->WindowHandle);
 		getTestBenchClientSideProxy(this)->getGUIClientproxy(m_index)->setMIVsValue(_UTF8sz("myInt"),_UTF8sz(AnsiString(this->MyIntSpinEdit->Value).c_str()));
 	}
 }
 //---------------------------------------------------------------------------
+

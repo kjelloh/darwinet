@@ -12,7 +12,7 @@
 #include <list>
 #include <queue>
 #include <boost/function.hpp>
-//#include <windows.h>
+#include "DarwinetWindowsGUIInterface.h"
 //---------------------------------------------------------------------------
 
 /**
@@ -73,7 +73,9 @@ namespace seedsrc {
 			,eSignalField_SignalSender
 			,eSignalField_SignalReceiver
 			,eSignalField_SignalIdentifier
-			// Client to MIVs signal fields
+			// ClientListenRequest
+			,eSignalField_
+			// ModifyMIVRequest
 			,eSignalField_MIVsOperationId
 			,eSignalField_MIVsOperationTargetId
 			,eSignalField_MIVsOperationNewValue
@@ -105,7 +107,52 @@ namespace seedsrc {
 
 		};
 
+		enum e_SignalIdentifier {
+			eSignalIdentifier_Undefined
+			,eSignalIdentifier_OpenMIVsRequest
+			,eSignalIdentifier_OnMIVsOpen
+//			,eSignalIdentifier_ClientListenRequest
+//			,eSignalIdentifier_OnClientConnected
+			,eSignalIdentifier_ModifyMIVRequest
+			,eSignalIdentifier_OnMIVEvent
+			,eSignalIdentifier_Unknown
+		};
+
+		class c_SignalIdentifierMapper
+			: public std::map<e_SignalIdentifier,c_DarwinetString>
+		{
+		public:
+			typedef boost::shared_ptr<c_SignalIdentifierMapper> shared_ptr;
+			typedef std::map<e_SignalIdentifier,c_DarwinetString> _Base;
+
+			c_SignalIdentifierMapper();
+
+			virtual c_DarwinetString& operator[](e_SignalIdentifier eKey);
+
+		};
+
+		enum e_MIVsEventId {
+			eMIVsEventId_Undefined
+			,eMIVsEventId_OnMIVValueChanged
+			,eMIVsEventId_Unknown
+		};
+
+		class c_MIVsEventIdMapper
+			: public std::map<e_MIVsEventId,c_DarwinetString>
+		{
+		public:
+			typedef boost::shared_ptr<c_MIVsEventIdMapper> shared_ptr;
+			typedef std::map<e_MIVsEventId,c_DarwinetString> _Base;
+
+			c_MIVsEventIdMapper();
+
+			virtual c_DarwinetString& operator[](e_MIVsEventId eKey);
+
+		};
+
 		static c_SignalFieldMapper SIGNAL_FIELD_MAPPER;
+		static c_SignalIdentifierMapper SIGNAL_IDENTIFIER_MAPPER;
+		static c_MIVsEventIdMapper MIVS_EVENT_MAPPER;
 
 		//-------------------------------------------------------------------
 		class c_Signal : public std::vector<std::pair<c_DarwinetString,c_DarwinetString> > {
@@ -366,6 +413,10 @@ namespace seedsrc {
 
 			void connect(boost::shared_ptr<c_GUIClientproxy> pClientProxy);
 
+			void open();
+
+			bool isOpen();
+
 			// Begin c_SignalSinkIfc
 
 			c_MessageTargetId getId();
@@ -387,7 +438,7 @@ namespace seedsrc {
 
 			c_MessageTargetId m_id;
 			boost::shared_ptr<c_GUIClientproxy> m_pClientProxy;
-
+			bool m_isOpen;
 			c_MessageTargetId m_MIVsHandlerId;
 
 			c_MessageTargetId getMIVsHandlerId();
@@ -441,15 +492,18 @@ namespace seedsrc {
 		{
 		public:
 			typedef boost::shared_ptr<c_GUIClientproxy> shared_ptr;
-//			typedef std::string c_MIVsIdentitier;
-//			typedef std::string c_MIVsValue;
 			typedef c_DarwinetString c_SignalString;
-			typedef c_DarwinetString c_MIVsIdentitier;
-			typedef c_DarwinetString c_MIVsValue;
+			typedef c_DarwinetString c_MIVsId; // Identifier of a whole MIVs
+			typedef c_DarwinetString c_MIVId; // Identifier of one MIV
+			typedef c_DarwinetString c_MIVValue;
 
 			c_GUIClientproxy(c_TestClient::shared_ptr pClient);
 
-			void setMIVsValue(c_GUIClientproxy::c_MIVsIdentitier MIVsId,c_GUIClientproxy::c_MIVsValue value);
+			void open();
+
+			bool isOpen();
+
+			void setMIVsValue(c_GUIClientproxy::c_MIVId MIVId,c_GUIClientproxy::c_MIVValue value);
 
 			void setGUIWindowhandle(HWND pGUIWindow);
 
