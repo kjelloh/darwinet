@@ -65,7 +65,8 @@ void __fastcall TMIVsViewFrame::CMOnMIVsChange(TMessage Message) {
 			String sMessage = "TMIVsViewFrame::CMOnMIVsChange. Received sSignal=\"";
 			sMessage += sSignal.c_str();
 			sMessage += "\n";
-			ShowMessage(sMessage);
+			LOG_BUSINESS(toLogString(sMessage));
+//			ShowMessage(sMessage);
 
 			darwinet_seed::c_Signal signal(darwinet_seed::createSignalFromString(sSignal));
 			darwinet_seed::c_GUIClientproxy::c_SignalString sEventId = signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventId]);
@@ -126,7 +127,7 @@ void __fastcall TMIVsViewFrame::MyIntSpinEditChange(TObject *Sender)
 		// Update our Viewed MIVs with the new value
 		LOG_DESIGN_INSUFFICIENCY(c_LogString("TMIVsViewFrame::MyIntSpinEditChange sets Proxy callback windows handle at each call."));
 		// TODO: Find a better way to report our windows handle to the GUI Client Proxy.
-		//       Note: We can't do it in the constructor as we have not yet been assigned our final windos hanlder there!
+		//       Note: We can't do it in the constructor as we have not yet been assigned our final windows handler there!
 		getTestBenchClientSideProxy(this)->getGUIClientproxy(m_index)->setGUIWindowhandle(this->WindowHandle);
 		getTestBenchClientSideProxy(this)->getGUIClientproxy(m_index)->setMIVsValue(_UTF8sz("myInt"),_UTF8sz(AnsiString(this->MyIntSpinEdit->Value).c_str()));
 	}

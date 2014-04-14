@@ -73,8 +73,6 @@ namespace seedsrc {
 			,eSignalField_SignalSender
 			,eSignalField_SignalReceiver
 			,eSignalField_SignalIdentifier
-			// ClientListenRequest
-			,eSignalField_
 			// ModifyMIVRequest
 			,eSignalField_MIVsOperationId
 			,eSignalField_MIVsOperationTargetId
@@ -131,6 +129,25 @@ namespace seedsrc {
 
 		};
 
+		enum e_MIVsOperation {
+			eMIVsOperation_Undefined
+			,eMIVsOperation_Assign
+			,eMIVsOperation_Unknown
+		};
+
+		class c_MIVsOperationMapper
+			: public std::map<e_MIVsOperation,c_DarwinetString>
+		{
+		public:
+			typedef boost::shared_ptr<c_MIVsOperationMapper> shared_ptr;
+			typedef std::map<e_MIVsOperation,c_DarwinetString> _Base;
+
+			c_MIVsOperationMapper();
+
+			virtual c_DarwinetString& operator[](e_MIVsOperation eKey);
+
+		};
+
 		enum e_MIVsEventId {
 			eMIVsEventId_Undefined
 			,eMIVsEventId_OnMIVValueChanged
@@ -152,6 +169,7 @@ namespace seedsrc {
 
 		static c_SignalFieldMapper SIGNAL_FIELD_MAPPER;
 		static c_SignalIdentifierMapper SIGNAL_IDENTIFIER_MAPPER;
+		static c_MIVsOperationMapper MIVS_OPERATION_MAPPER;
 		static c_MIVsEventIdMapper MIVS_EVENT_MAPPER;
 
 		//-------------------------------------------------------------------
@@ -160,6 +178,8 @@ namespace seedsrc {
 			typedef std::vector<std::pair<c_DarwinetString,c_DarwinetString> > _Base;
 		public:
 			typedef boost::shared_ptr<c_Signal> shared_ptr;
+			typedef c_DarwinetString t_key;
+			typedef c_DarwinetString t_value;
 			typedef _Base::iterator iterator;
 			typedef _Base::const_iterator const_iterator;
 			typedef std::pair<c_DarwinetString,c_DarwinetString> Pair;
@@ -219,31 +239,31 @@ namespace seedsrc {
 
 		};
 		//-------------------------------------------------------------------
-		class c_SignalPipe :
-			 public std::queue<c_Signal::shared_ptr>
-		{
-		public:
-
-			c_SignalPipe() {
-				LOG_METHOD_SCOPE;
-			}
-
-			typedef boost::shared_ptr<c_SignalPipe> shared_ptr;
-
-			virtual void actOnInSignal(const c_Signal::shared_ptr& pSignal);
-
-			void process();
-
-			boost::function<void (const c_Signal::shared_ptr& pSignal)> onSignalToTarget;
-
-		};
+//		class c_SignalPipe :
+//			 public std::queue<c_Signal::shared_ptr>
+//		{
+//		public:
+//
+//			c_SignalPipe() {
+//				LOG_METHOD_SCOPE;
+//			}
+//
+//			typedef boost::shared_ptr<c_SignalPipe> shared_ptr;
+//
+//			virtual void actOnInSignal(const c_Signal::shared_ptr& pSignal);
+//
+//			void process();
+//
+//			boost::function<void (const c_Signal::shared_ptr& pSignal)> onSignalToTarget;
+//
+//		};
 
 		//-------------------------------------------------------------------
-		class c_SignalPipes : public std::map<int,c_SignalPipe::shared_ptr> {
-		public:
-			typedef boost::shared_ptr<c_SignalPipes> shared_ptr;
-
-		};
+//		class c_SignalPipes : public std::map<int,c_SignalPipe::shared_ptr> {
+//		public:
+//			typedef boost::shared_ptr<c_SignalPipes> shared_ptr;
+//
+//		};
 		//-------------------------------------------------------------------
 
 		class c_DarwinetException
@@ -317,9 +337,9 @@ namespace seedsrc {
 			// End c_SignalSinkIfc
 
 
-			virtual void actOnSignalFromClient(const c_Signal::shared_ptr& pSignal);
-
-			boost::function<void (const c_Signal::shared_ptr& pSignal)> onSignalToClient;
+//			virtual void actOnSignalFromClient(const c_Signal::shared_ptr& pSignal);
+//
+//			boost::function<void (const c_Signal::shared_ptr& pSignal)> onSignalToClient;
 
 		private:
 			c_MessageTargetId m_id;
@@ -417,6 +437,8 @@ namespace seedsrc {
 
 			bool isOpen();
 
+			void setMIVsid(c_MessageTargetId MIVsMessageTargetId);
+
 			// Begin c_SignalSinkIfc
 
 			c_MessageTargetId getId();
@@ -425,11 +447,11 @@ namespace seedsrc {
 
 			// End c_SignalSinkIfc
 
-			boost::function<void (const c_Signal::shared_ptr& pSignal)> onSignalToMIVs;
-
-			void actOnSignalFromMIVs(const c_Signal::shared_ptr& pSignal);
-
-			c_SignalQueue::shared_ptr testMIVChange();
+//			boost::function<void (const c_Signal::shared_ptr& pSignal)> onSignalToMIVs;
+//
+//			void actOnSignalFromMIVs(const c_Signal::shared_ptr& pSignal);
+//
+//			c_SignalQueue::shared_ptr testMIVChange();
 
 			void setMIVsValue(c_MIVPath MIVsId,c_TestClient::c_MIVsValue value);
 
@@ -482,7 +504,7 @@ namespace seedsrc {
 		namespace log {
 			c_LogString toLogString(c_Signal::shared_ptr pSignal);
 
-			void logSignalTransfer(c_Signal::shared_ptr pSignal);
+			void logSignalSend(c_Signal::shared_ptr pSignal);
 		}
 
 		void test();

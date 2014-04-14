@@ -103,6 +103,35 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
+		c_MIVsOperationMapper::c_MIVsOperationMapper()
+		{
+			// Fill the map
+			for (int i = eMIVsOperation_Undefined+1; i < eMIVsOperation_Unknown; ++i) {
+				c_DarwinetString sValue;
+				e_MIVsOperation eKey = static_cast<e_MIVsOperation>(i);
+				switch (eKey) {
+					case eMIVsOperation_Undefined: sValue = _UTF8sz("Undefined"); break;
+					case eMIVsOperation_Assign: sValue = _UTF8sz("Assign"); break;
+					case eMIVsOperation_Unknown: sValue = _UTF8sz("Unknown"); break;
+				default:
+					;
+				}
+				(*this)[eKey] = sValue;
+			}
+		}
+
+		c_DarwinetString& c_MIVsOperationMapper::operator[](e_MIVsOperation eKey) {
+			if (_Base::operator [](eKey).length() == 0) {
+				c_DarwinetString sName("??");
+				sName += c_DataRepresentationFramework::intToDecimalString(eKey);
+				sName += _UTF8sz("??");
+				_Base::operator [](eKey) = sName;
+			}
+			return _Base::operator [](eKey);
+		}
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
 		c_MIVsEventIdMapper::c_MIVsEventIdMapper()
 		{
 			// Fill the map
@@ -180,21 +209,21 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
-		void c_SignalPipe::actOnInSignal(const c_Signal::shared_ptr& pSignal) {
-			LOG_METHOD_SCOPE;
-			this->push(pSignal);
-		}
-
-		void c_SignalPipe::process() {
-			LOG_METHOD_SCOPE;
-			if (this->size() > 0) {
-				c_Signal::shared_ptr pSignal = this->front();
-				if (onSignalToTarget) {
-					onSignalToTarget(this->front());
-					this->pop();
-				}
-			}
-		};
+//		void c_SignalPipe::actOnInSignal(const c_Signal::shared_ptr& pSignal) {
+//			LOG_METHOD_SCOPE;
+//			this->push(pSignal);
+//		}
+//
+//		void c_SignalPipe::process() {
+//			LOG_METHOD_SCOPE;
+//			if (this->size() > 0) {
+//				c_Signal::shared_ptr pSignal = this->front();
+//				if (onSignalToTarget) {
+//					onSignalToTarget(this->front());
+//					this->pop();
+//				}
+//			}
+//		};
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
@@ -202,7 +231,8 @@ namespace seedsrc {
 			c_DarwinetString result;
 			for (c_Signal::const_iterator iter = signal.begin(); iter != signal.end(); ++iter) {
 				if (result.size() > 0) {
-					result += _UTF8sz("\n"); // Separate lines
+//					result += _UTF8sz("\n"); // Separate fields
+					result += _UTF8sz("; "); // Separate fields
 				}
 				result += iter->first;
 				result += _UTF8sz("=");
@@ -214,7 +244,7 @@ namespace seedsrc {
 		c_Signal createSignalFromString(const c_DarwinetString& sSignal) {
 			c_Signal result;
 			std::vector<c_DarwinetString> value_pairs;
-			boost::split(value_pairs,sSignal,boost::is_any_of("\n"));
+			boost::split(value_pairs,sSignal,boost::is_any_of(";\n"));
 			for (std::vector<c_DarwinetString>::const_iterator iter = value_pairs.begin(); iter != value_pairs.end(); ++iter) {
 				std::vector<c_DarwinetString> value_pair;
 				boost::split(value_pair,*iter,boost::is_any_of("="));
@@ -238,14 +268,16 @@ namespace seedsrc {
 		void c_Messenger::send(c_Signal::shared_ptr pSignal) {
 			if (pSignal) {
 				this->m_SignalQueue.push(pSignal);
+				log::logSignalSend(pSignal);
 			}
 		}
 
 		void c_Messenger::send(c_SignalQueue::shared_ptr pSignals) {
 			if (pSignals) {
 				while (pSignals->size() > 0) {
-					this->m_SignalQueue.push(pSignals->front());
+					c_Signal::shared_ptr pSignal = pSignals->front();
 					pSignals->pop();
+					this->send(pSignal);
 				}
 			}
 		}
@@ -274,7 +306,6 @@ namespace seedsrc {
 			if (this->m_SignalQueue.size() > 0) {
 				c_Signal::shared_ptr pSignal(this->m_SignalQueue.front());
 				this->m_SignalQueue.pop();
-				log::logSignalTransfer(pSignal);
 				c_SignalSinkIfc::shared_ptr pSignalSink = m_SignalSinks[pSignal->getTargetId()].lock();
 				if (pSignalSink) {
 					this->send(pSignalSink->actOnSignal(pSignal));
@@ -308,23 +339,48 @@ namespace seedsrc {
 				c_LogString sMessage(this->getId().toString<c_LogString>());
 				sMessage += _UTF8sz("::actOnSignal(\"");
 				sMessage += toLogString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationId]));
+				sMessage += _UTF8sz(")\"");
 				LOG_BUSINESS(sMessage);
 
-				bool simulate_direct_call_back = true;
-				if (simulate_direct_call_back) {
+				c_MessageTargetId sender = c_MessageTargetId::fromString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_SignalSender]));
+				if (sender.size() == 1) {
+					// asume it is from a client (id Client::n)
 
-					c_Signal::shared_ptr pReply = boost::make_shared<c_Signal>();
-					pReply->addElement(eSignalField_SignalSender,this->getId().toString<c_DarwinetString>());
-					pReply->addElement(eSignalField_SignalReceiver,pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_SignalSender]));
-					pReply->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_OnMIVEvent]);
+					if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationId]) == MIVS_OPERATION_MAPPER[eMIVsOperation_Assign]) {
+						bool simulate_direct_call_back = true;
+						if (simulate_direct_call_back) {
 
-					pReply->addElement(eSignalField_MIVsEventId,MIVS_EVENT_MAPPER[eMIVsEventId_OnMIVValueChanged]);
-					pReply->addElement(eSignalField_MIVsEventSourceId,pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationTargetId]));
-					pReply->addElement(eSignalField_MIVsEventValue,pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationNewValue]));
-					result->push(pReply);
+							c_Signal::shared_ptr pReply = boost::make_shared<c_Signal>();
+							pReply->addElement(eSignalField_SignalSender,this->getId().toString<c_DarwinetString>());
+							pReply->addElement(eSignalField_SignalReceiver,pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_SignalSender]));
+							pReply->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_OnMIVEvent]);
+
+							pReply->addElement(eSignalField_MIVsEventId,MIVS_EVENT_MAPPER[eMIVsEventId_OnMIVValueChanged]);
+							pReply->addElement(eSignalField_MIVsEventSourceId,pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationTargetId]));
+							pReply->addElement(eSignalField_MIVsEventValue,pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationNewValue]));
+							result->push(pReply);
+						}
+						else {
+							LOG_NOT_IMPLEMENTED;
+							// Get the MIV we want to change
+						}
+					}
+					else {
+						c_LogString sMessage;
+						sMessage += this->getId().toString<c_LogString>();
+						sMessage += _UTF8sz(": Acting on signal from ");
+						sMessage += sender.toString<c_LogString>();
+						sMessage += _UTF8sz("Not implemented. Signal Discarded. ");
+						LOG_BUSINESS(sMessage);
+					}
 				}
 				else {
-					LOG_NOT_IMPLEMENTED;
+					c_LogString sMessage;
+					sMessage += this->getId().toString<c_LogString>();
+					sMessage += _UTF8sz(": Acting on signal from ");
+					sMessage += sender.toString<c_LogString>();
+					sMessage += _UTF8sz("Not implemented. Signal Discarded. ");
+					LOG_BUSINESS(sMessage);
 				}
 			}
 			return result;
@@ -332,9 +388,9 @@ namespace seedsrc {
 
 		// End c_SignalSinkIfc
 
-		void c_MIVsHandler::actOnSignalFromClient(const c_Signal::shared_ptr& pSignal) {
-			LOG_NOT_IMPLEMENTED;
-		}
+//		void c_MIVsHandler::actOnSignalFromClient(const c_Signal::shared_ptr& pSignal) {
+//			LOG_NOT_IMPLEMENTED;
+//		}
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
@@ -428,19 +484,33 @@ namespace seedsrc {
 			bool simulate_direct_call_back = true;
 			if (simulate_direct_call_back) {
 				// Short cut the call-back for test
-//				c_Signal::shared_ptr pSignal = boost::make_shared<c_Signal>();
 				c_Signal::shared_ptr pSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),this->getId());
 				pSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_OnMIVsOpen]);
-//				this->actOnSignal(pSignal);
 				c_DarwinetTestBench::instance()->sendMessage(pSignal);
 			}
 			else {
 				LOG_NOT_IMPLEMENTED;
+				// Ask the View to connect us to its MIVs
+//				c_MessageTargetId viewMessageTargetId
+
+				c_Signal::shared_ptr pSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),this->getId());
+
 			}
 		}
 
 		bool c_TestClient::isOpen() {
 			return this->m_isOpen;
+		}
+
+		void c_TestClient::setMIVsid(c_MessageTargetId MIVsMessageTargetId) {
+			{
+				c_LogString sMessage;
+				sMessage += this->getId().toString<c_LogString>();
+				sMessage += _UTF8sz(": Setting MIVs Id to ");
+				sMessage += MIVsMessageTargetId.toString<c_LogString>();
+				LOG_BUSINESS(sMessage);
+			}
+			this->m_MIVsHandlerId = MIVsMessageTargetId;
 		}
 
 		void c_TestClient::connect(boost::shared_ptr<c_GUIClientproxy> pClientProxy) {
@@ -474,24 +544,24 @@ namespace seedsrc {
 
 		// End c_SignalSinkIfc
 
-		void c_TestClient::actOnSignalFromMIVs(const c_Signal::shared_ptr& pSignal) {
-			LOG_NOT_IMPLEMENTED;
-		}
+//		void c_TestClient::actOnSignalFromMIVs(const c_Signal::shared_ptr& pSignal) {
+//			LOG_NOT_IMPLEMENTED;
+//		}
 
-		c_SignalQueue::shared_ptr c_TestClient::testMIVChange() {
-			c_SignalQueue::shared_ptr result = boost::make_shared<c_SignalQueue>();
-			if (true) {
-				c_Signal::shared_ptr pSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),c_DarwinetTestBench::instance()->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(1)->getMIVsHandler()->getId());
-				result->push(pSignal);
-			}
-			else {
-				if (onSignalToMIVs) {
-					c_Signal::shared_ptr pSignal = boost::make_shared<c_Signal>();
-					onSignalToMIVs(pSignal);
-				}
-			}
-			return result;
-		}
+//		c_SignalQueue::shared_ptr c_TestClient::testMIVChange() {
+//			c_SignalQueue::shared_ptr result = boost::make_shared<c_SignalQueue>();
+//			if (true) {
+//				c_Signal::shared_ptr pSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),c_DarwinetTestBench::instance()->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(1)->getMIVsHandler()->getId());
+//				result->push(pSignal);
+//			}
+//			else {
+//				if (onSignalToMIVs) {
+//					c_Signal::shared_ptr pSignal = boost::make_shared<c_Signal>();
+//					onSignalToMIVs(pSignal);
+//				}
+//			}
+//			return result;
+//		}
 
 		void c_TestClient::setMIVsValue(c_MIVPath MIVsId,c_TestClient::c_MIVsValue value) {
 			bool simulate_direct_call_back = false;
@@ -511,6 +581,7 @@ namespace seedsrc {
 			else {
 //				c_Signal::shared_ptr pSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),c_DarwinetTestBench::instance()->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(m_id.back().index())->getMIVsHandler()->getId());
 				c_Signal::shared_ptr pSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),this->getMIVsHandlerId());
+				pSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_ModifyMIVRequest]);
 				pSignal->addElement(eSignalField_MIVsOperationId,_UTF8sz("Assign"));
 				pSignal->addElement(eSignalField_MIVsOperationTargetId,MIVsId.toString<c_DarwinetString>());
 				pSignal->addElement(eSignalField_MIVsOperationNewValue,value);
@@ -520,13 +591,6 @@ namespace seedsrc {
 
 		c_MessageTargetId c_TestClient::getMIVsHandlerId() {
 			if (m_MIVsHandlerId.size() == 0) {
-//				if (m_id.size() > 0) {
-//					m_MIVsHandlerId = c_DarwinetTestBench::instance()->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(m_id.back().index())->getMIVsHandler()->getId();
-//				}
-//				else {
-//					c_LogString sMessage("NULL Client Id");
-//					throw c_InvalidActorIdException(sMessage);
-//				}
 				c_LogString sMessage("NULL Client Id");
 				throw c_InvalidActorIdException(sMessage);
 			}
@@ -562,6 +626,8 @@ namespace seedsrc {
 			if (!m_TestCients[index]) {
 				c_MessageTargetId client_id(c_MessageTargetId::Node(c_MessageTargetId::Node::t_key("Client"),index));
 				c_TestClient::shared_ptr pTestClient = boost::make_shared<c_TestClient>(client_id);
+				c_MessageTargetId MIVsMessageTargetId = this->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(index)->getMIVsHandler()->getId();
+				pTestClient->setMIVsid(MIVsMessageTargetId);
 				m_Messenger.connect(pTestClient);
 				m_TestCients[index] = pTestClient;
 			}
@@ -581,7 +647,7 @@ namespace seedsrc {
 		c_DarwinetTestBench::c_DarwinetTestBench()
 		{
 			// TODO: Find a way to automatically scale up the Darwinet actors on new GUI clients (and optionally ned Domains)
-			// AHrd code what actors we have for intra-messaging.
+			// For now, Hard code what actors we have for intra-messaging.
 			m_Messenger.connect(this->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(1)->getMIVsHandler());
 			m_Messenger.connect(this->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(2)->getMIVsHandler());
 			m_Messenger.connect(this->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(1));
@@ -614,7 +680,7 @@ namespace seedsrc {
 				return result;
 			}
 
-			void logSignalTransfer(c_Signal::shared_ptr pSignal) {
+			void logSignalSend(c_Signal::shared_ptr pSignal) {
 				c_LogString sMessage("NULL Signal");
 				if (pSignal) {
 					sMessage = pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_SignalSender]);
@@ -645,41 +711,41 @@ namespace seedsrc {
 				Messenger.connect(c_DarwinetTestBench::instance()->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(2));
 				Messenger.connect(c_DarwinetTestBench::instance()->getDarwinetEngine()->getDomainHandler(1));
 
-				Messenger.send(pClient1->testMIVChange());
+//				Messenger.send(pClient1->testMIVChange());
 				for (int i = 0; i < 10; i++) {
 					Messenger.process();
 				}
 			}
 			else {
-				c_TestClient::shared_ptr pClient1 = boost::make_shared<c_TestClient>(c_MessageTargetId(c_MessageTargetId::Node(c_MessageTargetId::Node::t_key("Client"),1)));
-				c_TestClient::shared_ptr pClient2 = boost::make_shared<c_TestClient>(c_MessageTargetId(c_MessageTargetId::Node(c_MessageTargetId::Node::t_key("Client"),2)));
-
-				c_DarwinetEngine::shared_ptr pEngine = boost::make_shared<c_DarwinetEngine>(c_MessageTargetId(c_MessageTargetId::Node(c_MessageTargetId::Node::t_key("Engine"),1)));
-
-				c_SignalPipes::shared_ptr pMessenger = boost::make_shared<c_SignalPipes>();
-
-				// About function pointers; See http://stackoverflow.com/questions/15323299/passing-function-pointer-arguments-with-boost
-				// Note: boost::bind stores copies of all provided parameters. But as we provide a smart pointer as the object pointer
-				//       the copied smart pointer still refers to the same object :)
-				//       I make this node because I tried providing *pSmartPointer as second parameter to bind. But
-				//       then bind stored and called a copy (!) of the provided instance (took me a while to realize)
-
-				// Bind Client -> MIVs Queue -> MIVs
-				c_SignalPipe::shared_ptr pClientToMIVs1SignalPipe = boost::make_shared<c_SignalPipe>();
-				// Bind Client -> MIVs Queue
-				pClient1->onSignalToMIVs = boost::bind(&c_SignalPipe::actOnInSignal,pClientToMIVs1SignalPipe,_1);
-				// Bind           MIVs Queue -> MIVs
-				pClientToMIVs1SignalPipe->onSignalToTarget = boost::bind(&c_MIVsHandler::actOnSignalFromClient,pEngine->getDomainHandler(1)->getViewHandler(1)->getMIVsHandler(),_1);
-				// Bind MIVs -> Client Queue -> Client
-				c_SignalPipe::shared_ptr pMIVsToClient1SignalPipe = boost::make_shared<c_SignalPipe>();
-				// Bind MIVs -> Client Queue
-				pEngine->getDomainHandler(1)->getViewHandler(1)->getMIVsHandler()->onSignalToClient
-					= boost::bind(&c_SignalPipe::actOnInSignal,pMIVsToClient1SignalPipe,_1);
-				// Bind         Client Queue -> Client
-				pMIVsToClient1SignalPipe->onSignalToTarget = boost::bind(&c_TestClient::actOnSignalFromMIVs,pClient1,_1);
-
-				pClient1->testMIVChange();
-				pClientToMIVs1SignalPipe->process();
+//				c_TestClient::shared_ptr pClient1 = boost::make_shared<c_TestClient>(c_MessageTargetId(c_MessageTargetId::Node(c_MessageTargetId::Node::t_key("Client"),1)));
+//				c_TestClient::shared_ptr pClient2 = boost::make_shared<c_TestClient>(c_MessageTargetId(c_MessageTargetId::Node(c_MessageTargetId::Node::t_key("Client"),2)));
+//
+//				c_DarwinetEngine::shared_ptr pEngine = boost::make_shared<c_DarwinetEngine>(c_MessageTargetId(c_MessageTargetId::Node(c_MessageTargetId::Node::t_key("Engine"),1)));
+//
+//				c_SignalPipes::shared_ptr pMessenger = boost::make_shared<c_SignalPipes>();
+//
+//				// About function pointers; See http://stackoverflow.com/questions/15323299/passing-function-pointer-arguments-with-boost
+//				// Note: boost::bind stores copies of all provided parameters. But as we provide a smart pointer as the object pointer
+//				//       the copied smart pointer still refers to the same object :)
+//				//       I make this node because I tried providing *pSmartPointer as second parameter to bind. But
+//				//       then bind stored and called a copy (!) of the provided instance (took me a while to realize)
+//
+//				// Bind Client -> MIVs Queue -> MIVs
+//				c_SignalPipe::shared_ptr pClientToMIVs1SignalPipe = boost::make_shared<c_SignalPipe>();
+//				// Bind Client -> MIVs Queue
+//				pClient1->onSignalToMIVs = boost::bind(&c_SignalPipe::actOnInSignal,pClientToMIVs1SignalPipe,_1);
+//				// Bind           MIVs Queue -> MIVs
+//				pClientToMIVs1SignalPipe->onSignalToTarget = boost::bind(&c_MIVsHandler::actOnSignalFromClient,pEngine->getDomainHandler(1)->getViewHandler(1)->getMIVsHandler(),_1);
+//				// Bind MIVs -> Client Queue -> Client
+//				c_SignalPipe::shared_ptr pMIVsToClient1SignalPipe = boost::make_shared<c_SignalPipe>();
+//				// Bind MIVs -> Client Queue
+//				pEngine->getDomainHandler(1)->getViewHandler(1)->getMIVsHandler()->onSignalToClient
+//					= boost::bind(&c_SignalPipe::actOnInSignal,pMIVsToClient1SignalPipe,_1);
+//				// Bind         Client Queue -> Client
+//				pMIVsToClient1SignalPipe->onSignalToTarget = boost::bind(&c_TestClient::actOnSignalFromMIVs,pClient1,_1);
+//
+//				pClient1->testMIVChange();
+//				pClientToMIVs1SignalPipe->process();
 			}
 		}
 
