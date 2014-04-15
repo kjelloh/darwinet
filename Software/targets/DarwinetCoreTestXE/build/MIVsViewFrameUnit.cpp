@@ -129,7 +129,7 @@ void __fastcall TMIVsViewFrame::MyIntSpinEditChange(TObject *Sender)
 		// TODO: Find a better way to report our windows handle to the GUI Client Proxy.
 		//       Note: We can't do it in the constructor as we have not yet been assigned our final windows handler there!
 		getTestBenchClientSideProxy(this)->getGUIClientproxy(m_index)->setGUIWindowhandle(this->WindowHandle);
-		getTestBenchClientSideProxy(this)->getGUIClientproxy(m_index)->setMIVsValue(_UTF8sz("myInt"),_UTF8sz(AnsiString(this->MyIntSpinEdit->Value).c_str()));
+		getTestBenchClientSideProxy(this)->getGUIClientproxy(m_index)->setMIVsValue(_UTF8sz("myInt:0"),_UTF8sz(AnsiString(this->MyIntSpinEdit->Value).c_str()));
 	}
 }
 //---------------------------------------------------------------------------

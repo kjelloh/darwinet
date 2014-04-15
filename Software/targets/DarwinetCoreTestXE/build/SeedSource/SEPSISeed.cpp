@@ -227,40 +227,13 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
-		c_DarwinetString toString(const c_Signal& signal) {
-			c_DarwinetString result;
-			for (c_Signal::const_iterator iter = signal.begin(); iter != signal.end(); ++iter) {
-				if (result.size() > 0) {
-//					result += _UTF8sz("\n"); // Separate fields
-					result += _UTF8sz("; "); // Separate fields
-				}
-				result += iter->first;
-				result += _UTF8sz("=");
-				result += iter->second;
-			}
-			return result;
-		}
-
-		c_Signal createSignalFromString(const c_DarwinetString& sSignal) {
-			c_Signal result;
-			std::vector<c_DarwinetString> value_pairs;
-			boost::split(value_pairs,sSignal,boost::is_any_of(";\n"));
-			for (std::vector<c_DarwinetString>::const_iterator iter = value_pairs.begin(); iter != value_pairs.end(); ++iter) {
-				std::vector<c_DarwinetString> value_pair;
-				boost::split(value_pair,*iter,boost::is_any_of("="));
-				if (value_pair.size() == 2) {
-					result.push_back(std::make_pair(value_pair[0],value_pair[1]));
-				}
-				else {
-					// Wrong format
-					c_LogString sMessage("Failed to create Signal from string=\"");
-					sMessage += _UTF8sz("\". Wrong format found in value pair string = \"");
-					sMessage += *iter;
-					sMessage += _UTF8sz("\"");
-					throw c_IllformedSignalStringException(sMessage);
+		void c_SignalQueue::append(c_SignalQueue::shared_ptr pQueue) {
+			if (pQueue) {
+				while (pQueue->size() > 0) {
+					this->push(pQueue->front());
+					pQueue->pop();
 				}
 			}
-			return result;
 		}
 
 		//-------------------------------------------------------------------
@@ -318,6 +291,119 @@ namespace seedsrc {
 				};
 			}
 		}
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+
+		c_DarwinetString toString(const c_Signal& signal) {
+			c_DarwinetString result;
+			for (c_Signal::const_iterator iter = signal.begin(); iter != signal.end(); ++iter) {
+				if (result.size() > 0) {
+//					result += _UTF8sz("\n"); // Separate fields
+					result += _UTF8sz("; "); // Separate fields
+				}
+				result += iter->first;
+				result += _UTF8sz("=");
+				result += iter->second;
+			}
+			return result;
+		}
+
+		c_Signal createSignalFromString(const c_DarwinetString& sSignal) {
+			c_Signal result;
+			std::vector<c_DarwinetString> value_pairs;
+			boost::split(value_pairs,sSignal,boost::is_any_of(";\n"));
+			for (std::vector<c_DarwinetString>::const_iterator iter = value_pairs.begin(); iter != value_pairs.end(); ++iter) {
+				std::vector<c_DarwinetString> value_pair;
+				boost::split(value_pair,*iter,boost::is_any_of("="));
+				if (value_pair.size() == 2) {
+					result.push_back(std::make_pair(value_pair[0],value_pair[1]));
+				}
+				else {
+					// Wrong format
+					c_LogString sMessage("Failed to create Signal from string=\"");
+					sMessage += _UTF8sz("\". Wrong format found in value pair string = \"");
+					sMessage += *iter;
+					sMessage += _UTF8sz("\"");
+					throw c_IllformedSignalStringException(sMessage);
+				}
+			}
+			return result;
+		}
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+
+		class c_CreateSetValueDelta : public boost::static_visitor<c_V> {
+		public:
+
+			c_CreateSetValueDelta(c_V_shared_ptr pNewValue) : m_pNewValue(pNewValue) {};
+
+			c_V operator()(c_IntValue& current_value) const {
+				c_IntValue result;
+				LOG_NOT_IMPLEMENTED;
+				return result;
+			}
+
+			c_V operator()(const c_StringValue& current_value) const {
+				c_StringValue result;
+				LOG_NOT_IMPLEMENTED;
+				return result;
+			}
+
+			c_V operator()(const c_RecordValue& current_value) const {
+				c_RecordValue result;
+				LOG_NOT_IMPLEMENTED;
+				return result;
+			}
+
+			c_V operator()(const c_ArrayValue& current_value) const {
+				c_ArrayValue result;
+				LOG_NOT_IMPLEMENTED;
+				return result;
+			}
+		private:
+			c_V_shared_ptr m_pNewValue;
+		};
+
+		c_Delta::shared_ptr c_MIVs::createSetValueDelta(c_MIVPath id,c_V_shared_ptr pNewValue) {
+			c_Delta::shared_ptr result(new c_Delta());
+			LOG_NOT_IMPLEMENTED;
+			c_MappedIs::iterator iterI = this->m_MappedIs.find(id);
+			if (iterI != this->m_MappedIs.end()) {
+				// It's there
+				c_CreateSetValueDelta visitor(pNewValue);
+				c_V current_value = *iterI->second->value();
+				c_V delta_value = boost::apply_visitor(visitor,current_value);
+
+				{
+					// TODO:
+					c_LogString sMessage("Delta not fully populated");
+					LOG_DESIGN_INSUFFICIENCY(sMessage);
+				}
+			}
+			else {
+				// No such instance
+				c_LogString sMessage("MIV Instance ");
+				sMessage += id.toString<c_LogString>();
+				sMessage += _UTF8sz(" does not exist.");
+				bool auto_create_unexisting_instance = true;
+				if (auto_create_unexisting_instance) {
+					sMessage += _UTF8sz(" Will auto-create it. Please remove when dM processing is in place!");
+					LOG_DESIGN_INSUFFICIENCY(sMessage);
+					result = this->createSetValueDelta(id,pNewValue); // recursive call
+				}
+				else {
+					throw c_NoSuchIException(sMessage);
+				}
+
+			}
+			return result;
+		}
+
+		c_SignalQueue::shared_ptr c_MIVs::actOnDelta(c_Delta::shared_ptr delta) {
+			c_SignalQueue::shared_ptr result(new c_SignalQueue());
+			LOG_NOT_IMPLEMENTED;
+			return result;
+		}
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
@@ -347,6 +433,7 @@ namespace seedsrc {
 					// asume it is from a client (id Client::n)
 
 					if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationId]) == MIVS_OPERATION_MAPPER[eMIVsOperation_Assign]) {
+						// Value Assign request
 						bool simulate_direct_call_back = true;
 						if (simulate_direct_call_back) {
 
@@ -361,8 +448,28 @@ namespace seedsrc {
 							result->push(pReply);
 						}
 						else {
-							LOG_NOT_IMPLEMENTED;
 							// Get the MIV we want to change
+							c_DarwinetString sTargetId = pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationTargetId]);
+							c_MIVPath target_miv_path = c_MIVPath::fromString(sTargetId);
+							c_DarwinetString sNewValue = pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationNewValue]);
+							{
+								c_LogString sMessage(METHOD_NAME + c_LogString(", Actual MIV model of target "));
+								sMessage += sTargetId;
+								sMessage += _UTF8sz(" not determined. Will assume integer instance");
+								LOG_DESIGN_INSUFFICIENCY(sMessage);
+							}
+//							c_V_shared_ptr pNewValue = boost::make_shared<c_IntValue>(c_DataRepresentationFramework::intValueOfDecimalString(sNewValue));
+							c_V_shared_ptr pNewValue;
+							c_Delta::shared_ptr pDelta = this->m_pMIVs->createSetValueDelta(target_miv_path,pNewValue);
+							bool short_cut_delta_distribution = true;
+							if (short_cut_delta_distribution) {
+								result->append(this->m_pMIVs->actOnDelta(pDelta));
+							}
+							else {
+								c_LogString sMessage(METHOD_NAME + c_LogString(", Distribution of created Delta not yet Implemented"));
+								LOG_DESIGN_INSUFFICIENCY(sMessage);
+							}
+
 						}
 					}
 					else {
@@ -648,11 +755,13 @@ namespace seedsrc {
 		{
 			// TODO: Find a way to automatically scale up the Darwinet actors on new GUI clients (and optionally ned Domains)
 			// For now, Hard code what actors we have for intra-messaging.
-			m_Messenger.connect(this->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(1)->getMIVsHandler());
-			m_Messenger.connect(this->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(2)->getMIVsHandler());
+			m_Messenger.connect(this->getDarwinetEngine()->getDomainHandler(1));
 			m_Messenger.connect(this->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(1));
 			m_Messenger.connect(this->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(2));
-			m_Messenger.connect(this->getDarwinetEngine()->getDomainHandler(1));
+			m_Messenger.connect(this->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(3));
+			m_Messenger.connect(this->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(1)->getMIVsHandler());
+			m_Messenger.connect(this->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(2)->getMIVsHandler());
+			m_Messenger.connect(this->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(3)->getMIVsHandler());
 			LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" uses Hard Coded Domain and View instances. Will NOT adapt to dynamic instancing of Clients."));
 		}
 
