@@ -279,8 +279,8 @@ namespace seedsrc {
 
 		DARWINET_EXCEPTION_CLASS(c_InvalidActorIdException);
 		DARWINET_EXCEPTION_CLASS(c_IllformedSignalStringException);
-		DARWINET_EXCEPTION_CLASS(c_NoSuchMException);
-		DARWINET_EXCEPTION_CLASS(c_NoSuchIException);
+		DARWINET_EXCEPTION_CLASS(c_NoSuchMIVException);
+		DARWINET_EXCEPTION_CLASS(c_NULLDeltaException);
 
 		//-------------------------------------------------------------------
 		c_DarwinetString toString(const c_Signal& signal);
@@ -339,6 +339,12 @@ namespace seedsrc {
 			void setBranch(const c_DeltaBranchIdentifier& branch) {m_Branch = branch;}
 			void setSeqNo(const t_DeltaSeqNo& seq_no) {m_SeqNo = seq_no;}
 
+			bool operator==(const c_DeltaIndex& other_value) const {
+				return (      (m_Producer == other_value.m_Producer)
+						   && (m_Branch == other_value.m_Branch)
+						   && (m_SeqNo == other_value.m_SeqNo));
+			}
+
 		private:
 			c_MIVsProducerIdentifier m_Producer;
 			c_DeltaBranchIdentifier m_Branch;
@@ -346,9 +352,9 @@ namespace seedsrc {
 		};
 
 		//-------------------------------------------------------------------
-		class c_V2 {
+		class c_V {
 		public:
-			typedef boost::shared_ptr<c_V2> shared_ptr;
+			typedef boost::shared_ptr<c_V> shared_ptr;
 
 			const c_DeltaIndex& getState() const {return m_State;}
 			const c_Value& getValue() const {return m_Value;}
@@ -361,17 +367,17 @@ namespace seedsrc {
 			c_Value m_Value;
 		};
 
-		typedef std::map<c_MIVPath,c_V2::shared_ptr> c_MappedVs;
+		typedef std::map<c_MIVPath,c_V::shared_ptr> c_MappedVs;
 
 		class c_I {
 		public:
 			typedef boost::shared_ptr<c_I> shared_ptr;
 
-			c_V2::shared_ptr getV() {return m_pV;}
-			void setV(c_V2::shared_ptr pV) {m_pV = pV;}
+			c_V::shared_ptr getV() {return m_pV;}
+			void setV(c_V::shared_ptr pV) {m_pV = pV;}
 
 		private:
-			c_V2::shared_ptr m_pV;
+			c_V::shared_ptr m_pV;
 		};
 
 		typedef std::map<c_MIVPath,c_I::shared_ptr> c_MappedIs;
@@ -457,19 +463,38 @@ namespace seedsrc {
 		};
 		//-------------------------------------------------------------------
 
+		typedef boost::variant<c_M,c_I,c_V> c_MIVBody;
+		typedef boost::shared_ptr<c_MIVBody> c_MIVBody_shared_ptr;
+
+		class c_MIV {
+		public:
+			typedef boost::shared_ptr<c_MIV> shared_ptr;
+			c_DeltaIndex getState() {return m_State;}
+			c_MIVBody& getBody() {return m_MIVBody;} // Return ref to allow variant visitor to visit
+
+			void setState(const c_DeltaIndex& state) {m_State = state;}
+			void setBody(const c_MIVBody& body) {m_MIVBody = body;}
+
+		private:
+			c_DeltaIndex m_State; // Index of last applied Delta defining this state
+			c_MIVBody m_MIVBody;
+		};
+
+		typedef std::map<c_MIVPath,c_MIV::shared_ptr> c_MappedMIVs;
+
+
 		class c_MIVs {
 		public:
 			typedef boost::shared_ptr<c_MIVs> shared_ptr;
 
 			c_Delta::shared_ptr createSetValueDelta(c_MIVPath id,c_Value_shared_ptr pNewValue);
+			c_SignalQueue::shared_ptr actOnDelta(c_Delta::shared_ptr pDelta);
 
-			c_SignalQueue::shared_ptr actOnDelta(c_Delta::shared_ptr delta);
 		private:
+
 			c_DeltaIndex m_LastCreatedDeltaIndex;
 			c_DeltaIndex m_LastAppliedDeltaIndex;
-			c_MappedMs m_MappedMs;
-			c_MappedIs m_MappedIs;
-			c_MappedVs m_MappedVs;
+			c_MappedMIVs m_MappedMIVs;
 		};
 
 		//-------------------------------------------------------------------
@@ -491,6 +516,9 @@ namespace seedsrc {
 
 
 		private:
+
+			c_Delta::shared_ptr createSetValueDelta(c_MIVPath id,c_Value_shared_ptr pNewValue);
+			c_SignalQueue::shared_ptr actOnDelta(c_Delta::shared_ptr pDelta);
 
 			c_MIVs::shared_ptr getMIVs();
 
@@ -654,6 +682,8 @@ namespace seedsrc {
 
 		namespace log {
 			c_LogString toLogString(c_Signal::shared_ptr pSignal);
+			c_LogString toLogString(const c_MIVTarget& miv_target);
+			c_LogString toLogString(const c_DeltaIndex& index);
 
 			void logSignalSend(c_Signal::shared_ptr pSignal);
 		}

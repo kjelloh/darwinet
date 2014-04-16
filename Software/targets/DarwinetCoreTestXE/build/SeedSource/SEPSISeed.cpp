@@ -394,19 +394,20 @@ namespace seedsrc {
 		c_Delta::shared_ptr c_MIVs::createSetValueDelta(c_MIVPath id,c_Value_shared_ptr pNewValue) {
 			LOG_METHOD_SCOPE;
 			c_Delta::shared_ptr result(new c_Delta());
-			c_MappedIs::iterator iterI = this->m_MappedIs.find(id);
-			if (iterI != this->m_MappedIs.end()) {
+			c_MappedMIVs::iterator iterMIV = this->m_MappedMIVs.find(id);
+			if (iterMIV != this->m_MappedMIVs.end()) {
 				// It's there
 				c_MIVTarget miv_target;
-				miv_target.setState(iterI->second->getV()->getState());
-
+				miv_target.setState(iterMIV->second->getState());
+				miv_target.setMIVId(id);
 				result->setMIVtarget(miv_target);
 				c_DeltaIndex new_delta_index = this->m_LastCreatedDeltaIndex;
 
-
 				result->setPredecessor(this->m_LastAppliedDeltaIndex);
 				c_CreateSetValueDeltaOperation visitor(pNewValue);
-				c_Value current_value = iterI->second->getV()->getValue();
+				// Asume provided id leads to a V
+				c_V current_V = boost::get<c_V>(iterMIV->second->getBody());
+				c_Value current_value = current_V.getValue();
 				c_DeltaOperation_shared_ptr pDeltaOperation = boost::make_shared<c_DeltaOperation>(boost::apply_visitor(visitor,current_value));
 				result->setDeltaOperation(pDeltaOperation);
 				{
@@ -426,32 +427,96 @@ namespace seedsrc {
 					LOG_DESIGN_INSUFFICIENCY(sMessage);
 					// Create a new I instance
 					{
-						LOG_DESIGN_INSUFFICIENCY(c_LogString("Setting of I and V state not yet implemented when auto-created in") + METHOD_NAME);
+						LOG_DESIGN_INSUFFICIENCY(c_LogString("Setting of MIV state not yet implemented when auto-created in") + METHOD_NAME);
 					}
-					c_I::shared_ptr pNewI = boost::make_shared<c_I>();
-					c_V2::shared_ptr pNewV = boost::make_shared<c_V2>();
-//					pNewV->setState(/* The index of the dI creating this default value or the dV setting the default value */);
+					c_MIV::shared_ptr pNewMIV = boost::make_shared<c_MIV>();
+					c_V::shared_ptr pNewV = boost::make_shared<c_V>();
 					pNewV->setValue(*pNewValue);
-//					pNewI->setState(/* The index of the dI creating this instance*/);
-					pNewI->setV(pNewV);
-					m_MappedIs[id] = pNewI;
+					pNewMIV->setBody(*pNewV);
+					{
+						LOG_DESIGN_INSUFFICIENCY(c_LogString("Only V (no M or I) is auto-created in") + METHOD_NAME);
+					}
+
+					m_MappedMIVs[id] = pNewMIV;
 					result = this->createSetValueDelta(id,pNewValue); // recursive call
 				}
 				else {
-					throw c_NoSuchIException(sMessage);
+					throw c_NoSuchMIVException(METHOD_NAME + c_LogString(" failed. No MIV found for id=") + id.toString<c_LogString>());
 				}
 
 			}
 			return result;
 		}
 
-		c_SignalQueue::shared_ptr c_MIVs::actOnDelta(c_Delta::shared_ptr delta) {
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+		class c_ApplyDeltaToMIVBody : public boost::static_visitor<> {
+		public:
+
+			c_ApplyDeltaToMIVBody(c_DeltaOperation_shared_ptr pDeltaOperation) : m_pDeltaOperation(pDeltaOperation) {};
+
+
+			void operator()(c_M& m) const {
+				LOG_NOT_IMPLEMENTED;
+			}
+
+			void operator()(c_I& i) const {
+				LOG_NOT_IMPLEMENTED;
+			}
+
+			void operator()(c_V& v) const {
+				LOG_NOT_IMPLEMENTED;
+			}
+
+		private:
+			c_DeltaOperation_shared_ptr m_pDeltaOperation;
+		};
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+		c_SignalQueue::shared_ptr c_MIVs::actOnDelta(c_Delta::shared_ptr pDelta) {
 			c_SignalQueue::shared_ptr result(new c_SignalQueue());
 			LOG_NOT_IMPLEMENTED;
 
 			// Find the MIV to apply the delta to
+			if (pDelta) {
+				c_MappedMIVs::iterator iter_MIV = this->m_MappedMIVs.find(pDelta->getMIVtarget().getMIVId());
+				if (iter_MIV != m_MappedMIVs.end()) {
+					c_MIV::shared_ptr pTargetMIV = iter_MIV->second;
+					// Apply the delta operation to the MIV body (they shall match)
+					if (pTargetMIV->getState() == pDelta->getMIVtarget().getState()) {
+						// our MIV state and delta target state matches. Ok to apply
+						c_ApplyDeltaToMIVBody visitor(pDelta->getDeltaOperation());
+						boost::apply_visitor(visitor,pTargetMIV->getBody());
+						{
+							// Create the signal that alerts the Client about the change
+							c_Signal::shared_ptr pReply = boost::make_shared<c_Signal>();
+//							pReply->addElement(eSignalField_SignalSender,this->getId().toString<c_DarwinetString>());
+//							pReply->addElement(eSignalField_SignalReceiver,pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_SignalSender]));
+							pReply->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_OnMIVEvent]);
 
+							pReply->addElement(eSignalField_MIVsEventSourceId,pDelta->getMIVtarget().getMIVId().toString<c_DarwinetString>());
+							if (pTargetMIV->getBody().type() == typeid(c_V)) {
+								// It is a V
+								pReply->addElement(eSignalField_MIVsEventId,MIVS_EVENT_MAPPER[eMIVsEventId_OnMIVValueChanged]);
+//								pReply->addElement(eSignalField_MIVsEventValue,pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationNewValue]));
+							}
+							result->push(pReply);
 
+						}
+					}
+					else {
+						LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" failed to match MIV state") + log::toLogString(iter_MIV->second->getState()) + c_LogString(" with delta target state") + log::toLogString(pDelta->getMIVtarget().getState()));
+					}
+				}
+				else {
+					throw c_NoSuchMIVException(METHOD_NAME + c_LogString(" failed. No MIV found for delta target =") + pDelta->getMIVtarget().getMIVId().toString<c_LogString>());
+				}
+			}
+			else {
+				throw c_NULLDeltaException(METHOD_NAME + c_LogString(" Called with NULL pDelta"));
+			}
 			return result;
 		}
 
@@ -509,10 +574,10 @@ namespace seedsrc {
 								LOG_DESIGN_INSUFFICIENCY(sMessage);
 							}
 							c_Value_shared_ptr pNewValue = boost::make_shared<c_Value>(c_IntValue(c_DataRepresentationFramework::intValueOfDecimalString(sNewValue)));
-							c_Delta::shared_ptr pDelta = this->getMIVs()->createSetValueDelta(target_miv_path,pNewValue);
+							c_Delta::shared_ptr pDelta = this->createSetValueDelta(target_miv_path,pNewValue);
 							bool short_cut_delta_distribution = true;
 							if (short_cut_delta_distribution) {
-								c_SignalQueue::shared_ptr pDeltaCreationResponse = this->getMIVs()->actOnDelta(pDelta);
+								c_SignalQueue::shared_ptr pDeltaCreationResponse = this->actOnDelta(pDelta);
 								result->append(pDeltaCreationResponse);
 							}
 							else {
@@ -546,6 +611,20 @@ namespace seedsrc {
 		}
 
 		// End c_SignalSinkIfc
+
+		c_Delta::shared_ptr c_MIVsHandler::createSetValueDelta(c_MIVPath id,c_Value_shared_ptr pNewValue) {
+			{
+				LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" should implement c_MIVs::createSetValueDelta() itself"));
+			}
+			return this->getMIVs()->createSetValueDelta(id,pNewValue);
+		}
+
+		c_SignalQueue::shared_ptr c_MIVsHandler::actOnDelta(c_Delta::shared_ptr pDelta) {
+			{
+				LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" should implement c_MIVs::actOnDelta() itself"));
+			}
+			return this->getMIVs()->actOnDelta(pDelta);
+		}
 
 		c_MIVs::shared_ptr c_MIVsHandler::getMIVs() {
 			if (!this->m_pMIVs) {
@@ -831,9 +910,7 @@ namespace seedsrc {
 				c_LogString result;
 				if (pSignal) {
 					for (c_Signal::const_iterator iter = pSignal->begin(); iter != pSignal->end(); ++iter) {
-						if (result.size() > 0) {
-							result += _UTF8sz("\n"); // add separator
-						}
+						result += _UTF8sz("\n\t"); // Infdent each key, value row
 						result += toLogString(iter->first);
 						result += _UTF8sz("=");
 						result += toLogString(iter->second);
@@ -842,6 +919,28 @@ namespace seedsrc {
 				else {
 					result = _UTF8sz("NULL");
 				}
+				return result;
+			}
+
+			c_LogString toLogString(const c_DeltaIndex& index) {
+				c_LogString result;
+				result += _UTF8sz("index{");
+				result += toLogString(index.getProducer());
+				result += _UTF8sz(", ");
+				result += toLogString(index.getBranch());
+				result += _UTF8sz(", ");
+				result += c_DataRepresentationFramework::intToDecimalString(index.getSeqNo());
+				result += _UTF8sz("}");
+				return result;
+			}
+
+			c_LogString toLogString(const c_MIVTarget& miv_target) {
+				c_LogString result;
+				result += _UTF8sz("state{");
+				result += toLogString(miv_target.getState());
+				result += _UTF8sz(", ");
+				result += miv_target.getMIVId().toString<c_LogString>();
+				result += _UTF8sz("}");
 				return result;
 			}
 
