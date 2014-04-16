@@ -332,48 +332,83 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
-		class c_CreateSetValueDelta : public boost::static_visitor<c_V> {
+		c_IntDeltaOperation::c_IntDeltaOperation(const c_IntValue& value,e_IntOperationId int_operation_id)
+			:  m_value(value)
+			  ,m_int_operation_id(int_operation_id)
+		{
+			LOG_METHOD_SCOPE;
+		}
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+		c_DeltaIndex c_Delta::getPredecessor() const {return m_Predecessor;}
+		c_MIVTarget c_Delta::getMIVtarget() const { return m_Target;}
+		c_DeltaIndex c_Delta::getIndex() const { return m_Index;}
+		c_DeltaOperation_shared_ptr c_Delta::getDeltaOperation() const {return m_pDeltaOperation;}
+
+		void c_Delta::setPredecessor(const c_DeltaIndex& predecessor) {m_Predecessor = predecessor;}
+		void c_Delta::setMIVtarget(const c_MIVTarget& target) { m_Target = target;}
+		void c_Delta::setIndex(const c_DeltaIndex& index) { m_Index = index;}
+		void c_Delta::setDeltaOperation(const c_DeltaOperation_shared_ptr& pDeltaOperation) {m_pDeltaOperation = pDeltaOperation;}
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+
+		class c_CreateSetValueDeltaOperation : public boost::static_visitor<c_DeltaOperation> {
 		public:
 
-			c_CreateSetValueDelta(c_V_shared_ptr pNewValue) : m_pNewValue(pNewValue) {};
+			c_CreateSetValueDeltaOperation(c_Value_shared_ptr pNewValue) : m_pNewValue(pNewValue) {};
 
-			c_V operator()(c_IntValue& current_value) const {
-				c_IntValue result;
+			c_DeltaOperation operator()(c_IntValue& current_value) const {
+				LOG_METHOD_SCOPE;
+				int integer_delta = boost::get<c_IntValue>(*m_pNewValue).getRawValue() - current_value.getRawValue();
+				return c_IntDeltaOperation(c_IntValue(integer_delta),eIntOperationId_ADD);
+			}
+
+			c_DeltaOperation operator()(const c_StringValue& current_value) const {
+				LOG_METHOD_SCOPE;
+				c_StringDeltaOperation result;
 				LOG_NOT_IMPLEMENTED;
 				return result;
 			}
 
-			c_V operator()(const c_StringValue& current_value) const {
-				c_StringValue result;
+			c_DeltaOperation operator()(const c_RecordValue& current_value) const {
+				LOG_METHOD_SCOPE;
+				c_RecordDeltaOperation result;
 				LOG_NOT_IMPLEMENTED;
 				return result;
 			}
 
-			c_V operator()(const c_RecordValue& current_value) const {
-				c_RecordValue result;
-				LOG_NOT_IMPLEMENTED;
-				return result;
-			}
-
-			c_V operator()(const c_ArrayValue& current_value) const {
-				c_ArrayValue result;
+			c_DeltaOperation operator()(const c_ArrayValue& current_value) const {
+				LOG_METHOD_SCOPE;
+				c_ArrayDeltaOperation result;
 				LOG_NOT_IMPLEMENTED;
 				return result;
 			}
 		private:
-			c_V_shared_ptr m_pNewValue;
+			c_Value_shared_ptr m_pNewValue;
 		};
 
-		c_Delta::shared_ptr c_MIVs::createSetValueDelta(c_MIVPath id,c_V_shared_ptr pNewValue) {
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+		c_Delta::shared_ptr c_MIVs::createSetValueDelta(c_MIVPath id,c_Value_shared_ptr pNewValue) {
+			LOG_METHOD_SCOPE;
 			c_Delta::shared_ptr result(new c_Delta());
-			LOG_NOT_IMPLEMENTED;
 			c_MappedIs::iterator iterI = this->m_MappedIs.find(id);
 			if (iterI != this->m_MappedIs.end()) {
 				// It's there
-				c_CreateSetValueDelta visitor(pNewValue);
-				c_V current_value = *iterI->second->value();
-				c_V delta_value = boost::apply_visitor(visitor,current_value);
+				c_MIVTarget miv_target;
+				miv_target.setState(iterI->second->getV()->getState());
 
+				result->setMIVtarget(miv_target);
+				c_DeltaIndex new_delta_index = this->m_LastCreatedDeltaIndex;
+
+
+				result->setPredecessor(this->m_LastAppliedDeltaIndex);
+				c_CreateSetValueDeltaOperation visitor(pNewValue);
+				c_Value current_value = iterI->second->getV()->getValue();
+				c_DeltaOperation_shared_ptr pDeltaOperation = boost::make_shared<c_DeltaOperation>(boost::apply_visitor(visitor,current_value));
+				result->setDeltaOperation(pDeltaOperation);
 				{
 					// TODO:
 					c_LogString sMessage("Delta not fully populated");
@@ -389,6 +424,17 @@ namespace seedsrc {
 				if (auto_create_unexisting_instance) {
 					sMessage += _UTF8sz(" Will auto-create it. Please remove when dM processing is in place!");
 					LOG_DESIGN_INSUFFICIENCY(sMessage);
+					// Create a new I instance
+					{
+						LOG_DESIGN_INSUFFICIENCY(c_LogString("Setting of I and V state not yet implemented when auto-created in") + METHOD_NAME);
+					}
+					c_I::shared_ptr pNewI = boost::make_shared<c_I>();
+					c_V2::shared_ptr pNewV = boost::make_shared<c_V2>();
+//					pNewV->setState(/* The index of the dI creating this default value or the dV setting the default value */);
+					pNewV->setValue(*pNewValue);
+//					pNewI->setState(/* The index of the dI creating this instance*/);
+					pNewI->setV(pNewV);
+					m_MappedIs[id] = pNewI;
 					result = this->createSetValueDelta(id,pNewValue); // recursive call
 				}
 				else {
@@ -402,6 +448,10 @@ namespace seedsrc {
 		c_SignalQueue::shared_ptr c_MIVs::actOnDelta(c_Delta::shared_ptr delta) {
 			c_SignalQueue::shared_ptr result(new c_SignalQueue());
 			LOG_NOT_IMPLEMENTED;
+
+			// Find the MIV to apply the delta to
+
+
 			return result;
 		}
 
@@ -434,7 +484,7 @@ namespace seedsrc {
 
 					if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationId]) == MIVS_OPERATION_MAPPER[eMIVsOperation_Assign]) {
 						// Value Assign request
-						bool simulate_direct_call_back = true;
+						bool simulate_direct_call_back = false;
 						if (simulate_direct_call_back) {
 
 							c_Signal::shared_ptr pReply = boost::make_shared<c_Signal>();
@@ -458,16 +508,18 @@ namespace seedsrc {
 								sMessage += _UTF8sz(" not determined. Will assume integer instance");
 								LOG_DESIGN_INSUFFICIENCY(sMessage);
 							}
-//							c_V_shared_ptr pNewValue = boost::make_shared<c_IntValue>(c_DataRepresentationFramework::intValueOfDecimalString(sNewValue));
-							c_V_shared_ptr pNewValue;
-							c_Delta::shared_ptr pDelta = this->m_pMIVs->createSetValueDelta(target_miv_path,pNewValue);
+							c_Value_shared_ptr pNewValue = boost::make_shared<c_Value>(c_IntValue(c_DataRepresentationFramework::intValueOfDecimalString(sNewValue)));
+							c_Delta::shared_ptr pDelta = this->getMIVs()->createSetValueDelta(target_miv_path,pNewValue);
 							bool short_cut_delta_distribution = true;
 							if (short_cut_delta_distribution) {
-								result->append(this->m_pMIVs->actOnDelta(pDelta));
+								c_SignalQueue::shared_ptr pDeltaCreationResponse = this->getMIVs()->actOnDelta(pDelta);
+								result->append(pDeltaCreationResponse);
 							}
 							else {
 								c_LogString sMessage(METHOD_NAME + c_LogString(", Distribution of created Delta not yet Implemented"));
 								LOG_DESIGN_INSUFFICIENCY(sMessage);
+
+								// Create a signal of pDelta and distribute to all MIVs
 							}
 
 						}
@@ -495,9 +547,13 @@ namespace seedsrc {
 
 		// End c_SignalSinkIfc
 
-//		void c_MIVsHandler::actOnSignalFromClient(const c_Signal::shared_ptr& pSignal) {
-//			LOG_NOT_IMPLEMENTED;
-//		}
+		c_MIVs::shared_ptr c_MIVsHandler::getMIVs() {
+			if (!this->m_pMIVs) {
+				this->m_pMIVs = boost::make_shared<c_MIVs>();
+			}
+			return this->m_pMIVs;
+		}
+
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 

@@ -58,7 +58,7 @@ namespace seedsrc {
 		typedef c_DarwinetString c_CaptionNode;
 		//-------------------------------------------------------------------
 		typedef oprime::c_KeyPath<oprime::c_IndexedKeyNode<c_CaptionNode> > c_MIVPath;
-		typedef c_DarwinetString c_MIVsIdentitier;
+		typedef c_DarwinetString c_MIVsProducerIdentifier;
 		typedef c_DarwinetString c_DeltaBranchIdentifier;
 		typedef unsigned int t_DeltaSeqNo;
 		//-------------------------------------------------------------------
@@ -288,46 +288,16 @@ namespace seedsrc {
 		c_Signal createSignalFromString(const c_DarwinetString& sSignal);
 		//-------------------------------------------------------------------
 
-		/**
-		  * Moment
-		  */
-		class c_DeltaIndex {
-		private:
-			c_MIVsIdentitier m_Producer;
-			c_DeltaBranchIdentifier m_Branch;
-			t_DeltaSeqNo m_SeqNo;
-		};
-
-		//-------------------------------------------------------------------
-		/**
-		  * Description
-		  */
-		class c_MIVtarget {
-		private:
-			c_DeltaIndex m_State;
-			c_MIVPath m_MIVId;
-		};
-
-		//-------------------------------------------------------------------
-		class c_Delta {
-		public:
-			typedef boost::shared_ptr<c_Delta> shared_ptr;
-		private:
-			c_DeltaIndex m_Predecessor;
-			c_MIVtarget m_Target;
-			c_DeltaIndex m_Index;
-		};
-		//-------------------------------------------------------------------
-
 
 		const INT_INIT_VALUE = 0;
 		class c_IntValue {
 		public:
 			typedef boost::shared_ptr<c_IntValue> shared_ptr;
 
-			c_IntValue(int raw_value = INT_INIT_VALUE) : m_raw_value(raw_value) {};
+			c_IntValue(int raw_value = INT_INIT_VALUE) : m_raw_value(raw_value) {;}
 
-			int raw_value();
+			int getRawValue() {return m_raw_value;}
+			void setRawValue(int raw_value) {m_raw_value = raw_value;}
 
 		private:
 			int m_raw_value;
@@ -350,19 +320,58 @@ namespace seedsrc {
 			// Vector of same type c_V
 		};
 
-		typedef boost::variant<c_IntValue,c_StringValue,c_RecordValue, c_ArrayValue> c_V;
-		typedef boost::shared_ptr<c_V> c_V_shared_ptr;
+		typedef boost::variant<c_IntValue,c_StringValue,c_RecordValue, c_ArrayValue> c_Value;
+		typedef boost::shared_ptr<c_Value> c_Value_shared_ptr;
 
-		typedef std::map<c_MIVPath,c_V_shared_ptr> c_MappedVs;
+
+		//-------------------------------------------------------------------
+		/**
+		  * Moment
+		  */
+		class c_DeltaIndex {
+		public:
+
+			c_MIVsProducerIdentifier getProducer() const {return m_Producer;}
+			c_DeltaBranchIdentifier getBranch() const {return m_Branch;}
+			t_DeltaSeqNo getSeqNo() const {return m_SeqNo;}
+
+			void setProducer(const c_MIVsProducerIdentifier& producer) {m_Producer = producer;}
+			void setBranch(const c_DeltaBranchIdentifier& branch) {m_Branch = branch;}
+			void setSeqNo(const t_DeltaSeqNo& seq_no) {m_SeqNo = seq_no;}
+
+		private:
+			c_MIVsProducerIdentifier m_Producer;
+			c_DeltaBranchIdentifier m_Branch;
+			t_DeltaSeqNo m_SeqNo;
+		};
+
+		//-------------------------------------------------------------------
+		class c_V2 {
+		public:
+			typedef boost::shared_ptr<c_V2> shared_ptr;
+
+			const c_DeltaIndex& getState() const {return m_State;}
+			const c_Value& getValue() const {return m_Value;}
+
+			void setState(const c_DeltaIndex& state) {m_State = state;}
+			void setValue(const c_Value& value) {m_Value = value;}
+
+		private:
+			c_DeltaIndex m_State;
+			c_Value m_Value;
+		};
+
+		typedef std::map<c_MIVPath,c_V2::shared_ptr> c_MappedVs;
 
 		class c_I {
 		public:
 			typedef boost::shared_ptr<c_I> shared_ptr;
 
-			c_V_shared_ptr value() {return m_pV;};
+			c_V2::shared_ptr getV() {return m_pV;}
+			void setV(c_V2::shared_ptr pV) {m_pV = pV;}
 
 		private:
-			c_V_shared_ptr m_pV;
+			c_V2::shared_ptr m_pV;
 		};
 
 		typedef std::map<c_MIVPath,c_I::shared_ptr> c_MappedIs;
@@ -377,15 +386,87 @@ namespace seedsrc {
 		typedef std::map<c_MIVPath,c_M::shared_ptr> c_MappedMs;
 
 		//-------------------------------------------------------------------
+		/**
+		  * Description
+		  */
+		class c_MIVTarget {
+		public:
+
+			// Needed because - Failed to create default assignment operator for c_MIVTarget := (const c_MIVTarget)
+			//                   due to member m_MIVId (Why? nothing wrong with c_MIVPath copy constructor nor assignment operator?)
+			c_MIVTarget& operator=(c_MIVTarget other_instance_copy) {std::swap(m_State,other_instance_copy.m_State);std::swap(m_MIVId,other_instance_copy.m_MIVId); return *this;}
+
+			c_DeltaIndex getState() const {return m_State;}
+			c_MIVPath getMIVId() const {return m_MIVId;}
+
+			void setState(const c_DeltaIndex& state) {m_State = state;}
+			void setMIVId(const c_MIVPath& miv_id) {m_MIVId = miv_id;}
+
+		private:
+			c_DeltaIndex m_State;
+			c_MIVPath m_MIVId;
+		};
+		//-------------------------------------------------------------------
+		enum e_IntOperationId {
+			eIntOperationId_Undefined
+			,eIntOperationId_ADD
+			,eIntOperationId_Unknown
+		};
+
+		class c_IntDeltaOperation {
+		public:
+			c_IntDeltaOperation(const c_IntValue& value,e_IntOperationId int_operation_id);
+		private:
+			c_IntValue m_value;
+			e_IntOperationId m_int_operation_id;
+		};
+
+		class c_StringDeltaOperation {
+		};
+
+		class c_RecordDeltaOperation {
+		};
+
+		class c_ArrayDeltaOperation {
+		};
+
+		typedef boost::variant<c_IntDeltaOperation,c_StringDeltaOperation,c_RecordDeltaOperation, c_ArrayDeltaOperation> c_DeltaOperation;
+		typedef boost::shared_ptr<c_DeltaOperation> c_DeltaOperation_shared_ptr;
+
+		//-------------------------------------------------------------------
+		class c_Delta {
+		public:
+			typedef boost::shared_ptr<c_Delta> shared_ptr;
+
+			c_DeltaIndex getPredecessor() const;// {return m_Predecessor;}
+			c_MIVTarget getMIVtarget() const;// { return m_Target;}
+			c_DeltaIndex getIndex() const; // { return m_Index;}
+			c_DeltaOperation_shared_ptr getDeltaOperation() const ;// {return m_pDeltaOperation;}
+
+			void setPredecessor(const c_DeltaIndex& predecessor);// {m_Predecessor = predecessor;}
+			void setMIVtarget(const c_MIVTarget& target);// { m_Target = target;}
+			void setIndex(const c_DeltaIndex& index);// { m_Index = index;}
+			void setDeltaOperation(const c_DeltaOperation_shared_ptr& pDeltaOperation);// {m_pDeltaOperation = pDeltaOperation;}
+
+		private:
+			c_DeltaIndex m_Predecessor;
+			c_MIVTarget m_Target;
+			c_DeltaIndex m_Index;
+
+			c_DeltaOperation_shared_ptr m_pDeltaOperation;
+		};
+		//-------------------------------------------------------------------
+
 		class c_MIVs {
 		public:
 			typedef boost::shared_ptr<c_MIVs> shared_ptr;
 
-			c_Delta::shared_ptr createSetValueDelta(c_MIVPath id,c_V_shared_ptr pNewValue);
+			c_Delta::shared_ptr createSetValueDelta(c_MIVPath id,c_Value_shared_ptr pNewValue);
 
 			c_SignalQueue::shared_ptr actOnDelta(c_Delta::shared_ptr delta);
 		private:
 			c_DeltaIndex m_LastCreatedDeltaIndex;
+			c_DeltaIndex m_LastAppliedDeltaIndex;
 			c_MappedMs m_MappedMs;
 			c_MappedIs m_MappedIs;
 			c_MappedVs m_MappedVs;
@@ -409,11 +490,10 @@ namespace seedsrc {
 			// End c_SignalSinkIfc
 
 
-//			virtual void actOnSignalFromClient(const c_Signal::shared_ptr& pSignal);
-//
-//			boost::function<void (const c_Signal::shared_ptr& pSignal)> onSignalToClient;
-
 		private:
+
+			c_MIVs::shared_ptr getMIVs();
+
 			c_MessageTargetId m_id;
 			c_MIVs::shared_ptr m_pMIVs;
 		};
