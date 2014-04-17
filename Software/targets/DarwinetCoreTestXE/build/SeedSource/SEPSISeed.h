@@ -56,16 +56,16 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		typedef c_DataRepresentationFramework::c_UTF8String c_DarwinetString;
 		typedef c_DarwinetString c_CaptionNode;
+		typedef oprime::c_KeyPath<c_CaptionNode> c_CaptionPath;
 		//-------------------------------------------------------------------
 		typedef oprime::c_KeyPath<oprime::c_IndexedKeyNode<c_CaptionNode> > c_MIVPath;
 		typedef c_DarwinetString c_MIVsProducerIdentifier;
 		typedef c_DarwinetString c_DeltaBranchIdentifier;
 		typedef unsigned int t_DeltaSeqNo;
 		//-------------------------------------------------------------------
-//		typedef oprime::c_KeyPath<c_CaptionNode> c_MessageTargetPath;
-//		typedef c_DarwinetString c_MessageTargetId;
 		typedef oprime::c_KeyPath<oprime::c_IndexedKeyNode<c_CaptionNode> > c_MessageTargetId;
-//		typedef oprime::c_KeyPath<oprime::c_IndexedKeyNode<c_DataRepresentationFramework::c_AsciiString> > c_MessageTargetId;
+		typedef std::vector<c_MessageTargetId> c_MessageTargetIds;
+		typedef boost::shared_ptr<c_MessageTargetIds> c_MessageTargetIds_shared_ptr;
 		//-------------------------------------------------------------------
 		enum e_SignalField {
 			 eSignalField_Undefined
@@ -83,10 +83,8 @@ namespace seedsrc {
 			// Delta Signal elements
 			,eSignalField_DeltaPredecessorIx
 			,eSignalField_DeltaIx
-			,eSignalField_DeltaProducerId
-			,eSignalField_DeltaBranchId
+			,eSignalField_DeltaTargetState
 			,eSignalField_DeltaTargetMIVId
-			,eSignalField_DeltaTargetMIVState
 			,eSignalField_DeltaOperationId
 			,eSignalField_DeltaOperationValue
 			,eSignalField_Unknown
@@ -115,6 +113,7 @@ namespace seedsrc {
 //			,eSignalIdentifier_OnClientConnected
 			,eSignalIdentifier_ModifyMIVRequest
 			,eSignalIdentifier_OnMIVEvent
+			,eSignalIdentifier_DeltaMIV
 			,eSignalIdentifier_Unknown
 		};
 
@@ -169,29 +168,49 @@ namespace seedsrc {
 
 		};
 
+		enum e_DeltaOperationId {
+			 eDeltaOperationId_Undefined
+			,eDeltaOperationId_IntDeltaAdd
+			,eDeltaOperationId_Unknown
+		};
+
+		class c_DeltaOperationIdMapper
+			: public std::map<e_DeltaOperationId,c_DarwinetString>
+		{
+		public:
+			typedef boost::shared_ptr<c_DeltaOperationIdMapper> shared_ptr;
+			typedef std::map<e_DeltaOperationId,c_DarwinetString> _Base;
+
+			c_DeltaOperationIdMapper();
+
+			virtual c_DarwinetString& operator[](e_DeltaOperationId eKey);
+
+		};
+
 		static c_SignalFieldMapper SIGNAL_FIELD_MAPPER;
 		static c_SignalIdentifierMapper SIGNAL_IDENTIFIER_MAPPER;
 		static c_MIVsOperationMapper MIVS_OPERATION_MAPPER;
 		static c_MIVsEventIdMapper MIVS_EVENT_MAPPER;
+		static c_DeltaOperationIdMapper DELTA_OPERATION_MAPPER;
 
 		//-------------------------------------------------------------------
-		class c_Signal : public std::vector<std::pair<c_DarwinetString,c_DarwinetString> > {
+		class c_Signal : public std::vector<std::pair<c_CaptionNode,c_CaptionNode> > {
 		private:
-			typedef std::vector<std::pair<c_DarwinetString,c_DarwinetString> > _Base;
+			typedef std::vector<std::pair<c_CaptionNode,c_CaptionNode> > _Base;
 		public:
 			typedef boost::shared_ptr<c_Signal> shared_ptr;
 			typedef c_DarwinetString t_key;
 			typedef c_DarwinetString t_value;
 			typedef _Base::iterator iterator;
 			typedef _Base::const_iterator const_iterator;
-			typedef std::pair<c_DarwinetString,c_DarwinetString> Pair;
+			typedef std::pair<c_CaptionNode,c_CaptionNode> Pair;
 
-			const_iterator find(const c_DarwinetString& sKey);
+			const_iterator find(const c_CaptionNode& sKey);
 
-			c_DarwinetString getValue(c_DarwinetString sKey);
+			c_DarwinetString getValue(c_CaptionNode sKey);
 
 //			void addElement(const c_DarwinetString& sKey,const c_DarwinetString& sValue);
-			void addElement(e_SignalField eKey,const c_DarwinetString& sValue);
+			void addElement(e_SignalField eKey,const c_CaptionNode& sValue);
 
 			c_MessageTargetId getTargetId();
 
@@ -424,6 +443,10 @@ namespace seedsrc {
 		class c_IntDeltaOperation {
 		public:
 			c_IntDeltaOperation(const c_IntValue& value,e_IntOperationId int_operation_id);
+
+			c_IntValue getValue() {return m_value;}
+			e_IntOperationId getIntOperationId() {return m_int_operation_id;}
+
 		private:
 			c_IntValue m_value;
 			e_IntOperationId m_int_operation_id;
@@ -490,7 +513,6 @@ namespace seedsrc {
 			typedef boost::shared_ptr<c_MIVs> shared_ptr;
 
 			c_Delta::shared_ptr createSetValueDelta(c_MIVPath id,c_Value_shared_ptr pNewValue);
-			c_SignalQueue::shared_ptr actOnDelta(c_Delta::shared_ptr pDelta);
 
 			c_MIV::shared_ptr getMIV(const c_MIVPath miv_path);
 
@@ -672,6 +694,8 @@ namespace seedsrc {
 			c_TestClient::shared_ptr getTestClient(unsigned int index);
 
 			void sendMessage(c_Signal::shared_ptr pSignal);
+
+			c_MessageTargetIds_shared_ptr getAllMIVHandlerIds();
 
 			void processMessages();
 

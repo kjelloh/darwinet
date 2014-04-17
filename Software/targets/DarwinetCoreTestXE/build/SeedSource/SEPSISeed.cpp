@@ -43,12 +43,10 @@ namespace seedsrc {
 					case eSignalField_MIVsEventId: sSignalFieldIdString = _UTF8sz("Body.MIVsEvent.Id"); break;
 					case eSignalField_MIVsEventSourceId: sSignalFieldIdString = _UTF8sz("Body.MIVsEvent.Source"); break;
 					case eSignalField_MIVsEventValue: sSignalFieldIdString = _UTF8sz("Body.MIVsEvent.Value"); break;
-					case eSignalField_DeltaPredecessorIx: sSignalFieldIdString = _UTF8sz("Body.Delta.Head.PredecessorIndex"); break;
-					case eSignalField_DeltaIx: sSignalFieldIdString = _UTF8sz("Body.Delta.Head.Index"); break;
-					case eSignalField_DeltaProducerId: sSignalFieldIdString = _UTF8sz("Body.Delta.Head.ProducerId"); break;
-					case eSignalField_DeltaBranchId: sSignalFieldIdString = _UTF8sz("Body.Delta.Head.BranchId"); break;
-					case eSignalField_DeltaTargetMIVId: sSignalFieldIdString = _UTF8sz("Body.Delta.Head.TargetMIVId"); break;
-					case eSignalField_DeltaTargetMIVState: sSignalFieldIdString = _UTF8sz("Body.Delta.Head.TargetMIVState"); break;
+					case eSignalField_DeltaPredecessorIx: sSignalFieldIdString = _UTF8sz("Body.Delta.PredecessorIndex"); break;
+					case eSignalField_DeltaIx: sSignalFieldIdString = _UTF8sz("Body.Delta.Index"); break;
+					case eSignalField_DeltaTargetState: sSignalFieldIdString = _UTF8sz("Body.Delta.Target.State"); break;
+					case eSignalField_DeltaTargetMIVId: sSignalFieldIdString = _UTF8sz("Body.Delta.Target.MIVId"); break;
 					case eSignalField_DeltaOperationId: sSignalFieldIdString = _UTF8sz("Body.Delta.Operation.Id"); break;
 					case eSignalField_DeltaOperationValue: sSignalFieldIdString = _UTF8sz("Body.Delta.Operation.Value"); break;
 					case eSignalField_Unknown: break;
@@ -85,6 +83,8 @@ namespace seedsrc {
 //					case eSignalIdentifier_OnMIVsOpen: sSignalIdentifier = _UTF8sz("OnMIVsOpen"); break;
 					case eSignalIdentifier_ModifyMIVRequest: sSignalIdentifier = _UTF8sz("ModifyMIVRequest"); break;
 					case eSignalIdentifier_OnMIVEvent: sSignalIdentifier = _UTF8sz("OnMIVEvent"); break;
+					case eSignalIdentifier_DeltaMIV: sSignalIdentifier = _UTF8sz("DeltaMIV"); break;
+
 					case eSignalIdentifier_Unknown: sSignalIdentifier = _UTF8sz("Unknown"); break;
 				default:
 					;
@@ -164,6 +164,35 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
+		c_DeltaOperationIdMapper::c_DeltaOperationIdMapper()
+		{
+			// Fill the map
+			for (int i = eDeltaOperationId_Undefined+1; i < eDeltaOperationId_Unknown; ++i) {
+				c_DarwinetString sValue;
+				e_DeltaOperationId eKey = static_cast<e_DeltaOperationId>(i);
+				switch (eKey) {
+					case eDeltaOperationId_Undefined: sValue = _UTF8sz("Undefined"); break;
+					case eDeltaOperationId_IntDeltaAdd: sValue = _UTF8sz("IntDeltaAdd"); break;
+					case eDeltaOperationId_Unknown: sValue = _UTF8sz("Unknown"); break;
+				default:
+					;
+				}
+				(*this)[eKey] = sValue;
+			}
+		}
+
+		c_DarwinetString& c_DeltaOperationIdMapper::operator[](e_DeltaOperationId eKey) {
+			if (_Base::operator [](eKey).length() == 0) {
+				c_DarwinetString sName("??");
+				sName += c_DataRepresentationFramework::intToDecimalString(eKey);
+				sName += _UTF8sz("??");
+				_Base::operator [](eKey) = sName;
+			}
+			return _Base::operator [](eKey);
+		}
+
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
 		struct is_parameter_key {
 			is_parameter_key(const c_DarwinetString& sKey)
 				: m_sKey(sKey)
@@ -477,52 +506,7 @@ namespace seedsrc {
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
-		c_SignalQueue::shared_ptr c_MIVs::actOnDelta(c_Delta::shared_ptr pDelta) {
-			c_SignalQueue::shared_ptr result(new c_SignalQueue());
-			LOG_NOT_IMPLEMENTED;
 
-			// Find the MIV to apply the delta to
-			if (pDelta) {
-				c_MappedMIVs::iterator iter_MIV = this->m_MappedMIVs.find(pDelta->getMIVtarget().getMIVId());
-				if (iter_MIV != m_MappedMIVs.end()) {
-					c_MIV::shared_ptr pTargetMIV = iter_MIV->second;
-					// Apply the delta operation to the MIV body (they shall match)
-					if (pTargetMIV->getState() == pDelta->getMIVtarget().getState()) {
-						// our MIV state and delta target state matches. Ok to apply
-						c_ApplyDeltaToMIVBody visitor(pDelta->getDeltaOperation());
-						boost::apply_visitor(visitor,pTargetMIV->getBody());
-						{
-							// Create the signal that alerts the Client about the change
-							c_Signal::shared_ptr pReply = boost::make_shared<c_Signal>();
-//							pReply->addElement(eSignalField_SignalSender,this->getId().toString<c_DarwinetString>());
-//							pReply->addElement(eSignalField_SignalReceiver,pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_SignalSender]));
-							pReply->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_OnMIVEvent]);
-
-							pReply->addElement(eSignalField_MIVsEventSourceId,pDelta->getMIVtarget().getMIVId().toString<c_DarwinetString>());
-							if (pTargetMIV->getBody().type() == typeid(c_V)) {
-								// It is a V
-								pReply->addElement(eSignalField_MIVsEventId,MIVS_EVENT_MAPPER[eMIVsEventId_OnMIVValueChanged]);
-//								pReply->addElement(eSignalField_MIVsEventValue,pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationNewValue]));
-							}
-							result->push(pReply);
-
-						}
-					}
-					else {
-						LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" failed to match MIV state") + log::toLogString(iter_MIV->second->getState()) + c_LogString(" with delta target state") + log::toLogString(pDelta->getMIVtarget().getState()));
-					}
-				}
-				else {
-					throw c_NoSuchMIVException(METHOD_NAME + c_LogString(" failed. No MIV found for delta target =") + pDelta->getMIVtarget().getMIVId().toString<c_LogString>());
-				}
-			}
-			else {
-				throw c_NULLDeltaException(METHOD_NAME + c_LogString(" Called with NULL pDelta"));
-			}
-			return result;
-		}
-
-		//-------------------------------------------------------------------
 		c_MIV::shared_ptr c_MIVs::getMIV(const c_MIVPath miv_path) {
 			c_MIV::shared_ptr result;
 			c_MappedMIVs::iterator iter_MIV = this->m_MappedMIVs.find(miv_path);
@@ -568,7 +552,6 @@ namespace seedsrc {
 						pReply->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_getMIVsResponse]);
 						result->push(pReply);
 					}
-
 					else if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationId]) == MIVS_OPERATION_MAPPER[eMIVsOperation_Assign]) {
 						// Value Assign request
 						bool simulate_direct_call_back = false;
@@ -597,7 +580,7 @@ namespace seedsrc {
 							}
 							c_Value_shared_ptr pNewValue = boost::make_shared<c_Value>(c_IntValue(c_DataRepresentationFramework::intValueOfDecimalString(sNewValue)));
 							c_Delta::shared_ptr pDelta = this->createSetValueDelta(target_miv_path,pNewValue);
-							bool short_cut_delta_distribution = true;
+							bool short_cut_delta_distribution = false;
 							if (short_cut_delta_distribution) {
 								c_SignalQueue::shared_ptr pDeltaCreationResponse = this->actOnDelta(pDelta);
 								result->append(pDeltaCreationResponse);
@@ -607,6 +590,41 @@ namespace seedsrc {
 								LOG_DESIGN_INSUFFICIENCY(sMessage);
 
 								// Create a signal of pDelta and distribute to all MIVs
+								c_MessageTargetIds_shared_ptr pMIVHanlderIds =  c_DarwinetTestBench::instance()->getAllMIVHandlerIds();
+								for (c_MessageTargetIds::iterator iter = pMIVHanlderIds->begin(); iter != pMIVHanlderIds->end(); ++iter) {
+									c_Signal::shared_ptr pDeltaSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),*iter);
+									pDeltaSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_DeltaMIV]);
+//									,eSignalField_DeltaPredecessorIx
+									c_CaptionPath delta_predecessor_ix_path;
+									delta_predecessor_ix_path += c_CaptionPath::Node(pDelta->getPredecessor().getProducer());
+									delta_predecessor_ix_path += c_CaptionPath::Node(pDelta->getPredecessor().getBranch());
+									delta_predecessor_ix_path += c_CaptionPath::Node(c_DataRepresentationFramework::intToDecimalString(pDelta->getPredecessor().getSeqNo()));
+									pDeltaSignal->addElement(eSignalField_DeltaPredecessorIx,delta_predecessor_ix_path.toString<c_CaptionNode>());
+//									,eSignalField_DeltaIx
+									c_CaptionPath delta_ix_path;
+									delta_ix_path += c_CaptionPath::Node(pDelta->getIndex().getProducer());
+									delta_ix_path += c_CaptionPath::Node(pDelta->getIndex().getBranch());
+									delta_ix_path += c_CaptionPath::Node(c_DataRepresentationFramework::intToDecimalString(pDelta->getIndex().getSeqNo()));
+									pDeltaSignal->addElement(eSignalField_DeltaIx,delta_ix_path.toString<c_CaptionNode>());
+//									,eSignalField_DeltaTargetState
+									c_CaptionPath delta_target_state_path;
+									delta_target_state_path += c_CaptionPath::Node(pDelta->getMIVtarget().getState().getProducer());
+									delta_target_state_path += c_CaptionPath::Node(pDelta->getMIVtarget().getState().getBranch());
+									delta_target_state_path += c_CaptionPath::Node(c_DataRepresentationFramework::intToDecimalString(pDelta->getMIVtarget().getState().getSeqNo()));
+									pDeltaSignal->addElement(eSignalField_DeltaTargetState,delta_target_state_path.toString<c_CaptionNode>());
+//									,eSignalField_DeltaTargetMIVId
+									pDeltaSignal->addElement(eSignalField_DeltaTargetMIVId,pDelta->getMIVtarget().getMIVId().toString<c_CaptionNode>());
+									if (pDelta->getDeltaOperation()->type() == typeid(c_IntDeltaOperation)) {
+										c_IntDeltaOperation int_delta_operation = boost::get<c_IntDeltaOperation>(*pDelta->getDeltaOperation());
+//										,eSignalField_DeltaOperationId
+										if (int_delta_operation.getIntOperationId() == eIntOperationId_ADD) {
+											pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_IntDeltaAdd]);
+	//										,eSignalField_DeltaOperationValue
+											pDeltaSignal->addElement(eSignalField_DeltaOperationValue,c_DataRepresentationFramework::intToDecimalString(int_delta_operation.getValue().getRawValue()));
+										}
+									}
+									result->push(pDeltaSignal);
+								}
 							}
 						}
 					}
@@ -615,16 +633,20 @@ namespace seedsrc {
 						sMessage += this->getId().toString<c_LogString>();
 						sMessage += _UTF8sz(": Acting on signal from ");
 						sMessage += sender.toString<c_LogString>();
-						sMessage += _UTF8sz("Not implemented. Signal Discarded. ");
+						sMessage += _UTF8sz(" Not implemented. Signal Discarded. ");
 						LOG_BUSINESS(sMessage);
 					}
+				}
+				else if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_SignalIdentifier]) == SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_DeltaMIV]) {
+					// Apply the received Delta
+					LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(", Applying Delta not yet implemented"));
 				}
 				else {
 					c_LogString sMessage;
 					sMessage += this->getId().toString<c_LogString>();
 					sMessage += _UTF8sz(": Acting on signal from ");
 					sMessage += sender.toString<c_LogString>();
-					sMessage += _UTF8sz("Not implemented. Signal Discarded. ");
+					sMessage += _UTF8sz(" Not implemented. Signal Discarded. ");
 					LOG_BUSINESS(sMessage);
 				}
 			}
@@ -641,11 +663,6 @@ namespace seedsrc {
 		}
 
 		c_SignalQueue::shared_ptr c_MIVsHandler::actOnDelta(c_Delta::shared_ptr pDelta) {
-//			{
-//				LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" should implement c_MIVs::actOnDelta() itself"));
-//			}
-//			return this->getMIVs()->actOnDelta(pDelta);
-
 			c_SignalQueue::shared_ptr result(new c_SignalQueue());
 			LOG_NOT_IMPLEMENTED;
 
@@ -675,7 +692,6 @@ namespace seedsrc {
 								}
 							}
 							result->push(pReply);
-
 						}
 					}
 					else {
@@ -944,6 +960,18 @@ namespace seedsrc {
 
 		void c_DarwinetTestBench::sendMessage(c_Signal::shared_ptr pSignal) {
 			this->m_Messenger.send(pSignal);
+		}
+
+		c_MessageTargetIds_shared_ptr c_DarwinetTestBench::getAllMIVHandlerIds() {
+			/**
+			  * TODO: remove this mecanism when proper Doman handling is in place.
+			  * This list defines all MIVs in the Domain for now during test of Delta Processing.
+			  */
+			c_MessageTargetIds_shared_ptr result(new c_MessageTargetIds());
+			result->push_back(this->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(1)->getMIVsHandler()->getId());
+			result->push_back(this->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(2)->getMIVsHandler()->getId());
+			result->push_back(this->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(3)->getMIVsHandler()->getId());
+			return result;
 		}
 
 		void c_DarwinetTestBench::processMessages() {
