@@ -12,6 +12,7 @@
 # pragma warn +8072 // Disable "suspicious pointer arithmetic". Seems to be a known Issue for  boost in Borland CPP 101112/KoH
 #include <limits> // std::is_integer
 #include <boost/shared_ptr.hpp>
+#include <boost/algorithm/string.hpp> // boost::split
 //---------------------------------------------------------------------------
 
 namespace oprime4 {
@@ -1044,9 +1045,12 @@ namespace oprime {
 		private:
 		public:
 
-			c_DefaultPathToStringVisitor(const _PathItemStringilizer& pathItemStringilizer = _PathItemStringilizer()) : m_pathItemStringilizer(pathItemStringilizer) {};
+			c_DefaultPathToStringVisitor(const _PathItemStringilizer& pathItemStringilizer = _PathItemStringilizer())
+				:  m_pathItemStringilizer(pathItemStringilizer)
+				  ,m_is_reset(true)
+			{};
 
-			void reset() {m_String.clear();}
+			void reset() {m_String.clear();m_is_reset = true;}
 
 			template <typename _Node>
 			void visitNode(const _Node& node) {
@@ -1069,6 +1073,7 @@ namespace oprime {
 
 		private:
 			_StringRepresentation m_String;
+			bool m_is_reset;
 			_PathItemStringilizer m_pathItemStringilizer;
 
 			/**
@@ -1077,10 +1082,16 @@ namespace oprime {
 
 			template <typename _Key>
 			void visit(const _Key& key, is_unwrapped_type dummy) {
-				if (m_String.size() > 0) {
-					m_String += _Asciic('.');
+// 140417, Does not work for nodes represented by empty strings
+//				if (m_String.size() > 0) {
+//					m_String += _Asciic('.');
+//				}
+				static bool call_count = 0;
+				if (!m_is_reset) {
+					m_String += _Asciic('.'); // Add separator
 				}
 				m_String += m_pathItemStringilizer.keyToString(key);
+				m_is_reset = false;
 			}
 
 			/**
@@ -1204,28 +1215,37 @@ namespace oprime {
 		std::vector<_Node> result;
 
 		try {
-			// Find the string up to the next '.' or end of string
-			// Note: If you get a compiler error here it is because the _StringRepresentation
-			// you have provided does not have an iterator defined. See above.
-			typename _StringRepresentation::const_iterator startIter = sPath.begin();
-			typename _StringRepresentation::const_iterator endIter = std::find(startIter,sPath.end(),'.');
-			while (startIter != endIter) {
-				_StringRepresentation sNode(startIter,endIter);
-
-				// Convert to keyPathNode and push into path
-				// Note: If you get a comiler error here it may be that your keyPathNode type T
-				// has no mathing stringToNode() method that creates a T from a string S.
-				result.push_back(stringToNode<_Node,_StringRepresentation>(sNode));
-
-				// Move start to end
-				if (endIter != sPath.end()) {
-					startIter = endIter+1;
-				}
-				else {
-					startIter = endIter;
-				}
-				endIter = std::find(startIter,sPath.end(),'.');
+			// Split on '.'
+			typedef std::vector<_StringRepresentation> _StringNodes;
+			_StringNodes string_nodes;
+			boost::split(string_nodes, sPath, boost::is_any_of("."));
+			// Create nodes from strings
+			for (_StringNodes::iterator iter = string_nodes.begin(); iter != string_nodes.end(); ++iter) {
+				result.push_back(stringToNode<_Node,_StringRepresentation>(*iter));
 			}
+
+//			// Find the string up to the next '.' or end of string
+//			// Note: If you get a compiler error here it is because the _StringRepresentation
+//			// you have provided does not have an iterator defined. See above.
+//			typename _StringRepresentation::const_iterator startIter = sPath.begin();
+//			typename _StringRepresentation::const_iterator endIter = std::find(startIter,sPath.end(),'.');
+//			while (startIter != endIter) {
+//				_StringRepresentation sNode(startIter,endIter);
+//
+//				// Convert to keyPathNode and push into path
+//				// Note: If you get a comiler error here it may be that your keyPathNode type T
+//				// has no mathing stringToNode() method that creates a T from a string S.
+//				result.push_back(stringToNode<_Node,_StringRepresentation>(sNode));
+//
+//				// Move start to end
+//				if (endIter != sPath.end()) {
+//					startIter = endIter+1;
+//				}
+//				else {
+//					startIter = endIter;
+//				}
+//				endIter = std::find(startIter,sPath.end(),'.');
+//			}
 		}
 		catch (std::exception& e) {
 //			c_LogString sMessage(_UTF8sz(__func__) + "  failed. sPath = ");
