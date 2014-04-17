@@ -307,20 +307,29 @@ namespace seedsrc {
 		}
 
 		void c_Messenger::process() {
-			if (this->m_SignalQueue.size() > 0) {
-				c_Signal::shared_ptr pSignal(this->m_SignalQueue.front());
-				this->m_SignalQueue.pop();
-				c_SignalSinkIfc::shared_ptr pSignalSink = m_SignalSinks[pSignal->getTargetId()].lock();
-				if (pSignalSink) {
-					this->send(pSignalSink->actOnSignal(pSignal));
+			try {
+				if (this->m_SignalQueue.size() > 0) {
+					c_Signal::shared_ptr pSignal(this->m_SignalQueue.front());
+					this->m_SignalQueue.pop();
+					c_SignalSinkIfc::shared_ptr pSignalSink = m_SignalSinks[pSignal->getTargetId()].lock();
+					if (pSignalSink) {
+						{
+							c_LogString sMessage("Sinkning signal={");
+							sMessage += log::toLogString(pSignal);
+							sMessage += _UTF8sz("}");
+							LOG_BUSINESS(sMessage);
+						}
+						this->send(pSignalSink->actOnSignal(pSignal));
+					}
+					else {
+						c_LogString sMessage("Failed to send signal={");
+						sMessage += log::toLogString(pSignal);
+						sMessage += _UTF8sz("}. Receiver does not exist.");
+						LOG_DESIGN_INSUFFICIENCY(sMessage);
+					};
 				}
-				else {
-					c_LogString sMessage("Failed to send signal={");
-					sMessage += log::toLogString(pSignal);
-					sMessage += _UTF8sz("}. Receiver does not exist.");
-					LOG_DESIGN_INSUFFICIENCY(sMessage);
-				};
 			}
+			CATCH_AND_LOG_IDE_STD_AND_GENERAL_EXCEPTION_DESIGN_INSUFFICIENCY;
 		}
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
@@ -619,7 +628,7 @@ namespace seedsrc {
 //										,eSignalField_DeltaOperationId
 										if (int_delta_operation.getIntOperationId() == eIntOperationId_ADD) {
 											pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_IntDeltaAdd]);
-	//										,eSignalField_DeltaOperationValue
+//											,eSignalField_DeltaOperationValue
 											pDeltaSignal->addElement(eSignalField_DeltaOperationValue,c_DataRepresentationFramework::intToDecimalString(int_delta_operation.getValue().getRawValue()));
 										}
 									}
@@ -639,7 +648,58 @@ namespace seedsrc {
 				}
 				else if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_SignalIdentifier]) == SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_DeltaMIV]) {
 					// Apply the received Delta
-					LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(", Applying Delta not yet implemented"));
+					c_Delta::shared_ptr pDelta(new c_Delta());
+					{
+						// Create Delta from Signal
+//						,eSignalField_DeltaPredecessorIx
+						c_CaptionPath delta_predecessor_ix_path = c_CaptionPath::fromString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_DeltaPredecessorIx]));
+						if (delta_predecessor_ix_path.size() == 3) {
+							c_DeltaIndex delta_index;
+							delta_index.setProducer(delta_predecessor_ix_path[0]);
+							delta_index.setBranch(delta_predecessor_ix_path[1]);
+							delta_index.setSeqNo(c_DataRepresentationFramework::intValueOfDecimalString(delta_predecessor_ix_path[2]));
+							pDelta->setPredecessor(delta_index);
+						}
+						else {
+							throw c_IllFormedSignalFieldException(c_LogString(" Incomplete Signal Field DeltaPredecessorIx=") + delta_predecessor_ix_path.toString<c_LogString>());
+						}
+//						,eSignalField_DeltaIx
+						c_CaptionPath delta_ix_path = c_CaptionPath::fromString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_DeltaIx]));
+						if (delta_ix_path.size() == 3) {
+							c_DeltaIndex delta_index;
+							delta_index.setProducer(delta_ix_path[0]);
+							delta_index.setBranch(delta_ix_path[1]);
+							delta_index.setSeqNo(c_DataRepresentationFramework::intValueOfDecimalString(delta_ix_path[2]));
+							pDelta->setIndex(delta_index);
+						}
+						else {
+							throw c_IllFormedSignalFieldException(c_LogString(" Incomplete Signal Field DeltaIx=") + delta_ix_path.toString<c_LogString>());
+						}
+//						,eSignalField_DeltaTargetState
+						c_CaptionPath delta_target_state_path = c_CaptionPath::fromString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_DeltaTargetState]));
+						if (delta_target_state_path.size() == 3) {
+							c_DeltaIndex delta_index;
+							delta_index.setProducer(delta_target_state_path[0]);
+							delta_index.setBranch(delta_target_state_path[1]);
+							delta_index.setSeqNo(c_DataRepresentationFramework::intValueOfDecimalString(delta_target_state_path[2]));
+							c_MIVTarget delta_target;
+							delta_target.setState(delta_index);
+							delta_target.setMIVId(c_MIVPath::fromString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_DeltaTargetMIVId])));
+							pDelta->setMIVtarget(delta_target);
+						}
+						else {
+							throw c_IllFormedSignalFieldException(c_LogString(" Incomplete Signal Field DeltaIx=") + delta_ix_path.toString<c_LogString>());
+						}
+						if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_DeltaOperationId]) == DELTA_OPERATION_MAPPER[eDeltaOperationId_IntDeltaAdd]) {
+							int raw_int_value = c_DataRepresentationFramework::intValueOfDecimalString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_DeltaOperationValue]));
+							c_IntValue int_value(raw_int_value);
+							e_IntOperationId int_operation_id = eIntOperationId_ADD;
+							c_IntDeltaOperation int_delta_operation(int_value,int_operation_id);
+							pDelta->setDeltaOperation(boost::make_shared<c_DeltaOperation>(int_delta_operation));
+						}
+					}
+					c_SignalQueue::shared_ptr pDeltaCreationResponse = this->actOnDelta(pDelta);
+					result->append(pDeltaCreationResponse);
 				}
 				else {
 					c_LogString sMessage;
@@ -664,7 +724,6 @@ namespace seedsrc {
 
 		c_SignalQueue::shared_ptr c_MIVsHandler::actOnDelta(c_Delta::shared_ptr pDelta) {
 			c_SignalQueue::shared_ptr result(new c_SignalQueue());
-			LOG_NOT_IMPLEMENTED;
 
 			// Find the MIV to apply the delta to
 			if (pDelta) {

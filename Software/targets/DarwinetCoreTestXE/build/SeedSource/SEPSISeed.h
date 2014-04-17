@@ -302,6 +302,7 @@ namespace seedsrc {
 		DARWINET_EXCEPTION_CLASS(c_IllformedSignalStringException);
 		DARWINET_EXCEPTION_CLASS(c_NoSuchMIVException);
 		DARWINET_EXCEPTION_CLASS(c_NULLDeltaException);
+		DARWINET_EXCEPTION_CLASS(c_IllFormedSignalFieldException);
 
 		//-------------------------------------------------------------------
 		c_DarwinetString toString(const c_Signal& signal);
