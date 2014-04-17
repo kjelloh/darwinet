@@ -79,8 +79,10 @@ namespace seedsrc {
 				e_SignalIdentifier eField = static_cast<e_SignalIdentifier>(i);
 				switch (eField) {
 					case eSignalIdentifier_Undefined: sSignalIdentifier = _UTF8sz("Undefined"); break;
-					case eSignalIdentifier_OpenMIVsRequest: sSignalIdentifier = _UTF8sz("OpenMIVsRequest"); break;
-					case eSignalIdentifier_OnMIVsOpen: sSignalIdentifier = _UTF8sz("OnMIVsOpen"); break;
+					case eSignalIdentifier_getMIVs: sSignalIdentifier = _UTF8sz("getMIVs"); break;
+					case eSignalIdentifier_getMIVsResponse: sSignalIdentifier = _UTF8sz("getMIVsResponse"); break;
+//					case eSignalIdentifier_OpenMIVsRequest: sSignalIdentifier = _UTF8sz("OpenMIVsRequest"); break;
+//					case eSignalIdentifier_OnMIVsOpen: sSignalIdentifier = _UTF8sz("OnMIVsOpen"); break;
 					case eSignalIdentifier_ModifyMIVRequest: sSignalIdentifier = _UTF8sz("ModifyMIVRequest"); break;
 					case eSignalIdentifier_OnMIVEvent: sSignalIdentifier = _UTF8sz("OnMIVEvent"); break;
 					case eSignalIdentifier_Unknown: sSignalIdentifier = _UTF8sz("Unknown"); break;
@@ -521,9 +523,20 @@ namespace seedsrc {
 		}
 
 		//-------------------------------------------------------------------
+		c_MIV::shared_ptr c_MIVs::getMIV(const c_MIVPath miv_path) {
+			c_MIV::shared_ptr result;
+			c_MappedMIVs::iterator iter_MIV = this->m_MappedMIVs.find(miv_path);
+			if (iter_MIV != m_MappedMIVs.end()) {
+				result = iter_MIV->second;
+			}
+			return result;
+		}
+
+		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 		c_MIVsHandler::c_MIVsHandler(c_MessageTargetId id)
-			: m_id(id)
+			:  m_id(id)
+			  ,m_listening_client_id()
 		{
 		}
 
@@ -539,15 +552,24 @@ namespace seedsrc {
 			if (pSignal) {
 				c_LogString sMessage(this->getId().toString<c_LogString>());
 				sMessage += _UTF8sz("::actOnSignal(\"");
-				sMessage += toLogString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationId]));
-				sMessage += _UTF8sz(")\"");
+				sMessage += toLogString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_SignalIdentifier]));
+				sMessage += _UTF8sz("\")");
 				LOG_BUSINESS(sMessage);
 
 				c_MessageTargetId sender = c_MessageTargetId::fromString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_SignalSender]));
 				if (sender.size() == 1) {
 					// asume it is from a client (id Client::n)
+					if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_SignalIdentifier]) == SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_getMIVs]) {
+						// Set sender as listener to us
+						this->m_listening_client_id = c_MessageTargetId::fromString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_SignalSender]));
+						c_Signal::shared_ptr pReply = boost::make_shared<c_Signal>();
+						pReply->addElement(eSignalField_SignalSender,this->getId().toString<c_DarwinetString>());
+						pReply->addElement(eSignalField_SignalReceiver,pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_SignalSender]));
+						pReply->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_getMIVsResponse]);
+						result->push(pReply);
+					}
 
-					if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationId]) == MIVS_OPERATION_MAPPER[eMIVsOperation_Assign]) {
+					else if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationId]) == MIVS_OPERATION_MAPPER[eMIVsOperation_Assign]) {
 						// Value Assign request
 						bool simulate_direct_call_back = false;
 						if (simulate_direct_call_back) {
@@ -586,7 +608,6 @@ namespace seedsrc {
 
 								// Create a signal of pDelta and distribute to all MIVs
 							}
-
 						}
 					}
 					else {
@@ -620,10 +641,56 @@ namespace seedsrc {
 		}
 
 		c_SignalQueue::shared_ptr c_MIVsHandler::actOnDelta(c_Delta::shared_ptr pDelta) {
-			{
-				LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" should implement c_MIVs::actOnDelta() itself"));
+//			{
+//				LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" should implement c_MIVs::actOnDelta() itself"));
+//			}
+//			return this->getMIVs()->actOnDelta(pDelta);
+
+			c_SignalQueue::shared_ptr result(new c_SignalQueue());
+			LOG_NOT_IMPLEMENTED;
+
+			// Find the MIV to apply the delta to
+			if (pDelta) {
+				c_MIV::shared_ptr pTargetMIV = this->getMIVs()->getMIV(pDelta->getMIVtarget().getMIVId());
+				if (pTargetMIV) {
+					// Apply the delta operation to the MIV body (they shall match)
+					if (pTargetMIV->getState() == pDelta->getMIVtarget().getState()) {
+						c_ApplyDeltaToMIVBody visitor(pDelta->getDeltaOperation());
+						boost::apply_visitor(visitor,pTargetMIV->getBody());
+						{
+							// Create the signal that alerts the Client about the change
+							c_Signal::shared_ptr pReply = boost::make_shared<c_Signal>();
+							pReply->addElement(eSignalField_SignalSender,this->getId().toString<c_DarwinetString>());
+							pReply->addElement(eSignalField_SignalReceiver,this->m_listening_client_id.toString<c_DarwinetString>()); // Report event to client
+							pReply->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_OnMIVEvent]);
+
+							pReply->addElement(eSignalField_MIVsEventSourceId,pDelta->getMIVtarget().getMIVId().toString<c_DarwinetString>());
+							if (pTargetMIV->getBody().type() == typeid(c_V)) {
+								// It is a V
+								pReply->addElement(eSignalField_MIVsEventId,MIVS_EVENT_MAPPER[eMIVsEventId_OnMIVValueChanged]);
+								c_V newV = boost::get<c_V>(pTargetMIV->getBody());
+								if (newV.getValue().type() == typeid(c_IntValue)) {
+									c_IntValue newIntValue = boost::get<c_IntValue>(newV.getValue());
+									pReply->addElement(eSignalField_MIVsEventValue,c_DataRepresentationFramework::intToDecimalString(newIntValue.getRawValue()));
+								}
+							}
+							result->push(pReply);
+
+						}
+					}
+					else {
+						LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" failed to match MIV state ") + log::toLogString(pTargetMIV->getState()) + c_LogString(" with delta target state ") + log::toLogString(pDelta->getMIVtarget().getState()));
+					}
+				}
+				else {
+					throw c_NoSuchMIVException(METHOD_NAME + c_LogString(" failed. No MIV found for delta target =") + pDelta->getMIVtarget().getMIVId().toString<c_LogString>());
+				}
 			}
-			return this->getMIVs()->actOnDelta(pDelta);
+			else {
+				throw c_NULLDeltaException(METHOD_NAME + c_LogString(" Called with NULL pDelta"));
+			}
+			return result;
+
 		}
 
 		c_MIVs::shared_ptr c_MIVsHandler::getMIVs() {
@@ -723,20 +790,19 @@ namespace seedsrc {
 		}
 
 		void c_TestClient::open() {
-			bool simulate_direct_call_back = true;
+			bool simulate_direct_call_back = false;
 			if (simulate_direct_call_back) {
 				// Short cut the call-back for test
 				c_Signal::shared_ptr pSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),this->getId());
-				pSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_OnMIVsOpen]);
+				pSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_getMIVsResponse]);
 				c_DarwinetTestBench::instance()->sendMessage(pSignal);
 			}
 			else {
 				LOG_NOT_IMPLEMENTED;
 				// Ask the View to connect us to its MIVs
-//				c_MessageTargetId viewMessageTargetId
-
-				c_Signal::shared_ptr pSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),this->getId());
-
+				c_Signal::shared_ptr pSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),this->getMIVsHandlerId());
+				pSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_getMIVs]);
+				c_DarwinetTestBench::instance()->sendMessage(pSignal);
 			}
 		}
 
@@ -772,7 +838,7 @@ namespace seedsrc {
 
 		c_SignalQueue::shared_ptr c_TestClient::actOnSignal(const c_Signal::shared_ptr& pSignal) {
 			c_SignalQueue::shared_ptr result;
-			if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_SignalIdentifier]) == SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_OnMIVsOpen]) {
+			if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_SignalIdentifier]) == SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_getMIVsResponse]) {
 				this->m_isOpen = true;
 			}
 			if (this->m_pClientProxy) {

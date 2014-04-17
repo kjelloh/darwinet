@@ -107,8 +107,10 @@ namespace seedsrc {
 
 		enum e_SignalIdentifier {
 			eSignalIdentifier_Undefined
-			,eSignalIdentifier_OpenMIVsRequest
-			,eSignalIdentifier_OnMIVsOpen
+//			,eSignalIdentifier_OpenMIVsRequest
+//			,eSignalIdentifier_OnMIVsOpen
+			,eSignalIdentifier_getMIVs
+			,eSignalIdentifier_getMIVsResponse
 //			,eSignalIdentifier_ClientListenRequest
 //			,eSignalIdentifier_OnClientConnected
 			,eSignalIdentifier_ModifyMIVRequest
@@ -490,6 +492,8 @@ namespace seedsrc {
 			c_Delta::shared_ptr createSetValueDelta(c_MIVPath id,c_Value_shared_ptr pNewValue);
 			c_SignalQueue::shared_ptr actOnDelta(c_Delta::shared_ptr pDelta);
 
+			c_MIV::shared_ptr getMIV(const c_MIVPath miv_path);
+
 		private:
 
 			c_DeltaIndex m_LastCreatedDeltaIndex;
@@ -514,6 +518,7 @@ namespace seedsrc {
 
 			// End c_SignalSinkIfc
 
+			void setListeningClientId(c_MessageTargetId listening_client_id);
 
 		private:
 
@@ -524,6 +529,9 @@ namespace seedsrc {
 
 			c_MessageTargetId m_id;
 			c_MIVs::shared_ptr m_pMIVs;
+
+			c_MessageTargetId m_listening_client_id;
+
 		};
 
 		//-------------------------------------------------------------------
@@ -600,8 +608,9 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		// Test clients
 
+		//-------------------------------------------------------------------
 		class c_GUIClientproxy; // Forward
-
+		//-------------------------------------------------------------------
 		class c_TestClient
 			: public c_SignalSinkIfc
 		{
