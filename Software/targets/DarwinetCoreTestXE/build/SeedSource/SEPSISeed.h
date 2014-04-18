@@ -105,12 +105,8 @@ namespace seedsrc {
 
 		enum e_SignalIdentifier {
 			eSignalIdentifier_Undefined
-//			,eSignalIdentifier_OpenMIVsRequest
-//			,eSignalIdentifier_OnMIVsOpen
 			,eSignalIdentifier_getMIVs
 			,eSignalIdentifier_getMIVsResponse
-//			,eSignalIdentifier_ClientListenRequest
-//			,eSignalIdentifier_OnClientConnected
 			,eSignalIdentifier_ModifyMIVRequest
 			,eSignalIdentifier_OnMIVEvent
 			,eSignalIdentifier_DeltaMIV
@@ -293,16 +289,20 @@ namespace seedsrc {
 			: public std::runtime_error
 		{
 		public:
-			c_DarwinetException(const c_LogString& sMessage) : std::runtime_error(sMessage.c_str()) {};
+//			c_DarwinetException(const c_LogString& sMessage) : std::runtime_error(sMessage.c_str()) {};
+			c_DarwinetException(const c_LogString& sHeading,const c_LogString& sMessage) : std::runtime_error((sHeading + sMessage).c_str()) {};
 		};
 
-		#define DARWINET_EXCEPTION_CLASS(X) class X : public c_DarwinetException {public: X(const c_LogString& sMessage): c_DarwinetException(sMessage) {};}
+		#define DARWINET_EXCEPTION_CLASS(X,Y) class X : public c_DarwinetException {public: X(const c_LogString& sMessage): c_DarwinetException(c_LogString(Y),sMessage) {};}
 
-		DARWINET_EXCEPTION_CLASS(c_InvalidActorIdException);
-		DARWINET_EXCEPTION_CLASS(c_IllformedSignalStringException);
-		DARWINET_EXCEPTION_CLASS(c_NoSuchMIVException);
-		DARWINET_EXCEPTION_CLASS(c_NULLDeltaException);
-		DARWINET_EXCEPTION_CLASS(c_IllFormedSignalFieldException);
+		DARWINET_EXCEPTION_CLASS(c_InvalidActorIdException,"Invalid Actor Id. ");
+		DARWINET_EXCEPTION_CLASS(c_IllformedSignalStringException,"Illformed signal string representation. ");
+		DARWINET_EXCEPTION_CLASS(c_NoSuchMIVException,"No such MIV. ");
+		DARWINET_EXCEPTION_CLASS(c_NULLDeltaException,"NULL Delta. ");
+		DARWINET_EXCEPTION_CLASS(c_IllFormedSignalFieldException,"Illformed Signal Field. ");
+		DARWINET_EXCEPTION_CLASS(c_DeltaApplicationException," Failed to apply Delta. ");
+		DARWINET_EXCEPTION_CLASS(c_NULLMIVBodyException,"NULL MIV Body. ");
+		DARWINET_EXCEPTION_CLASS(c_UnknownDeltaOperation,"Unknown Delta Operation. ");
 
 		//-------------------------------------------------------------------
 		c_DarwinetString toString(const c_Signal& signal);
@@ -318,7 +318,7 @@ namespace seedsrc {
 
 			c_IntValue(int raw_value = INT_INIT_VALUE) : m_raw_value(raw_value) {;}
 
-			int getRawValue() {return m_raw_value;}
+			int getRawValue() const {return m_raw_value;}
 			void setRawValue(int raw_value) {m_raw_value = raw_value;}
 
 		private:
@@ -353,6 +353,8 @@ namespace seedsrc {
 		class c_DeltaIndex {
 		public:
 
+//			c_DeltaIndex(const c_MIVsProducerIdentifier& producer = _UTF8sz("??producer??"),const c_DeltaBranchIdentifier& branch = _UTF8sz("??branch??"),const t_DeltaSeqNo& seq_no = 0);
+
 			c_MIVsProducerIdentifier getProducer() const {return m_Producer;}
 			c_DeltaBranchIdentifier getBranch() const {return m_Branch;}
 			t_DeltaSeqNo getSeqNo() const {return m_SeqNo;}
@@ -380,6 +382,7 @@ namespace seedsrc {
 
 			const c_DeltaIndex& getState() const {return m_State;}
 			const c_Value& getValue() const {return m_Value;}
+			c_Value& getValue() {return m_Value;}
 
 			void setState(const c_DeltaIndex& state) {m_State = state;}
 			void setValue(const c_Value& value) {m_Value = value;}
@@ -443,13 +446,15 @@ namespace seedsrc {
 
 		class c_IntDeltaOperation {
 		public:
-			c_IntDeltaOperation(const c_IntValue& value,e_IntOperationId int_operation_id);
+			c_IntDeltaOperation(const c_IntValue& delta_value,e_IntOperationId int_operation_id);
 
-			c_IntValue getValue() {return m_value;}
-			e_IntOperationId getIntOperationId() {return m_int_operation_id;}
+			c_IntValue operator()(c_IntValue& current_value) const;
+
+			c_IntValue getValue() const {return m_delta_value;}
+			e_IntOperationId getIntOperationId() const {return m_int_operation_id;}
 
 		private:
-			c_IntValue m_value;
+			c_IntValue m_delta_value;
 			e_IntOperationId m_int_operation_id;
 		};
 
@@ -496,14 +501,17 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<c_MIV> shared_ptr;
 			c_DeltaIndex getState() {return m_State;}
-			c_MIVBody& getBody() {return m_MIVBody;} // Return ref to allow variant visitor to visit
+//			c_MIVBody& getBody() {return m_MIVBody;} // Return ref to allow variant visitor to visit
+			c_MIVBody_shared_ptr getBody() {return m_pMIVBody;}
 
 			void setState(const c_DeltaIndex& state) {m_State = state;}
-			void setBody(const c_MIVBody& body) {m_MIVBody = body;}
+//			void setBody(const c_MIVBody& body) {m_MIVBody = body;}
+			void setBody(const c_MIVBody_shared_ptr& pBody) {m_pMIVBody = pBody;}
 
 		private:
 			c_DeltaIndex m_State; // Index of last applied Delta defining this state
-			c_MIVBody m_MIVBody;
+//			c_MIVBody m_MIVBody;
+			c_MIVBody_shared_ptr m_pMIVBody;
 		};
 
 		typedef std::map<c_MIVPath,c_MIV::shared_ptr> c_MappedMIVs;
@@ -513,9 +521,13 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<c_MIVs> shared_ptr;
 
+			c_MIVs(const c_DeltaIndex& last_created_delta_index)
+				:  m_LastCreatedDeltaIndex(last_created_delta_index)
+			{;}
+
 			c_Delta::shared_ptr createSetValueDelta(c_MIVPath id,c_Value_shared_ptr pNewValue);
 
-			c_MIV::shared_ptr getMIV(const c_MIVPath miv_path);
+			c_MIV::shared_ptr getMIV(const c_MIVPath& miv_path);
 
 		private:
 
@@ -715,6 +727,7 @@ namespace seedsrc {
 		};
 
 		namespace log {
+			c_LogString toLogString(const c_Signal& signal);
 			c_LogString toLogString(c_Signal::shared_ptr pSignal);
 			c_LogString toLogString(const c_MIVTarget& miv_target);
 			c_LogString toLogString(const c_DeltaIndex& index);
