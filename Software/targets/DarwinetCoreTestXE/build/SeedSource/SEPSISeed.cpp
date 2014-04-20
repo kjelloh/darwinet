@@ -79,8 +79,6 @@ namespace seedsrc {
 					case eSignalIdentifier_Undefined: sSignalIdentifier = _UTF8sz("Undefined"); break;
 					case eSignalIdentifier_getMIVs: sSignalIdentifier = _UTF8sz("getMIVs"); break;
 					case eSignalIdentifier_getMIVsResponse: sSignalIdentifier = _UTF8sz("getMIVsResponse"); break;
-//					case eSignalIdentifier_OpenMIVsRequest: sSignalIdentifier = _UTF8sz("OpenMIVsRequest"); break;
-//					case eSignalIdentifier_OnMIVsOpen: sSignalIdentifier = _UTF8sz("OnMIVsOpen"); break;
 					case eSignalIdentifier_ModifyMIVRequest: sSignalIdentifier = _UTF8sz("ModifyMIVRequest"); break;
 					case eSignalIdentifier_OnMIVEvent: sSignalIdentifier = _UTF8sz("OnMIVEvent"); break;
 					case eSignalIdentifier_DeltaMIV: sSignalIdentifier = _UTF8sz("DeltaMIV"); break;
@@ -221,9 +219,6 @@ namespace seedsrc {
 			return result;
 		}
 
-//		void c_Signal::addElement(const c_DarwinetString& sKey,const c_DarwinetString& sValue) {
-//			this->push_back(std::make_pair(sKey,sValue));
-//		}
 		void c_Signal::addElement(e_SignalField eKey,const c_DarwinetString& sValue) {
 			this->push_back(std::make_pair(SIGNAL_FIELD_MAPPER[eKey],sValue));
 		}
@@ -237,24 +232,6 @@ namespace seedsrc {
 			return result;
 		}
 
-		//-------------------------------------------------------------------
-		//-------------------------------------------------------------------
-
-//		void c_SignalPipe::actOnInSignal(const c_Signal::shared_ptr& pSignal) {
-//			LOG_METHOD_SCOPE;
-//			this->push(pSignal);
-//		}
-//
-//		void c_SignalPipe::process() {
-//			LOG_METHOD_SCOPE;
-//			if (this->size() > 0) {
-//				c_Signal::shared_ptr pSignal = this->front();
-//				if (onSignalToTarget) {
-//					onSignalToTarget(this->front());
-//					this->pop();
-//				}
-//			}
-//		};
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
@@ -449,27 +426,28 @@ namespace seedsrc {
 			LOG_METHOD_SCOPE;
 			c_Delta::shared_ptr result(new c_Delta());
 			c_MIV::shared_ptr pMIV = this->getMIV(id);
-//			c_MappedMIVs::iterator iterMIV = this->m_MappedMIVs.find(id);
-//			if (iterMIV != this->m_MappedMIVs.end()) {
 			if (pMIV) {
 				// It's there
 				c_MIVTarget miv_target;
 				miv_target.setState(pMIV->getState());
 				miv_target.setMIVId(id);
 				result->setMIVtarget(miv_target);
-				c_DeltaIndex new_delta_index = this->m_LastCreatedDeltaIndex;
-
+				{
+					c_DeltaIndex new_delta_index = this->m_LastCreatedDeltaIndex;
+					LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(", m_LastCreatedDeltaIndex not incremented for new Delta. All created delta will have the same predecessor"));
+// Dont yet work. Created Signal Field value will be a path with the first node being a path (Producer = c_MIVPath). This is not parseable by receiver.
+//					result->setIndex(new_delta_index);
+					this->m_LastCreatedDeltaIndex = new_delta_index;
+				}
 				result->setPredecessor(this->m_LastAppliedDeltaIndex);
 				c_CreateSetValueDeltaOperation visitor(pNewValue);
-				// Asume provided id leads to a V
-				c_V current_V = boost::get<c_V>(*pMIV->getBody());
-				c_Value current_value = current_V.getValue();
-				c_DeltaOperation_shared_ptr pDeltaOperation = boost::make_shared<c_DeltaOperation>(boost::apply_visitor(visitor,current_value));
-				result->setDeltaOperation(pDeltaOperation);
 				{
-					// TODO:
-					c_LogString sMessage("Delta not fully populated");
-					LOG_DESIGN_INSUFFICIENCY(sMessage);
+					LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(", Will Asume provided MIV is a V"));
+					// Asume provided id leads to a V
+					c_V current_V = boost::get<c_V>(*pMIV->getBody());
+					c_Value current_value = current_V.getValue();
+					c_DeltaOperation_shared_ptr pDeltaOperation = boost::make_shared<c_DeltaOperation>(boost::apply_visitor(visitor,current_value));
+					result->setDeltaOperation(pDeltaOperation);
 				}
 			}
 			else {
@@ -573,59 +551,115 @@ namespace seedsrc {
 							c_DarwinetString sTargetId = pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationTargetId]);
 							c_MIVPath target_miv_path = c_MIVPath::fromString(sTargetId);
 							c_DarwinetString sNewValue = pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationNewValue]);
+							c_Delta::shared_ptr pDelta;
 							{
-								c_LogString sMessage(METHOD_NAME + c_LogString(", Actual MIV model of target "));
-								sMessage += sTargetId;
-								sMessage += _UTF8sz(" not determined. Will assume integer instance");
-								LOG_DESIGN_INSUFFICIENCY(sMessage);
+								// Qick fix for now to test int or string value assign
+								if (sTargetId == _UTF8sz("myInt:0")) {
+									{
+										c_LogString sMessage(METHOD_NAME + c_LogString(", Actual MIV model of target "));
+										sMessage += sTargetId;
+										sMessage += _UTF8sz(" not determined. Will assume integer instance");
+										LOG_DESIGN_INSUFFICIENCY(sMessage);
+									}
+									c_Value_shared_ptr pNewValue = boost::make_shared<c_Value>(c_IntValue(c_DataRepresentationFramework::intValueOfDecimalString(sNewValue)));
+									pDelta = this->createSetValueDelta(target_miv_path,pNewValue);
+								}
+								else if (sTargetId == _UTF8sz("myString:0")) {
+//									{
+//										c_LogString sMessage(METHOD_NAME + c_LogString(", Actual MIV model of target "));
+//										sMessage += sTargetId;
+//										sMessage += _UTF8sz(" not determined. Will assume string instance");
+//										LOG_DESIGN_INSUFFICIENCY(sMessage);
+//									}
+//									c_Value_shared_ptr pNewValue = boost::make_shared<c_Value>(c_StringValue(sNewValue));
+//									pDelta = this->createSetValueDelta(target_miv_path,pNewValue);
+
+									/*
+									TODO 140420
+
+									Implement only "array expand" and "array contract"
+
+									array expand = {position,+,value_to_insert}
+									array contratc = {position,-,value_to_remove}
+
+									forward: "Hej" + {3,+,'!'} := "Hej!"
+									backward: "hej!" + {3,-,'!'} := "Hej"
+
+									This works for modifications to.
+
+									forward: "Hej+Hopp" + {{3,-,'+'};{3,+,'-'}} := "Hej-Hopp"
+									backward: "Hej-Hopp" + {{3,-,'-'};{3,+,'+'}} := "Hej+Hopp"
+
+									Note: The backward delta {{3,-,'-'};{3,+,'+'}} is the forward delta {{3,-,'+'};{3,+,'-'}} with each operation reversed and applied in reverse order.
+
+									This works for ranges to!
+
+									forward: "Hej Hopp" + {3,+," and"} := "Hej and Hopp"
+									reverse: "Hej and Hopp" + {3,-," and"} := "Hej Hopp"
+
+									And consequensly for modification.
+
+									forward: "Hej and Hopp" + {{3,-," and"};{3,+," och"} := "Hej och Hopp"
+									backward: "Hej och Hopp" + {{3,-," och"};{3,+," and"}} := "Hej and Hopp"
+
+									*/
+								}
+								else {
+									LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" failed. Assigning MIV ") + target_miv_path.toString<c_LogString>() + c_LogString(" not implemented"));
+								}
 							}
-							c_Value_shared_ptr pNewValue = boost::make_shared<c_Value>(c_IntValue(c_DataRepresentationFramework::intValueOfDecimalString(sNewValue)));
-							c_Delta::shared_ptr pDelta = this->createSetValueDelta(target_miv_path,pNewValue);
-							bool short_cut_delta_distribution = false;
-							if (short_cut_delta_distribution) {
-								c_SignalQueue::shared_ptr pDeltaCreationResponse = this->actOnDelta(pDelta);
-								result->append(pDeltaCreationResponse);
+							if (pDelta) {
+								// Distribute the created Delta
+								bool short_cut_delta_distribution = false;
+								if (short_cut_delta_distribution) {
+									c_SignalQueue::shared_ptr pDeltaCreationResponse = this->actOnDelta(pDelta);
+									result->append(pDeltaCreationResponse);
+								}
+								else {
+									c_LogString sMessage(METHOD_NAME + c_LogString(", Distribution of created Delta not yet Implemented"));
+									LOG_DESIGN_INSUFFICIENCY(sMessage);
+
+									// Create a signal of pDelta and distribute to all MIVs
+									c_MessageTargetIds_shared_ptr pMIVHanlderIds =  c_DarwinetTestBench::instance()->getAllMIVHandlerIds();
+									for (c_MessageTargetIds::iterator iter = pMIVHanlderIds->begin(); iter != pMIVHanlderIds->end(); ++iter) {
+										c_Signal::shared_ptr pDeltaSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),*iter);
+										pDeltaSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_DeltaMIV]);
+	//									,eSignalField_DeltaPredecessorIx
+										c_CaptionPath delta_predecessor_ix_path;
+										delta_predecessor_ix_path += c_CaptionPath::Node(pDelta->getPredecessor().getProducer());
+										delta_predecessor_ix_path += c_CaptionPath::Node(pDelta->getPredecessor().getBranch());
+										delta_predecessor_ix_path += c_CaptionPath::Node(c_DataRepresentationFramework::intToDecimalString(pDelta->getPredecessor().getSeqNo()));
+										pDeltaSignal->addElement(eSignalField_DeltaPredecessorIx,delta_predecessor_ix_path.toString<c_CaptionNode>());
+	//									,eSignalField_DeltaIx
+										c_CaptionPath delta_ix_path;
+										delta_ix_path += c_CaptionPath::Node(pDelta->getIndex().getProducer());
+										delta_ix_path += c_CaptionPath::Node(pDelta->getIndex().getBranch());
+										delta_ix_path += c_CaptionPath::Node(c_DataRepresentationFramework::intToDecimalString(pDelta->getIndex().getSeqNo()));
+										pDeltaSignal->addElement(eSignalField_DeltaIx,delta_ix_path.toString<c_CaptionNode>());
+	//									,eSignalField_DeltaTargetState
+										c_CaptionPath delta_target_state_path;
+										delta_target_state_path += c_CaptionPath::Node(pDelta->getMIVtarget().getState().getProducer());
+										delta_target_state_path += c_CaptionPath::Node(pDelta->getMIVtarget().getState().getBranch());
+										delta_target_state_path += c_CaptionPath::Node(c_DataRepresentationFramework::intToDecimalString(pDelta->getMIVtarget().getState().getSeqNo()));
+										pDeltaSignal->addElement(eSignalField_DeltaTargetState,delta_target_state_path.toString<c_CaptionNode>());
+	//									,eSignalField_DeltaTargetMIVId
+										pDeltaSignal->addElement(eSignalField_DeltaTargetMIVId,pDelta->getMIVtarget().getMIVId().toString<c_CaptionNode>());
+										if (pDelta->getDeltaOperation()->type() == typeid(c_IntDeltaOperation)) {
+											c_IntDeltaOperation int_delta_operation = boost::get<c_IntDeltaOperation>(*pDelta->getDeltaOperation());
+	//										,eSignalField_DeltaOperationId
+											if (int_delta_operation.getIntOperationId() == eIntOperationId_ADD) {
+												pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_IntDeltaAdd]);
+	//											,eSignalField_DeltaOperationValue
+												pDeltaSignal->addElement(eSignalField_DeltaOperationValue,c_DataRepresentationFramework::intToDecimalString(int_delta_operation.getValue().getRawValue()));
+											}
+										}
+										result->push(pDeltaSignal);
+									}
+								}
 							}
 							else {
-								c_LogString sMessage(METHOD_NAME + c_LogString(", Distribution of created Delta not yet Implemented"));
-								LOG_DESIGN_INSUFFICIENCY(sMessage);
-
-								// Create a signal of pDelta and distribute to all MIVs
-								c_MessageTargetIds_shared_ptr pMIVHanlderIds =  c_DarwinetTestBench::instance()->getAllMIVHandlerIds();
-								for (c_MessageTargetIds::iterator iter = pMIVHanlderIds->begin(); iter != pMIVHanlderIds->end(); ++iter) {
-									c_Signal::shared_ptr pDeltaSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),*iter);
-									pDeltaSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_DeltaMIV]);
-//									,eSignalField_DeltaPredecessorIx
-									c_CaptionPath delta_predecessor_ix_path;
-									delta_predecessor_ix_path += c_CaptionPath::Node(pDelta->getPredecessor().getProducer());
-									delta_predecessor_ix_path += c_CaptionPath::Node(pDelta->getPredecessor().getBranch());
-									delta_predecessor_ix_path += c_CaptionPath::Node(c_DataRepresentationFramework::intToDecimalString(pDelta->getPredecessor().getSeqNo()));
-									pDeltaSignal->addElement(eSignalField_DeltaPredecessorIx,delta_predecessor_ix_path.toString<c_CaptionNode>());
-//									,eSignalField_DeltaIx
-									c_CaptionPath delta_ix_path;
-									delta_ix_path += c_CaptionPath::Node(pDelta->getIndex().getProducer());
-									delta_ix_path += c_CaptionPath::Node(pDelta->getIndex().getBranch());
-									delta_ix_path += c_CaptionPath::Node(c_DataRepresentationFramework::intToDecimalString(pDelta->getIndex().getSeqNo()));
-									pDeltaSignal->addElement(eSignalField_DeltaIx,delta_ix_path.toString<c_CaptionNode>());
-//									,eSignalField_DeltaTargetState
-									c_CaptionPath delta_target_state_path;
-									delta_target_state_path += c_CaptionPath::Node(pDelta->getMIVtarget().getState().getProducer());
-									delta_target_state_path += c_CaptionPath::Node(pDelta->getMIVtarget().getState().getBranch());
-									delta_target_state_path += c_CaptionPath::Node(c_DataRepresentationFramework::intToDecimalString(pDelta->getMIVtarget().getState().getSeqNo()));
-									pDeltaSignal->addElement(eSignalField_DeltaTargetState,delta_target_state_path.toString<c_CaptionNode>());
-//									,eSignalField_DeltaTargetMIVId
-									pDeltaSignal->addElement(eSignalField_DeltaTargetMIVId,pDelta->getMIVtarget().getMIVId().toString<c_CaptionNode>());
-									if (pDelta->getDeltaOperation()->type() == typeid(c_IntDeltaOperation)) {
-										c_IntDeltaOperation int_delta_operation = boost::get<c_IntDeltaOperation>(*pDelta->getDeltaOperation());
-//										,eSignalField_DeltaOperationId
-										if (int_delta_operation.getIntOperationId() == eIntOperationId_ADD) {
-											pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_IntDeltaAdd]);
-//											,eSignalField_DeltaOperationValue
-											pDeltaSignal->addElement(eSignalField_DeltaOperationValue,c_DataRepresentationFramework::intToDecimalString(int_delta_operation.getValue().getRawValue()));
-										}
-									}
-									result->push(pDeltaSignal);
-								}
+								// No Delta was created
+								LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" failed. No Delta created for Assigning MIV ") + target_miv_path.toString<c_LogString>() + c_LogString(" to value ") + sNewValue);
 							}
 						}
 					}
@@ -987,10 +1021,9 @@ namespace seedsrc {
 				}
 			}
 			else {
-//				c_Signal::shared_ptr pSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),c_DarwinetTestBench::instance()->getDarwinetEngine()->getDomainHandler(1)->getViewHandler(m_id.back().index())->getMIVsHandler()->getId());
 				c_Signal::shared_ptr pSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),this->getMIVsHandlerId());
 				pSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_ModifyMIVRequest]);
-				pSignal->addElement(eSignalField_MIVsOperationId,_UTF8sz("Assign"));
+				pSignal->addElement(eSignalField_MIVsOperationId,MIVS_OPERATION_MAPPER[eMIVsOperation_Assign]);
 				pSignal->addElement(eSignalField_MIVsOperationTargetId,MIVsId.toString<c_DarwinetString>());
 				pSignal->addElement(eSignalField_MIVsOperationNewValue,value);
 				c_DarwinetTestBench::instance()->sendMessage(pSignal);

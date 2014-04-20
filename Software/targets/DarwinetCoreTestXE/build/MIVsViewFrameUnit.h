@@ -15,7 +15,9 @@ class TMIVsViewFrame : public TFrame
 {
 __published:	// IDE-managed Components
 	TSpinEdit *MyIntSpinEdit;
+	TEdit *MyTextEdit;
 	void __fastcall MyIntSpinEditChange(TObject *Sender);
+	void __fastcall MyTextEditChange(TObject *Sender);
 private:	// User declarations
 	static unsigned int m_instanceCount;
 	unsigned int m_index;

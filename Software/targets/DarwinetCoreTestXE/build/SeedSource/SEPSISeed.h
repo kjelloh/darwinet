@@ -327,19 +327,25 @@ namespace seedsrc {
 
 		class c_StringValue {
 		public:
+			typedef c_DarwinetString _RawValueType;
 			typedef boost::shared_ptr<c_StringValue> shared_ptr;
-		};
 
-		class c_RecordValue {
-		public:
-			typedef boost::shared_ptr<c_RecordValue> shared_ptr;
-			// Vector of different type c_V
+			c_StringValue(const _RawValueType& raw_value) : m_raw_value(raw_value) {;}
+
+		private:
+			_RawValueType m_raw_value;
 		};
 
 		class c_ArrayValue {
 		public:
 			typedef boost::shared_ptr<c_ArrayValue> shared_ptr;
 			// Vector of same type c_V
+		};
+
+		class c_RecordValue {
+		public:
+			typedef boost::shared_ptr<c_RecordValue> shared_ptr;
+			// Vector of different type c_V
 		};
 
 		typedef boost::variant<c_IntValue,c_StringValue,c_RecordValue, c_ArrayValue> c_Value;
@@ -458,7 +464,63 @@ namespace seedsrc {
 			e_IntOperationId m_int_operation_id;
 		};
 
+		enum e_StringDeltaOperation {
+			 eStringDeltaOperation_Undefined
+			,eStringDeltaOperation_Extend
+			,eStringDeltaOperation_Contract
+			,eStringDeltaOperation_Unknown
+		};
 		class c_StringDeltaOperation {
+		/*
+			Implement only "array expand" and "array contract"
+
+			array expand = {position,+,value_to_insert}
+			array contratc = {position,-,value_to_remove}
+
+			forward: "Hej" + {3,+,'!'} := "Hej!"
+			backward: "hej!" + {3,-,'!'} := "Hej"
+
+			This works for modifications to.
+
+			forward: "Hej+Hopp" + {{3,-,'+'};{3,+,'-'}} := "Hej-Hopp"
+			backward: "Hej-Hopp" + {{3,-,'-'};{3,+,'+'}} := "Hej+Hopp"
+
+			Note: The backward delta {{3,-,'-'};{3,+,'+'}} is the forward delta {{3,-,'+'};{3,+,'-'}} with each operation reversed and applied in reverse order.
+
+			This works for ranges to!
+
+			forward: "Hej Hopp" + {3,+," and"} := "Hej and Hopp"
+			reverse: "Hej and Hopp" + {3,-," and"} := "Hej Hopp"
+
+			And consequensly for modification.
+
+			forward: "Hej and Hopp" + {{3,-," and"};{3,+," och"} := "Hej och Hopp"
+			backward: "Hej och Hopp" + {{3,-," och"};{3,+," and"}} := "Hej and Hopp"
+
+			Note: forward delta {target_index,+,value} means backward delta is {{target_index,-,value}}
+				  forward delta {target_index,-,value} means backward delta is {{target_index,+,value}}
+
+		*/
+
+		public:
+
+			c_StringDeltaOperation(unsigned int target_index=0,e_StringDeltaOperation StringDeltaOperation = eStringDeltaOperation_Undefined,const c_DarwinetString& sDeltaValue = c_DarwinetString())
+				:  m_target_index(target_index)
+				  ,m_StringDeltaOperation(StringDeltaOperation)
+				  ,m_sDeltaValue(sDeltaValue)
+			{;}
+
+			unsigned int getTargetIndex() const {return m_target_index;}
+			e_StringDeltaOperation getOperation() const {return m_StringDeltaOperation;}
+			c_DarwinetString getDeltaValue() const {return m_sDeltaValue;}
+			void setTargetIndex(unsigned int target_index) {m_target_index = target_index;}
+			void setOperation(e_StringDeltaOperation StringDeltaOperation) {m_StringDeltaOperation = StringDeltaOperation;}
+			void getDeltaValue(const c_DarwinetString& sDeltaValue) {m_sDeltaValue = sDeltaValue;}
+
+		private:
+			unsigned int m_target_index;
+			e_StringDeltaOperation m_StringDeltaOperation;
+			c_DarwinetString m_sDeltaValue;
 		};
 
 		class c_RecordDeltaOperation {
