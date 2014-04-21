@@ -398,6 +398,85 @@ namespace seedsrc {
 			c_DeltaOperation operator()(const c_StringValue& current_value) const {
 				LOG_METHOD_SCOPE;
 				c_StringDeltaOperation result;
+				c_DarwinetString A = current_value.getRawValue(); // Current value
+				c_DarwinetString B = boost::get<c_StringValue>(*m_pNewValue).getRawValue(); // New value
+				{
+					// Implementation of the SES (Shortest Edit Script) algorithm as
+					// suggested by Eugene W. Myers in "An O(ND) Difference Algorithm and Its Variations" published at http://www.xmailserver.org/diff2.pdf
+
+					int N = A.length();
+					int M = B.length();
+					int MAX = N+M;
+
+					const int V_ZERO_INDEX = MAX;
+// (1) The same V vector for all iterations D
+//					std::vector<int> V; // Array [-MAX .. MAX]
+//					V[V_ZERO_INDEX+1] = 0;
+// (2) Save the vector V for each iteration D
+					typedef std::vector<int> c_VectorV;
+					std::vector<c_VectorV> Vs(MAX+1,c_VectorV(2*MAX+1,0)); // Vs[D] is the vector V for iteration D
+					Vs[0][V_ZERO_INDEX+1] = 0;
+
+					int D;
+					int x;
+					int y;
+					bool success = false;
+					// Try all possible paths lengths D.
+					for (int D = 0; D <= MAX; D += 1) {
+						// Try each possible diagonal k (defined as diagonal k = x-y) in steps of 2
+						for (int k = -D; k <= D; k += 2) {
+							if (    (k==-D)
+								 || (    (k!=D)
+									  && (Vs[D][V_ZERO_INDEX + (k-1)] < Vs[D][V_ZERO_INDEX + (k+1)]))) {
+								x = Vs[D][V_ZERO_INDEX + (k+1)];
+							}
+							else {
+								// (-D < k < D) and x endpoint of diagonal k-1 is the same or to the right of x endpoint of diagonal k+1
+								x = Vs[D][V_ZERO_INDEX + (k-1)];
+							}
+							y = x-k;
+							// path Startpoint is now (x,y)
+							while ((x < N) && (y<M) && (A[x+1] == B[y+1])) {
+								// A and B matches at next diagonal x,y - Traverse
+								x += 1;
+								y += 1;
+							}
+							Vs[D][V_ZERO_INDEX + k] = x; // Update current longest diagonal k as endpoint x
+							if ((x >=N) && (y>=M)) {
+								// SES length is current D
+								success = true;
+								break;
+							}
+						}
+					}
+					if (success) {
+						// Create the Delta from the Edit script
+
+						// TODO: Determine the edit script from the recorded Vs.
+						/*  From document
+
+							"The search of the greedy algorithm traces the optimal D-paths among others.
+							 But only the current set of furthest reaching endpoints are retained in V.
+							 Consequently, only the length of an SES/LCS can be reported in Line 12.
+							 To explicitly generate a solution path, O(D2 ) space? is used to store a
+							 copy of V after each iteration of the outer loop. Let Vd be the copy of V kept
+							 after the dth iteration. To list an optimal path from (0,0) to the point Vd [k]
+							 first deter- mine whether it is at the end of a maximal snake following a
+							 vertical edge from V d ? 1 [ k + 1 ] or a horizontal edge from Vd?1[k?1].
+							 To be concrete, suppose it is Vd?1[k?1]. Recursively list an optimal path
+							 from (0,0) to this point and then list the vertical edge and maximal snake to V d [ k ].
+							 The recursion stops when d = 0 in which case the snake from (0,0) to (V0 [0],V0 [0]) is listed.
+							 So with O(M+N) additional time and O(D2 ) space an optimal path can be
+							 listed by replacing Line 12 with a call to this recursive procedure
+							 with VD[N?M] as the initial point."
+						*/
+
+						throw c_StringDeltaCreationFailed(c_LogString(" String Delta Creation noy yet implemented. No Delta Created."));
+					}
+					else {
+						throw c_StringDeltaCreationFailed(c_LogString(" No Delta Created in ") + METHOD_NAME);
+					}
+				}
 				LOG_NOT_IMPLEMENTED;
 				return result;
 			}
@@ -422,7 +501,7 @@ namespace seedsrc {
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
-		c_Delta::shared_ptr c_MIVs::createSetValueDelta(c_MIVPath id,c_Value_shared_ptr pNewValue) {
+		c_Delta::shared_ptr c_MIVs::createSetValueDelta(const c_MIVPath& id,c_Value_shared_ptr pNewValue) {
 			LOG_METHOD_SCOPE;
 			c_Delta::shared_ptr result(new c_Delta());
 			c_MIV::shared_ptr pMIV = this->getMIV(id);
@@ -441,7 +520,8 @@ namespace seedsrc {
 				}
 				result->setPredecessor(this->m_LastAppliedDeltaIndex);
 				c_CreateSetValueDeltaOperation visitor(pNewValue);
-				{
+
+				if (this->isV(id)) {
 					LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(", Will Asume provided MIV is a V"));
 					// Asume provided id leads to a V
 					c_V current_V = boost::get<c_V>(*pMIV->getBody());
@@ -470,29 +550,62 @@ namespace seedsrc {
 				// No such instance
 				bool auto_create_unexisting_instance = true;
 				if (auto_create_unexisting_instance) {
+					// auto-create the MIV
 					c_LogString sMessage("MIV Instance ");
 					sMessage += miv_path.toString<c_LogString>();
 					sMessage += _UTF8sz(" does not exist.");
 					sMessage += _UTF8sz(" Will auto-create it. Please remove when dM processing is in place!");
 					LOG_DESIGN_INSUFFICIENCY(sMessage);
-					// Create a new V instance
-
-					{
-						LOG_DESIGN_INSUFFICIENCY(c_LogString("Auo-created MIV ") + miv_path.toString<c_LogString>() + c_LogString(" will be set to integer V = 0. Auto-creation of M or I not yet implemented."));
+					if (this->isIntV(miv_path)) {
+						// Create a new int V instance
+						{
+							LOG_DESIGN_INSUFFICIENCY(c_LogString("Auo-created MIV ") + miv_path.toString<c_LogString>() + c_LogString(" will be set to integer V = 0. Auto-creation of M or I not yet implemented."));
+						}
+						c_MIV::shared_ptr pNewMIV = boost::make_shared<c_MIV>();
+						c_V new_V;
+						c_IntValue int_value(0);
+						new_V.setValue(int_value);
+						pNewMIV->setBody(boost::make_shared<c_MIVBody>(new_V));
+						{
+							LOG_DESIGN_INSUFFICIENCY(c_LogString("Auo-created MIV ") + miv_path.toString<c_LogString>() + c_LogString(" will have no corresponding M or I to describe it"));
+						}
+						m_MappedMIVs[miv_path] = pNewMIV;
+						result = pNewMIV;
 					}
-					c_MIV::shared_ptr pNewMIV = boost::make_shared<c_MIV>();
-					c_V new_V;
-					c_IntValue int_value(0);
-					new_V.setValue(int_value);
-					pNewMIV->setBody(boost::make_shared<c_MIVBody>(new_V));
-					{
-						LOG_DESIGN_INSUFFICIENCY(c_LogString("Auo-created MIV ") + miv_path.toString<c_LogString>() + c_LogString(" will have no corresponding M or I to describe it"));
+					else if (this->isStringV(miv_path)) {
+						// Create a new int V instance
+						{
+							LOG_DESIGN_INSUFFICIENCY(c_LogString("Auo-created MIV ") + miv_path.toString<c_LogString>() + c_LogString(" will be set to String V = \"\". Auto-creation of M or I not yet implemented."));
+						}
+						c_MIV::shared_ptr pNewMIV = boost::make_shared<c_MIV>();
+						c_V new_V;
+						c_StringValue string_value;
+						new_V.setValue(string_value);
+						pNewMIV->setBody(boost::make_shared<c_MIVBody>(new_V));
+						{
+							LOG_DESIGN_INSUFFICIENCY(c_LogString("Auo-created MIV ") + miv_path.toString<c_LogString>() + c_LogString(" will have no corresponding M or I to describe it"));
+						}
+						m_MappedMIVs[miv_path] = pNewMIV;
+						result = pNewMIV;
 					}
-					m_MappedMIVs[miv_path] = pNewMIV;
-					result = pNewMIV;
 				}
 			}
 			return result;
+		}
+
+		//-------------------------------------------------------------------
+		bool c_MIVs::isIntV(const c_MIVPath& miv_path) {
+			c_DarwinetString sPath = miv_path.toString<c_DarwinetString>();
+			return (sPath == _UTF8sz("myInt:0"));
+		}
+		//-------------------------------------------------------------------
+		bool c_MIVs::isStringV(const c_MIVPath& miv_path) {
+			c_DarwinetString sPath = miv_path.toString<c_DarwinetString>();
+			return (sPath == _UTF8sz("myString:0"));
+		}
+
+		bool c_MIVs::isV(const c_MIVPath& miv_path) {
+			return (isIntV(miv_path) || isStringV(miv_path));
 		}
 
 		//-------------------------------------------------------------------
@@ -554,7 +667,8 @@ namespace seedsrc {
 							c_Delta::shared_ptr pDelta;
 							{
 								// Qick fix for now to test int or string value assign
-								if (sTargetId == _UTF8sz("myInt:0")) {
+//								if (sTargetId == _UTF8sz("myInt:0")) {
+								if (this->getMIVs()->isIntV(target_miv_path)) {
 									{
 										c_LogString sMessage(METHOD_NAME + c_LogString(", Actual MIV model of target "));
 										sMessage += sTargetId;
@@ -564,15 +678,16 @@ namespace seedsrc {
 									c_Value_shared_ptr pNewValue = boost::make_shared<c_Value>(c_IntValue(c_DataRepresentationFramework::intValueOfDecimalString(sNewValue)));
 									pDelta = this->createSetValueDelta(target_miv_path,pNewValue);
 								}
-								else if (sTargetId == _UTF8sz("myString:0")) {
-//									{
-//										c_LogString sMessage(METHOD_NAME + c_LogString(", Actual MIV model of target "));
-//										sMessage += sTargetId;
-//										sMessage += _UTF8sz(" not determined. Will assume string instance");
-//										LOG_DESIGN_INSUFFICIENCY(sMessage);
-//									}
-//									c_Value_shared_ptr pNewValue = boost::make_shared<c_Value>(c_StringValue(sNewValue));
-//									pDelta = this->createSetValueDelta(target_miv_path,pNewValue);
+//								else if (sTargetId == _UTF8sz("myString:0")) {
+								else if (this->getMIVs()->isStringV(target_miv_path)) {
+									{
+										c_LogString sMessage(METHOD_NAME + c_LogString(", Actual MIV model of target "));
+										sMessage += sTargetId;
+										sMessage += _UTF8sz(" not determined. Will assume string instance");
+										LOG_DESIGN_INSUFFICIENCY(sMessage);
+									}
+									c_Value_shared_ptr pNewValue = boost::make_shared<c_Value>(c_StringValue(sNewValue));
+									pDelta = this->createSetValueDelta(target_miv_path,pNewValue);
 
 									/*
 									TODO 140420
@@ -803,11 +918,9 @@ namespace seedsrc {
 				if (pTargetMIV) {
 					// Apply the delta operation to the MIV body (they shall match)
 					if (pTargetMIV->getState() == pDelta->getMIVtarget().getState()) {
-//						c_ApplyDeltaToMIVBody visitor(pDelta->getDeltaOperation());
-//						boost::apply_visitor(visitor,pTargetMIV->getBody());
-						c_ApplyDeltaToMIVBody visitor(pTargetMIV->getBody());
-						boost::apply_visitor(visitor,*pDelta->getDeltaOperation());
-						{
+						if (pDelta->getDeltaOperation()) {
+							c_ApplyDeltaToMIVBody visitor(pTargetMIV->getBody());
+							boost::apply_visitor(visitor,*pDelta->getDeltaOperation());
 							// Create the signal that alerts the Client about the change
 							c_Signal::shared_ptr pReply = boost::make_shared<c_Signal>();
 							pReply->addElement(eSignalField_SignalSender,this->getId().toString<c_DarwinetString>());

@@ -303,6 +303,7 @@ namespace seedsrc {
 		DARWINET_EXCEPTION_CLASS(c_DeltaApplicationException," Failed to apply Delta. ");
 		DARWINET_EXCEPTION_CLASS(c_NULLMIVBodyException,"NULL MIV Body. ");
 		DARWINET_EXCEPTION_CLASS(c_UnknownDeltaOperation,"Unknown Delta Operation. ");
+		DARWINET_EXCEPTION_CLASS(c_StringDeltaCreationFailed,"String Delta Creation Failed. ");
 
 		//-------------------------------------------------------------------
 		c_DarwinetString toString(const c_Signal& signal);
@@ -330,7 +331,9 @@ namespace seedsrc {
 			typedef c_DarwinetString _RawValueType;
 			typedef boost::shared_ptr<c_StringValue> shared_ptr;
 
-			c_StringValue(const _RawValueType& raw_value) : m_raw_value(raw_value) {;}
+			c_StringValue(const _RawValueType& raw_value = _RawValueType()) : m_raw_value(raw_value) {;}
+
+			const _RawValueType& getRawValue() const {return m_raw_value;}
 
 		private:
 			_RawValueType m_raw_value;
@@ -587,9 +590,13 @@ namespace seedsrc {
 				:  m_LastCreatedDeltaIndex(last_created_delta_index)
 			{;}
 
-			c_Delta::shared_ptr createSetValueDelta(c_MIVPath id,c_Value_shared_ptr pNewValue);
+			c_Delta::shared_ptr createSetValueDelta(const c_MIVPath& id,c_Value_shared_ptr pNewValue);
 
 			c_MIV::shared_ptr getMIV(const c_MIVPath& miv_path);
+
+			bool isIntV(const c_MIVPath& miv_path);
+			bool isStringV(const c_MIVPath& miv_path);
+			bool isV(const c_MIVPath& miv_path);
 
 		private:
 
