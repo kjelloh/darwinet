@@ -384,6 +384,41 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
+		namespace ses {
+
+			class c_Point {
+			public:
+				c_Point(int _x,int _y) : x(_x), y(_y) {;}
+				int x;
+				int y;
+			};
+
+			/**
+			  * A snake is a file of all horizontal or vertical edges
+			  * followed by zero or more diagonal edges .
+			  * Thus it may be described using a start point, a middle point
+			  * and an end point.
+			  */
+			class c_Snake {
+			public:
+
+				c_Snake(c_Point start,c_Point middle,c_Point end) : m_start(start),m_middle(middle), m_end(end) {;}
+
+				c_Point start() {return m_start;}
+				c_Point middle() {return m_middle;}
+				c_Point end() {return m_end;}
+
+			private:
+				c_Point m_start;
+				c_Point m_middle;
+				c_Point m_end;
+
+			};
+
+			typedef std::vector<c_Snake> c_Snakes;
+
+		}
+
 		class c_CreateSetValueDeltaOperation : public boost::static_visitor<c_DeltaOperation> {
 		public:
 
@@ -409,10 +444,6 @@ namespace seedsrc {
 					int MAX = N+M;
 
 					const int V_ZERO_INDEX = MAX;
-// (1) The same V vector for all iterations D
-//					std::vector<int> V; // Array [-MAX .. MAX]
-//					V[V_ZERO_INDEX+1] = 0;
-// (2) Save the vector V for each iteration D
 					typedef std::vector<int> c_VectorV;
 					std::vector<c_VectorV> Vs(MAX+1,c_VectorV(2*MAX+1,0)); // Vs[D] is the vector V for iteration D
 					Vs[0][V_ZERO_INDEX+1] = 0;
@@ -452,7 +483,6 @@ namespace seedsrc {
 					if (success) {
 						// Create the Delta from the Edit script
 
-						// TODO: Determine the edit script from the recorded Vs.
 						/*  From document
 
 							"The search of the greedy algorithm traces the optimal D-paths among others.
@@ -470,6 +500,61 @@ namespace seedsrc {
 							 listed by replacing Line 12 with a call to this recursive procedure
 							 with VD[N?M] as the initial point."
 						*/
+
+						// Implementation adviced by Nicolas Butler (http://www.codeproject.com/Members/Nicholas-Butler)
+						// at http://www.codeproject.com/Articles/42279/Investigating-Myers-diff-algorithm-Part-of
+
+						ses::c_Snakes snakes;
+						ses::c_Point p(N,M);
+						// Iterate back to (0,0)
+						for ( int d = Vs.size() - 1 ; p.x > 0 || p.y > 0 ; d -= 1 ) {
+							int k = (p.x - p.y);
+
+							// end point is defined by current V[d][k]
+							int xEnd = Vs[d][k];
+							int yEnd = xEnd - k;
+							ses::c_Point end(xEnd,yEnd);
+							// down or right snake?
+							bool down = (    (k == -d)
+										  || (    (k != d)
+											   && (Vs[d][k - 1] < Vs[d][k + 1])
+										 ));
+							int kPrev = down ? k + 1 : k - 1;
+							// start point
+							int xStart = Vs[d][kPrev];
+							int yStart = xStart - kPrev;
+							ses::c_Point start(xStart,yStart);
+							// mid point
+							int xMid = down ? xStart : xStart + 1;
+							int yMid = xMid - k;
+							ses::c_Point middle(xMid,yMid);
+							// Insert this snake in the front of current snakes
+							snakes.insert(snakes.begin(),ses::c_Snake(start,middle,end));
+							// move back to previous start point
+							p.x = xStart;
+							p.y = yStart;
+						}
+
+						// The snakes now defines the inserts and deletes that defines
+						// how to modify A to B.
+						// A right edge snake defines deletions.
+						// A horizontal edge snake defines insertions
+
+						for (ses::c_Snakes::iterator iter = snakes.begin(); iter != snakes.end(); ++iter) {
+							// the snake is either a right snake or down snake
+							c_LogString sMessage("Edit Script=");
+							for (int x = iter->start().x + 1; x <= iter->start().x; ++x) {
+								// right snake = delete commands
+								sMessage += c_DataRepresentationFramework::intToDecimalString(x) + _Asciisz("D");
+								sMessage.anonymous() += A[x-1]; // x = 1..M string index = 0..M-1
+							}
+							for (int y = iter->start().y+1; y <= iter->middle().y; ++y) {
+								// down snake = insert commands
+								sMessage += c_DataRepresentationFramework::intToDecimalString(y) + _Asciisz("I");
+								sMessage.anonymous() += B[y-1]; // y = 1..N string index = 0..N-1
+							}
+							LOG_BUSINESS(sMessage);
+						}
 
 						throw c_StringDeltaCreationFailed(c_LogString(" String Delta Creation noy yet implemented. No Delta Created."));
 					}
