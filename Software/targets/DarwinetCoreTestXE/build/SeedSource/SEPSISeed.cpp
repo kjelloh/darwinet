@@ -48,7 +48,9 @@ namespace seedsrc {
 					case eSignalField_DeltaTargetState: sSignalFieldIdString = _UTF8sz("Body.Delta.Target.State"); break;
 					case eSignalField_DeltaTargetMIVId: sSignalFieldIdString = _UTF8sz("Body.Delta.Target.MIVId"); break;
 					case eSignalField_DeltaOperationId: sSignalFieldIdString = _UTF8sz("Body.Delta.Operation.Id"); break;
-					case eSignalField_DeltaOperationValue: sSignalFieldIdString = _UTF8sz("Body.Delta.Operation.Value"); break;
+					case eSignalField_IntDeltaOperationValue: sSignalFieldIdString = _UTF8sz("Body.Delta.Integer.Value"); break;
+					case eSignalField_StringDeltaOperationIndex: sSignalFieldIdString = _UTF8sz("Body.Delta.String.Index"); break;
+					case eSignalField_StringDeltaOperationValue: sSignalFieldIdString = _UTF8sz("Body.Delta.String.Value"); break;
 					case eSignalField_Unknown: break;
 				default:
 					;
@@ -171,6 +173,8 @@ namespace seedsrc {
 				switch (eKey) {
 					case eDeltaOperationId_Undefined: sValue = _UTF8sz("Undefined"); break;
 					case eDeltaOperationId_IntDeltaAdd: sValue = _UTF8sz("IntDeltaAdd"); break;
+					case eDeltaOperationId_ArrayDeltaExtend: sValue = _UTF8sz("ArrayDeltaExtend"); break;
+					case eDeltaOperationId_ArrayDeltaContract: sValue = _UTF8sz("ArrayDeltaContract"); break;
 					case eDeltaOperationId_Unknown: sValue = _UTF8sz("Unknown"); break;
 				default:
 					;
@@ -506,7 +510,7 @@ namespace seedsrc {
 
 						ses::c_Snakes snakes;
 						ses::c_Point p(N,M);
-						// Iterate back to (0,0)
+						// Iterate back to (0,0) and re-create all snakes in the path
 						for ( int d = Vs.size() - 1 ; p.x > 0 || p.y > 0 ; d -= 1 ) {
 							int k = (p.x - p.y);
 
@@ -519,7 +523,7 @@ namespace seedsrc {
 										  || (    (k != d)
 											   && (Vs[d][k - 1] < Vs[d][k + 1])
 										 ));
-							int kPrev = down ? k + 1 : k - 1;
+							int kPrev = down ? k + 1 : k - 1; // down is diagonal k+1. Right is diagonal k-1
 							// start point
 							int xStart = Vs[d][kPrev];
 							int yStart = xStart - kPrev;
@@ -536,27 +540,65 @@ namespace seedsrc {
 						}
 
 						// The snakes now defines the inserts and deletes that defines
-						// how to modify A to B.
+						// how to modify from A to B.
 						// A right edge snake defines deletions.
 						// A horizontal edge snake defines insertions
 
+						/**
+						  * TODO 140430. Implement insert/Delete of ranges of chars (strings)
+						  *              Current implementation treats each char Insert/Delete
+						  *              separatly (one snake per insert/delete).
+						  *              Proposal: Collapse ranges of snakes with the same
+						  *                        direction (horizontal or vertical) to one
+						  *                        snake. Note that only sankes with no tail
+						  *                        (no diagonal) may be collapsed.
+						  *                        resultning snakes will have a (middle - start)
+						  *                        being a range of horizontal deletes or vertical inserts.
+						  * TODO 140430. Implement handling of extened characters. Current string is an UTF8
+						  *              string where e.g. 'Ö' will be represented as an escape seuence of
+						  *              characters. Current implementation will be unable to handle adding/removing
+						  *              such an escape sequence!
+						  *              Proposal: Use UT16 (low risk of escape sequences) or UTF32 (no risk of
+						  *                        escape seqeuncies. But both UTF16 and UTF32 will add significant
+						  *                        overhead to wetsern language texts!
+						  */
+
+						c_LogString sMessage("Edit Script=");
+						std::vector<c_StringDeltaOperation> string_deltas;
 						for (ses::c_Snakes::iterator iter = snakes.begin(); iter != snakes.end(); ++iter) {
-							// the snake is either a right snake or down snake
-							c_LogString sMessage("Edit Script=");
-							for (int x = iter->start().x + 1; x <= iter->start().x; ++x) {
+							// each snake is either a right snake or down snake
+							// Note 140430, currently each snake represents one insert or delete only.
+							//              But we have the loop here for future use
+							for (int x = iter->start().x + 1; x <= iter->middle().x; ++x) {
 								// right snake = delete commands
 								sMessage += c_DataRepresentationFramework::intToDecimalString(x) + _Asciisz("D");
 								sMessage.anonymous() += A[x-1]; // x = 1..M string index = 0..M-1
+								c_DarwinetString sDelta;
+								sDelta.anonymous() += A[x-1];
+								string_deltas.push_back(c_StringDeltaOperation(x-1,eStringDeltaOperation_Contract,sDelta));
 							}
+							// Note 140430, currently each snake represents one insert or delete only.
+							//              But we have the loop here for future use
 							for (int y = iter->start().y+1; y <= iter->middle().y; ++y) {
 								// down snake = insert commands
 								sMessage += c_DataRepresentationFramework::intToDecimalString(y) + _Asciisz("I");
 								sMessage.anonymous() += B[y-1]; // y = 1..N string index = 0..N-1
+								c_DarwinetString sDelta;
+								sDelta.anonymous() += B[y-1];
+								string_deltas.push_back(c_StringDeltaOperation(y-1,eStringDeltaOperation_Extend,sDelta));
 							}
-							LOG_BUSINESS(sMessage);
 						}
-
-						throw c_StringDeltaCreationFailed(c_LogString(" String Delta Creation noy yet implemented. No Delta Created."));
+						LOG_BUSINESS(sMessage);
+						if (string_deltas.size() == 0) {
+							throw c_StringDeltaCreationFailed(c_LogString(" No string Insert/Remove detected."));
+						}
+						else if (string_deltas.size() == 1) {
+							// Ok. Report this Delta
+							result = string_deltas[0];
+						}
+						else if (string_deltas.size() > 1) {
+							throw c_StringDeltaCreationFailed(c_LogString(" More than one string insert/delete detected. But we can handle only one char change for each Delta."));
+						}
 					}
 					else {
 						throw c_StringDeltaCreationFailed(c_LogString(" No Delta Created in ") + METHOD_NAME);
@@ -773,43 +815,14 @@ namespace seedsrc {
 									}
 									c_Value_shared_ptr pNewValue = boost::make_shared<c_Value>(c_StringValue(sNewValue));
 									pDelta = this->createSetValueDelta(target_miv_path,pNewValue);
-
-									/*
-									TODO 140420
-
-									Implement only "array expand" and "array contract"
-
-									array expand = {position,+,value_to_insert}
-									array contratc = {position,-,value_to_remove}
-
-									forward: "Hej" + {3,+,'!'} := "Hej!"
-									backward: "hej!" + {3,-,'!'} := "Hej"
-
-									This works for modifications to.
-
-									forward: "Hej+Hopp" + {{3,-,'+'};{3,+,'-'}} := "Hej-Hopp"
-									backward: "Hej-Hopp" + {{3,-,'-'};{3,+,'+'}} := "Hej+Hopp"
-
-									Note: The backward delta {{3,-,'-'};{3,+,'+'}} is the forward delta {{3,-,'+'};{3,+,'-'}} with each operation reversed and applied in reverse order.
-
-									This works for ranges to!
-
-									forward: "Hej Hopp" + {3,+," and"} := "Hej and Hopp"
-									reverse: "Hej and Hopp" + {3,-," and"} := "Hej Hopp"
-
-									And consequensly for modification.
-
-									forward: "Hej and Hopp" + {{3,-," and"};{3,+," och"} := "Hej och Hopp"
-									backward: "Hej och Hopp" + {{3,-," och"};{3,+," and"}} := "Hej and Hopp"
-
-									*/
 								}
 								else {
 									LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" failed. Assigning MIV ") + target_miv_path.toString<c_LogString>() + c_LogString(" not implemented"));
 								}
 							}
+							// Is there a Delta to distribute in the domain?
 							if (pDelta) {
-								// Distribute the created Delta
+								// Distribute the created Delta to all MIVs in the Domain
 								bool short_cut_delta_distribution = false;
 								if (short_cut_delta_distribution) {
 									c_SignalQueue::shared_ptr pDeltaCreationResponse = this->actOnDelta(pDelta);
@@ -849,9 +862,33 @@ namespace seedsrc {
 	//										,eSignalField_DeltaOperationId
 											if (int_delta_operation.getIntOperationId() == eIntOperationId_ADD) {
 												pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_IntDeltaAdd]);
-	//											,eSignalField_DeltaOperationValue
-												pDeltaSignal->addElement(eSignalField_DeltaOperationValue,c_DataRepresentationFramework::intToDecimalString(int_delta_operation.getValue().getRawValue()));
+	//											,eSignalField_IntDeltaOperationValue
+												pDeltaSignal->addElement(eSignalField_IntDeltaOperationValue,c_DataRepresentationFramework::intToDecimalString(int_delta_operation.getValue().getRawValue()));
 											}
+										}
+										else if (pDelta->getDeltaOperation()->type() == typeid(c_StringDeltaOperation)) {
+											c_StringDeltaOperation string_delta_operation = boost::get<c_StringDeltaOperation>(*pDelta->getDeltaOperation());
+	//										,eSignalField_DeltaOperationId
+											if (string_delta_operation.getOperation() == eStringDeltaOperation_Extend) {
+												pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_ArrayDeltaExtend]);
+	//											,eSignalField_StringDeltaOperationIndex
+												pDeltaSignal->addElement(eSignalField_StringDeltaOperationIndex,c_DataRepresentationFramework::intToDecimalString(string_delta_operation.getTargetIndex()));
+	//											,eSignalField_StringDeltaOperationValue
+												pDeltaSignal->addElement(eSignalField_StringDeltaOperationValue,string_delta_operation.getDeltaValue());
+											}
+											else if (string_delta_operation.getOperation() == eDeltaOperationId_ArrayDeltaContract) {
+												pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_ArrayDeltaContract]);
+	//											,eSignalField_StringDeltaOperationIndex
+												pDeltaSignal->addElement(eSignalField_StringDeltaOperationIndex,c_DataRepresentationFramework::intToDecimalString(string_delta_operation.getTargetIndex()));
+	//											,eSignalField_StringDeltaOperationValue
+												pDeltaSignal->addElement(eSignalField_StringDeltaOperationValue,string_delta_operation.getDeltaValue());
+											}
+											else {
+												throw c_UnknownDeltaOperation(c_LogString("No signal created for provided e_StringDeltaOperation = ") + c_DataRepresentationFramework::intToDecimalString(string_delta_operation.getOperation()));
+											}
+										}
+										else {
+											throw c_UnknownDeltaOperation(c_LogString("No signal created for unknown Delta"));
 										}
 										result->push(pDeltaSignal);
 									}
@@ -875,8 +912,8 @@ namespace seedsrc {
 				else if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_SignalIdentifier]) == SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_DeltaMIV]) {
 					// Apply the received Delta
 					c_Delta::shared_ptr pDelta(new c_Delta());
+					// Create Delta from Signal
 					{
-						// Create Delta from Signal
 //						,eSignalField_DeltaPredecessorIx
 						c_CaptionPath delta_predecessor_ix_path = c_CaptionPath::fromString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_DeltaPredecessorIx]));
 						if (delta_predecessor_ix_path.size() == 3) {
@@ -916,12 +953,25 @@ namespace seedsrc {
 						else {
 							throw c_IllFormedSignalFieldException(c_LogString(" Incomplete Signal Field DeltaIx=") + delta_ix_path.toString<c_LogString>());
 						}
+						// Create correct Delta Operation
 						if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_DeltaOperationId]) == DELTA_OPERATION_MAPPER[eDeltaOperationId_IntDeltaAdd]) {
-							int raw_int_value = c_DataRepresentationFramework::intValueOfDecimalString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_DeltaOperationValue]));
+							int raw_int_value = c_DataRepresentationFramework::intValueOfDecimalString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_IntDeltaOperationValue]));
 							c_IntValue int_value(raw_int_value);
 							e_IntOperationId int_operation_id = eIntOperationId_ADD;
 							c_IntDeltaOperation int_delta_operation(int_value,int_operation_id);
 							pDelta->setDeltaOperation(boost::make_shared<c_DeltaOperation>(int_delta_operation));
+						}
+// TODO 140430
+//						else if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_DeltaOperationId]) == DELTA_OPERATION_MAPPER[eDeltaOperationId_ArrayDeltaExtend]) {
+//							int operation_index = c_DataRepresentationFramework::intValueOfDecimalString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_StringDeltaOperationIndex]));
+//							c_DarwinetString raw_string_value = pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_StringDeltaOperationValue]);
+//							c_StringValue string_value(raw_string_value);
+//							e_StringDeltaOperation string_operation_id = eStringDeltaOperation_Extend;
+//							c_StringDeltaOperation string_delta_operation(operation_index,string_operation_id,string_value);
+//							pDelta->setDeltaOperation(boost::make_shared<c_DeltaOperation>(string_delta_operation));
+//						}
+						else {
+							throw c_DeltaApplicationException(c_LogString("Received Signal carries unknown Delta"));
 						}
 					}
 					c_SignalQueue::shared_ptr pDeltaCreationResponse = this->actOnDelta(pDelta);

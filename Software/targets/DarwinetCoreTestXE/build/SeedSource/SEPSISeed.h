@@ -86,7 +86,9 @@ namespace seedsrc {
 			,eSignalField_DeltaTargetState
 			,eSignalField_DeltaTargetMIVId
 			,eSignalField_DeltaOperationId
-			,eSignalField_DeltaOperationValue
+			,eSignalField_IntDeltaOperationValue
+			,eSignalField_StringDeltaOperationIndex
+			,eSignalField_StringDeltaOperationValue
 			,eSignalField_Unknown
 		};
 
@@ -167,6 +169,8 @@ namespace seedsrc {
 		enum e_DeltaOperationId {
 			 eDeltaOperationId_Undefined
 			,eDeltaOperationId_IntDeltaAdd
+			,eDeltaOperationId_ArrayDeltaExtend
+			,eDeltaOperationId_ArrayDeltaContract
 			,eDeltaOperationId_Unknown
 		};
 
