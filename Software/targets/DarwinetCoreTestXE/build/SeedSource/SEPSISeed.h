@@ -308,6 +308,7 @@ namespace seedsrc {
 		DARWINET_EXCEPTION_CLASS(c_NULLMIVBodyException,"NULL MIV Body. ");
 		DARWINET_EXCEPTION_CLASS(c_UnknownDeltaOperation,"Unknown Delta Operation. ");
 		DARWINET_EXCEPTION_CLASS(c_StringDeltaCreationFailed,"String Delta Creation Failed. ");
+		DARWINET_EXCEPTION_CLASS(c_UnknownMIVValueType,"Unknown MIV Value Type. ");
 
 		//-------------------------------------------------------------------
 		c_DarwinetString toString(const c_Signal& signal);
@@ -338,6 +339,16 @@ namespace seedsrc {
 			c_StringValue(const _RawValueType& raw_value = _RawValueType()) : m_raw_value(raw_value) {;}
 
 			const _RawValueType& getRawValue() const {return m_raw_value;}
+
+			c_StringValue& extend(int target_index,const c_StringValue& string_value) {
+				m_raw_value.insert(target_index,string_value.getRawValue());
+				return *this;
+			}
+
+			c_StringValue& contract(int target_index,const c_StringValue& string_value) {
+				m_raw_value.erase(target_index,string_value.getRawValue().length());
+				return *this;
+			}
 
 		private:
 			_RawValueType m_raw_value;
@@ -459,7 +470,7 @@ namespace seedsrc {
 
 		class c_IntDeltaOperation {
 		public:
-			c_IntDeltaOperation(const c_IntValue& delta_value,e_IntOperationId int_operation_id);
+			c_IntDeltaOperation(e_IntOperationId int_operation_id, const c_IntValue& delta_value);
 
 			c_IntValue operator()(c_IntValue& current_value) const;
 
@@ -511,23 +522,26 @@ namespace seedsrc {
 
 		public:
 
-			c_StringDeltaOperation(unsigned int target_index=0,e_StringDeltaOperation StringDeltaOperation = eStringDeltaOperation_Undefined,const c_DarwinetString& sDeltaValue = c_DarwinetString())
-				:  m_target_index(target_index)
-				  ,m_StringDeltaOperation(StringDeltaOperation)
-				  ,m_sDeltaValue(sDeltaValue)
+			c_StringDeltaOperation(e_StringDeltaOperation StringDeltaOperation = eStringDeltaOperation_Undefined,unsigned int target_index=0,const c_StringValue& sDeltaValue = c_StringValue())
+				: m_sDeltaValue(sDeltaValue)
+				 ,m_target_index(target_index)
+				 ,m_StringDeltaOperation(StringDeltaOperation)
 			{;}
 
 			unsigned int getTargetIndex() const {return m_target_index;}
 			e_StringDeltaOperation getOperation() const {return m_StringDeltaOperation;}
-			c_DarwinetString getDeltaValue() const {return m_sDeltaValue;}
+			const c_StringValue& getDeltaValue() const {return m_sDeltaValue;}
+
+			c_StringValue operator()(c_StringValue& current_value) const;
+
 			void setTargetIndex(unsigned int target_index) {m_target_index = target_index;}
 			void setOperation(e_StringDeltaOperation StringDeltaOperation) {m_StringDeltaOperation = StringDeltaOperation;}
-			void getDeltaValue(const c_DarwinetString& sDeltaValue) {m_sDeltaValue = sDeltaValue;}
+			void setDeltaValue(const c_StringValue& sDeltaValue) {m_sDeltaValue = sDeltaValue;}
 
 		private:
 			unsigned int m_target_index;
 			e_StringDeltaOperation m_StringDeltaOperation;
-			c_DarwinetString m_sDeltaValue;
+			c_StringValue m_sDeltaValue;
 		};
 
 		class c_RecordDeltaOperation {

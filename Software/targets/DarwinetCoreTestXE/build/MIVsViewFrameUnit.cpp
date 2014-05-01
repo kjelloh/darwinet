@@ -70,18 +70,23 @@ void __fastcall TMIVsViewFrame::CMOnMIVsChange(TMessage Message) {
 
 			darwinet_seed::c_Signal signal(darwinet_seed::createSignalFromString(sSignal));
 			LOG_BUSINESS(c_LogString("Parsed Signal = ") + darwinet_seed::log::toLogString(signal));
+			darwinet_seed::c_GUIClientproxy::c_SignalString sReceiver = signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_SignalReceiver]);
 			darwinet_seed::c_GUIClientproxy::c_SignalString sEventId = signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventId]);
 //			darwinet_seed::c_GUIClientproxy::c_SignalString sEventId = signal.getValue(darwinet_seed::c_CaptionNode(" Body.MIVsEvent.Id"));
 			if (sEventId == darwinet_seed::MIVS_EVENT_MAPPER[darwinet_seed::eMIVsEventId_OnMIVValueChanged]) {
 				darwinet_seed::c_GUIClientproxy::c_SignalString sMIV_Element = signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventSourceId]);
 				if (sMIV_Element == _UTF8sz("myInt:0")) {
 					String sValue(signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventValue]).c_str());
-					darwinet_seed::c_GUIClientproxy::c_SignalString sReceiver = signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_SignalReceiver]);
 					SCOPED_ONCHANGE_INHIBIT(this->MyIntSpinEdit);
 					this->MyIntSpinEdit->Value = sValue.ToInt();
 				}
+				else if (sMIV_Element == _UTF8sz("myString:0")) {
+					String sValue(signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventValue]).c_str());
+					SCOPED_ONCHANGE_INHIBIT(this->MyTextEdit);
+					this->MyTextEdit->Text = sValue;
+				}
 				else {
-					// Not myInt
+					LOG_BUSINESS(c_LogString(METHOD_NAME + ", Received unknwon MIV Id = ") + sMIV_Element);
 				}
 			}
 			else {

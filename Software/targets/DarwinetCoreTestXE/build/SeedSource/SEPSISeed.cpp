@@ -353,9 +353,9 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
-		c_IntDeltaOperation::c_IntDeltaOperation(const c_IntValue& delta_value,e_IntOperationId int_operation_id)
-			:  m_delta_value(delta_value)
-			  ,m_int_operation_id(int_operation_id)
+		c_IntDeltaOperation::c_IntDeltaOperation(e_IntOperationId int_operation_id, const c_IntValue& delta_value)
+			: m_int_operation_id(int_operation_id)
+			 ,m_delta_value(delta_value)
 		{
 			LOG_METHOD_SCOPE;
 		}
@@ -369,6 +369,27 @@ namespace seedsrc {
 				break;
 				default: {
 					throw c_UnknownDeltaOperation(c_LogString("c_IntDeltaOperation is not eIntOperationId_ADD"));
+				}
+			}
+			return result;
+		}
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
+
+		c_StringValue c_StringDeltaOperation::operator()(c_StringValue& current_value) const {
+			// Apply us to provided string value
+			c_StringValue result(current_value); // Default - no operation
+			switch (this->getOperation()) {
+				case eStringDeltaOperation_Extend: {
+					result.extend(this->getTargetIndex(),this->getDeltaValue());
+				}
+				break;
+				case eStringDeltaOperation_Contract: {
+					result.contract(this->getTargetIndex(),this->getDeltaValue());
+				}
+				break;
+				default: {
+					throw c_UnknownDeltaOperation(METHOD_NAME + c_LogString(", unknown e_StringDeltaOperation"));
 				}
 			}
 			return result;
@@ -431,7 +452,7 @@ namespace seedsrc {
 			c_DeltaOperation operator()(c_IntValue& current_value) const {
 				LOG_METHOD_SCOPE;
 				int integer_delta = boost::get<c_IntValue>(*m_pNewValue).getRawValue() - current_value.getRawValue();
-				return c_IntDeltaOperation(c_IntValue(integer_delta),eIntOperationId_ADD);
+				return c_IntDeltaOperation(eIntOperationId_ADD,c_IntValue(integer_delta));
 			}
 
 			c_DeltaOperation operator()(const c_StringValue& current_value) const {
@@ -440,6 +461,7 @@ namespace seedsrc {
 				c_DarwinetString A = current_value.getRawValue(); // Current value
 				c_DarwinetString B = boost::get<c_StringValue>(*m_pNewValue).getRawValue(); // New value
 				{
+					LOG_BUSINESS(c_LogString("Calculating SES of  A=\"") + A + c_LogString("\" to B = \"") + B + c_LogString("\""));
 					// Implementation of the SES (Shortest Edit Script) algorithm as
 					// suggested by Eugene W. Myers in "An O(ND) Difference Algorithm and Its Variations" published at http://www.xmailserver.org/diff2.pdf
 
@@ -455,11 +477,12 @@ namespace seedsrc {
 					int D;
 					int x;
 					int y;
+					int SES_Length;
 					bool success = false;
 					// Try all possible paths lengths D.
-					for (int D = 0; D <= MAX; D += 1) {
+					for (D = 0; !success && (D <= MAX); D += 1) {
 						// Try each possible diagonal k (defined as diagonal k = x-y) in steps of 2
-						for (int k = -D; k <= D; k += 2) {
+						for (int k = -D; !success && (k <= D); k += 2) {
 							if (    (k==-D)
 								 || (    (k!=D)
 									  && (Vs[D][V_ZERO_INDEX + (k-1)] < Vs[D][V_ZERO_INDEX + (k+1)]))) {
@@ -471,7 +494,7 @@ namespace seedsrc {
 							}
 							y = x-k;
 							// path Startpoint is now (x,y)
-							while ((x < N) && (y<M) && (A[x+1] == B[y+1])) {
+							while ((x < N) && (y < M) && (A[x+1] == B[y+1])) {
 								// A and B matches at next diagonal x,y - Traverse
 								x += 1;
 								y += 1;
@@ -479,8 +502,8 @@ namespace seedsrc {
 							Vs[D][V_ZERO_INDEX + k] = x; // Update current longest diagonal k as endpoint x
 							if ((x >=N) && (y>=M)) {
 								// SES length is current D
+								SES_Length = D;
 								success = true;
-								break;
 							}
 						}
 					}
@@ -511,21 +534,21 @@ namespace seedsrc {
 						ses::c_Snakes snakes;
 						ses::c_Point p(N,M);
 						// Iterate back to (0,0) and re-create all snakes in the path
-						for ( int d = Vs.size() - 1 ; p.x > 0 || p.y > 0 ; d -= 1 ) {
+						for ( int d = SES_Length ; p.x > 0 || p.y > 0 ; d -= 1 ) {
 							int k = (p.x - p.y);
 
 							// end point is defined by current V[d][k]
-							int xEnd = Vs[d][k];
+							int xEnd = Vs[d][V_ZERO_INDEX + k];
 							int yEnd = xEnd - k;
 							ses::c_Point end(xEnd,yEnd);
 							// down or right snake?
 							bool down = (    (k == -d)
 										  || (    (k != d)
-											   && (Vs[d][k - 1] < Vs[d][k + 1])
+											   && (Vs[d][V_ZERO_INDEX + k - 1] < Vs[d][V_ZERO_INDEX + k + 1])
 										 ));
 							int kPrev = down ? k + 1 : k - 1; // down is diagonal k+1. Right is diagonal k-1
 							// start point
-							int xStart = Vs[d][kPrev];
+							int xStart = Vs[d][V_ZERO_INDEX + kPrev];
 							int yStart = xStart - kPrev;
 							ses::c_Point start(xStart,yStart);
 							// mid point
@@ -562,6 +585,36 @@ namespace seedsrc {
 						  *                        escape seqeuncies. But both UTF16 and UTF32 will add significant
 						  *                        overhead to wetsern language texts!
 						  */
+						{
+							// Log the snakes
+							LOG_BUSINESS(c_LogString("**SES Result Snake Listing**"));
+							for (ses::c_Snakes::iterator iter = snakes.begin(); iter != snakes.end(); ++iter) {
+								c_LogString sMessage;
+								sMessage += _UTF8sz("\t");
+								sMessage += _UTF8sz("start(");
+								sMessage += c_DataRepresentationFramework::intToDecimalString(iter->start().x);
+								sMessage += _UTF8sz(",");
+								sMessage += c_DataRepresentationFramework::intToDecimalString(iter->start().y);
+								sMessage += _UTF8sz(")");
+
+								sMessage += _UTF8sz("\t");
+								sMessage += _UTF8sz("middle(");
+								sMessage += c_DataRepresentationFramework::intToDecimalString(iter->middle().x);
+								sMessage += _UTF8sz(",");
+								sMessage += c_DataRepresentationFramework::intToDecimalString(iter->middle().y);
+								sMessage += _UTF8sz(")");
+
+								sMessage += _UTF8sz("\t");
+								sMessage += _UTF8sz("end(");
+								sMessage += c_DataRepresentationFramework::intToDecimalString(iter->end().x);
+								sMessage += _UTF8sz(",");
+								sMessage += c_DataRepresentationFramework::intToDecimalString(iter->end().y);
+								sMessage += _UTF8sz(")");
+
+								LOG_BUSINESS(sMessage);
+							}
+							LOG_BUSINESS(c_LogString("**END of SES Result Snake Listing**"));
+						}
 
 						c_LogString sMessage("Edit Script=");
 						std::vector<c_StringDeltaOperation> string_deltas;
@@ -575,7 +628,7 @@ namespace seedsrc {
 								sMessage.anonymous() += A[x-1]; // x = 1..M string index = 0..M-1
 								c_DarwinetString sDelta;
 								sDelta.anonymous() += A[x-1];
-								string_deltas.push_back(c_StringDeltaOperation(x-1,eStringDeltaOperation_Contract,sDelta));
+								string_deltas.push_back(c_StringDeltaOperation(eStringDeltaOperation_Contract,x-1,c_StringValue(sDelta)));
 							}
 							// Note 140430, currently each snake represents one insert or delete only.
 							//              But we have the loop here for future use
@@ -585,7 +638,7 @@ namespace seedsrc {
 								sMessage.anonymous() += B[y-1]; // y = 1..N string index = 0..N-1
 								c_DarwinetString sDelta;
 								sDelta.anonymous() += B[y-1];
-								string_deltas.push_back(c_StringDeltaOperation(y-1,eStringDeltaOperation_Extend,sDelta));
+								string_deltas.push_back(c_StringDeltaOperation(eStringDeltaOperation_Extend,y-1,c_StringValue(sDelta)));
 							}
 						}
 						LOG_BUSINESS(sMessage);
@@ -625,7 +678,6 @@ namespace seedsrc {
 			c_Value_shared_ptr m_pNewValue;
 		};
 
-
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 		c_Delta::shared_ptr c_MIVs::createSetValueDelta(const c_MIVPath& id,c_Value_shared_ptr pNewValue) {
@@ -662,10 +714,6 @@ namespace seedsrc {
 			}
 			return result;
 		}
-
-
-		//-------------------------------------------------------------------
-		//-------------------------------------------------------------------
 
 		c_MIV::shared_ptr c_MIVs::getMIV(const c_MIVPath& miv_path) {
 			c_MIV::shared_ptr result;
@@ -793,8 +841,6 @@ namespace seedsrc {
 							c_DarwinetString sNewValue = pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationNewValue]);
 							c_Delta::shared_ptr pDelta;
 							{
-								// Qick fix for now to test int or string value assign
-//								if (sTargetId == _UTF8sz("myInt:0")) {
 								if (this->getMIVs()->isIntV(target_miv_path)) {
 									{
 										c_LogString sMessage(METHOD_NAME + c_LogString(", Actual MIV model of target "));
@@ -805,7 +851,6 @@ namespace seedsrc {
 									c_Value_shared_ptr pNewValue = boost::make_shared<c_Value>(c_IntValue(c_DataRepresentationFramework::intValueOfDecimalString(sNewValue)));
 									pDelta = this->createSetValueDelta(target_miv_path,pNewValue);
 								}
-//								else if (sTargetId == _UTF8sz("myString:0")) {
 								else if (this->getMIVs()->isStringV(target_miv_path)) {
 									{
 										c_LogString sMessage(METHOD_NAME + c_LogString(", Actual MIV model of target "));
@@ -874,14 +919,14 @@ namespace seedsrc {
 	//											,eSignalField_StringDeltaOperationIndex
 												pDeltaSignal->addElement(eSignalField_StringDeltaOperationIndex,c_DataRepresentationFramework::intToDecimalString(string_delta_operation.getTargetIndex()));
 	//											,eSignalField_StringDeltaOperationValue
-												pDeltaSignal->addElement(eSignalField_StringDeltaOperationValue,string_delta_operation.getDeltaValue());
+												pDeltaSignal->addElement(eSignalField_StringDeltaOperationValue,string_delta_operation.getDeltaValue().getRawValue());
 											}
 											else if (string_delta_operation.getOperation() == eDeltaOperationId_ArrayDeltaContract) {
 												pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_ArrayDeltaContract]);
 	//											,eSignalField_StringDeltaOperationIndex
 												pDeltaSignal->addElement(eSignalField_StringDeltaOperationIndex,c_DataRepresentationFramework::intToDecimalString(string_delta_operation.getTargetIndex()));
 	//											,eSignalField_StringDeltaOperationValue
-												pDeltaSignal->addElement(eSignalField_StringDeltaOperationValue,string_delta_operation.getDeltaValue());
+												pDeltaSignal->addElement(eSignalField_StringDeltaOperationValue,string_delta_operation.getDeltaValue().getRawValue());
 											}
 											else {
 												throw c_UnknownDeltaOperation(c_LogString("No signal created for provided e_StringDeltaOperation = ") + c_DataRepresentationFramework::intToDecimalString(string_delta_operation.getOperation()));
@@ -958,18 +1003,17 @@ namespace seedsrc {
 							int raw_int_value = c_DataRepresentationFramework::intValueOfDecimalString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_IntDeltaOperationValue]));
 							c_IntValue int_value(raw_int_value);
 							e_IntOperationId int_operation_id = eIntOperationId_ADD;
-							c_IntDeltaOperation int_delta_operation(int_value,int_operation_id);
+							c_IntDeltaOperation int_delta_operation(int_operation_id,int_value);
 							pDelta->setDeltaOperation(boost::make_shared<c_DeltaOperation>(int_delta_operation));
 						}
-// TODO 140430
-//						else if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_DeltaOperationId]) == DELTA_OPERATION_MAPPER[eDeltaOperationId_ArrayDeltaExtend]) {
-//							int operation_index = c_DataRepresentationFramework::intValueOfDecimalString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_StringDeltaOperationIndex]));
-//							c_DarwinetString raw_string_value = pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_StringDeltaOperationValue]);
-//							c_StringValue string_value(raw_string_value);
-//							e_StringDeltaOperation string_operation_id = eStringDeltaOperation_Extend;
-//							c_StringDeltaOperation string_delta_operation(operation_index,string_operation_id,string_value);
-//							pDelta->setDeltaOperation(boost::make_shared<c_DeltaOperation>(string_delta_operation));
-//						}
+						else if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_DeltaOperationId]) == DELTA_OPERATION_MAPPER[eDeltaOperationId_ArrayDeltaExtend]) {
+							int insert_index = c_DataRepresentationFramework::intValueOfDecimalString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_StringDeltaOperationIndex]));
+							c_DarwinetString raw_string_value = pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_StringDeltaOperationValue]);
+							c_StringValue string_value(raw_string_value);
+							e_StringDeltaOperation string_operation_id = eStringDeltaOperation_Extend;
+							c_StringDeltaOperation string_delta_operation(string_operation_id,insert_index,string_value);
+							pDelta->setDeltaOperation(boost::make_shared<c_DeltaOperation>(string_delta_operation));
+						}
 						else {
 							throw c_DeltaApplicationException(c_LogString("Received Signal carries unknown Delta"));
 						}
@@ -1003,10 +1047,10 @@ namespace seedsrc {
 
 		class c_ApplyDeltaToMIVBody : public boost::static_visitor<> {
 		public:
-
 			c_ApplyDeltaToMIVBody(const c_MIVBody_shared_ptr& pMIVBody) : m_pMIVBody(pMIVBody) {;}
 
 			void operator()(c_IntDeltaOperation& op) {
+				LOG_BUSINESS(METHOD_NAME + c_LogString(", Applying c_IntDeltaOperation"));
 				try {
 					if (m_pMIVBody) {
 						c_V v = boost::get<c_V>(*m_pMIVBody);
@@ -1028,7 +1072,17 @@ namespace seedsrc {
 			}
 
 			void operator()(c_StringDeltaOperation& op) {
-				LOG_NOT_IMPLEMENTED;
+				LOG_BUSINESS(METHOD_NAME + c_LogString(", Applying c_StringDeltaOperation"));
+					if (m_pMIVBody) {
+						c_V v = boost::get<c_V>(*m_pMIVBody);
+						c_StringValue string_value = boost::get<c_StringValue>(v.getValue());
+						string_value = op(string_value);
+						v.setValue(string_value);
+						*m_pMIVBody = v;
+					}
+					else {
+						throw c_NULLMIVBodyException(c_LogString("Can't apply Delta"));
+					}
 			}
 
 			void operator()(c_RecordDeltaOperation& op) {
@@ -1054,6 +1108,7 @@ namespace seedsrc {
 					// Apply the delta operation to the MIV body (they shall match)
 					if (pTargetMIV->getState() == pDelta->getMIVtarget().getState()) {
 						if (pDelta->getDeltaOperation()) {
+							// Apply the delta operation to the MIV
 							c_ApplyDeltaToMIVBody visitor(pTargetMIV->getBody());
 							boost::apply_visitor(visitor,*pDelta->getDeltaOperation());
 							// Create the signal that alerts the Client about the change
@@ -1071,6 +1126,13 @@ namespace seedsrc {
 									c_IntValue newIntValue = boost::get<c_IntValue>(newV.getValue());
 									pReply->addElement(eSignalField_MIVsEventValue,c_DataRepresentationFramework::intToDecimalString(newIntValue.getRawValue()));
 								}
+								else if (newV.getValue().type() == typeid(c_StringValue)) {
+									c_StringValue newStringValue = boost::get<c_StringValue>(newV.getValue());
+									pReply->addElement(eSignalField_MIVsEventValue,newStringValue.getRawValue());
+								}
+								else {
+                                    throw c_UnknownMIVValueType(c_LogString("Failed to report Value change back to Client."));
+                                }
 							}
 							result->push(pReply);
 						}
