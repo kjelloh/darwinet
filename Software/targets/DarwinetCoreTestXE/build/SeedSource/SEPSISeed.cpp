@@ -471,41 +471,51 @@ namespace seedsrc {
 
 					const int V_ZERO_INDEX = MAX;
 					typedef std::vector<int> c_VectorV;
-					std::vector<c_VectorV> Vs(MAX+1,c_VectorV(2*MAX+1,0)); // Vs[D] is the vector V for iteration D
-					Vs[0][V_ZERO_INDEX+1] = 0;
+					c_VectorV V(2*MAX+1,0);
+					V[V_ZERO_INDEX+1] = 0;
 
-					int D;
+					std::vector<c_VectorV> Vs; // Vs[d] is the vector V for iteration d
+
+					int d;
 					int x;
 					int y;
 					int SES_Length;
 					bool success = false;
-					// Try all possible paths lengths D.
-					for (D = 0; !success && (D <= MAX); D += 1) {
+					// Try all possible paths lengths d.
+					for (d = 0; !success && (d <= MAX); d += 1) {
 						// Try each possible diagonal k (defined as diagonal k = x-y) in steps of 2
-						for (int k = -D; !success && (k <= D); k += 2) {
-							if (    (k==-D)
-								 || (    (k!=D)
-									  && (Vs[D][V_ZERO_INDEX + (k-1)] < Vs[D][V_ZERO_INDEX + (k+1)]))) {
-								x = Vs[D][V_ZERO_INDEX + (k+1)];
+						for (int k = -d; !success && (k <= d); k += 2) {
+							// Find the end-point of the furthest reaching D-path of length d in diagonal k
+							// Decide on starting point (x,y) in edit graph
+							if (    (k==-d)
+								 || (    (k!=d)
+									  && (V[V_ZERO_INDEX + (k-1)] < V[V_ZERO_INDEX + (k+1)]))) {
+								// Use end-point of longest reaching D-path on diagonal k+1
+								x = V[V_ZERO_INDEX + (k+1)];
 							}
 							else {
-								// (-D < k < D) and x endpoint of diagonal k-1 is the same or to the right of x endpoint of diagonal k+1
-								x = Vs[D][V_ZERO_INDEX + (k-1)];
+								// (-d < k < d) and x endpoint of diagonal k-1 is the same or to the right of x endpoint of diagonal k+1
+								// Use end-point to the right of the longest path of diagonal k-1
+								x = V[V_ZERO_INDEX + (k-1)] + 1;
 							}
 							y = x-k;
-							// path Startpoint is now (x,y)
-							while ((x < N) && (y < M) && (A[x+1] == B[y+1])) {
-								// A and B matches at next diagonal x,y - Traverse
+							// path Startpoint is now (x,y). Follow any existing match diagonal
+							// Note: x = 1..N, y = 1..M but C++ string index are 0..M-1.
+							//       Thus the match is made A[x] == B[y] (meaning match (x+1,y+1))
+							while ((x < N) && (y < M) && (A[x] == B[y])) {
+								// A and B has a match-point at (x+1,y+1) - Traverse
 								x += 1;
 								y += 1;
 							}
-							Vs[D][V_ZERO_INDEX + k] = x; // Update current longest diagonal k as endpoint x
+							V[V_ZERO_INDEX + k] = x; // Update furthest reaching edit graph ending at (x,y)
 							if ((x >=N) && (y>=M)) {
 								// SES length is current D
-								SES_Length = D;
+								SES_Length = d;
 								success = true;
 							}
 						}
+						// Store a snap-shot of current V into Vs
+						Vs.push_back(V);
 					}
 					if (success) {
 						// Create the Delta from the Edit script
@@ -528,13 +538,15 @@ namespace seedsrc {
 							 with VD[N?M] as the initial point."
 						*/
 
-						// Implementation adviced by Nicolas Butler (http://www.codeproject.com/Members/Nicholas-Butler)
-						// at http://www.codeproject.com/Articles/42279/Investigating-Myers-diff-algorithm-Part-of
+						// Implementation adviced at http://www.codeproject.com/Articles/42279/Investigating-Myers-diff-algorithm-Part-of
+						// by Nicolas Butler (http://www.codeproject.com/Members/Nicholas-Butler)
 
 						ses::c_Snakes snakes;
 						ses::c_Point p(N,M);
 						// Iterate back to (0,0) and re-create all snakes in the path
-						for ( int d = SES_Length ; p.x > 0 || p.y > 0 ; d -= 1 ) {
+						// A snake here is a right (delete) or down (add) edge followed
+						// by a match diagonal edges. Thus d=0 can not define a snake
+						for ( int d = Vs.size() - 1 ; ((d>0) && (p.x > 0 || p.y > 0)) ; d -= 1 ) {
 							int k = (p.x - p.y);
 
 							// end point is defined by current V[d][k]
