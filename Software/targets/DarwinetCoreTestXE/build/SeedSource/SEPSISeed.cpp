@@ -705,8 +705,7 @@ namespace seedsrc {
 				{
 					c_DeltaIndex new_delta_index = this->m_LastCreatedDeltaIndex;
 					LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(", m_LastCreatedDeltaIndex not incremented for new Delta. All created delta will have the same predecessor"));
-// Dont yet work. Created Signal Field value will be a path with the first node being a path (Producer = c_MIVPath). This is not parseable by receiver.
-//					result->setIndex(new_delta_index);
+					result->setIndex(new_delta_index);
 					this->m_LastCreatedDeltaIndex = new_delta_index;
 				}
 				result->setPredecessor(this->m_LastAppliedDeltaIndex);
@@ -741,30 +740,30 @@ namespace seedsrc {
 					c_LogString sMessage("MIV Instance ");
 					sMessage += miv_path.toString<c_LogString>();
 					sMessage += _UTF8sz(" does not exist.");
-					sMessage += _UTF8sz(" Will auto-create it. Please remove when dM processing is in place!");
+					sMessage += _UTF8sz(" Will auto-create it. Consider to remove when dM and dI processing is in place.");
 					LOG_DESIGN_INSUFFICIENCY(sMessage);
+					c_MIV::shared_ptr pNewMIV;
 					if (this->isIntV(miv_path)) {
 						// Create a new int V instance
 						{
 							LOG_DESIGN_INSUFFICIENCY(c_LogString("Auo-created MIV ") + miv_path.toString<c_LogString>() + c_LogString(" will be set to integer V = 0. Auto-creation of M or I not yet implemented."));
 						}
-						c_MIV::shared_ptr pNewMIV = boost::make_shared<c_MIV>();
+						pNewMIV = boost::make_shared<c_MIV>();
 						c_V new_V;
 						c_IntValue int_value(0);
 						new_V.setValue(int_value);
 						pNewMIV->setBody(boost::make_shared<c_MIVBody>(new_V));
 						{
 							LOG_DESIGN_INSUFFICIENCY(c_LogString("Auo-created MIV ") + miv_path.toString<c_LogString>() + c_LogString(" will have no corresponding M or I to describe it"));
+							// TODO: Auto-creation needs to also create and distribute dM and dI for created V
 						}
-						m_MappedMIVs[miv_path] = pNewMIV;
-						result = pNewMIV;
 					}
 					else if (this->isStringV(miv_path)) {
 						// Create a new int V instance
 						{
 							LOG_DESIGN_INSUFFICIENCY(c_LogString("Auo-created MIV ") + miv_path.toString<c_LogString>() + c_LogString(" will be set to String V = \"\". Auto-creation of M or I not yet implemented."));
 						}
-						c_MIV::shared_ptr pNewMIV = boost::make_shared<c_MIV>();
+						pNewMIV = boost::make_shared<c_MIV>();
 						c_V new_V;
 						c_StringValue string_value;
 						new_V.setValue(string_value);
@@ -772,8 +771,12 @@ namespace seedsrc {
 						{
 							LOG_DESIGN_INSUFFICIENCY(c_LogString("Auo-created MIV ") + miv_path.toString<c_LogString>() + c_LogString(" will have no corresponding M or I to describe it"));
 						}
-						m_MappedMIVs[miv_path] = pNewMIV;
+					}
+					if (pNewMIV) {
+						LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(", increment of Delta Index not yet implemented. Created MIV will have MIVs::m_LastCreatedDeltaIndex"));
+						pNewMIV->setState(this->m_LastCreatedDeltaIndex);
 						result = pNewMIV;
+						m_MappedMIVs[miv_path] = result;
 					}
 				}
 			}
@@ -1164,13 +1167,24 @@ namespace seedsrc {
 
 		}
 
+		c_MIVsProducerIdentifier c_MIVsHandler::getMIVsProducerIdentifierOfMessageTargetId(const c_MessageTargetId message_target_id) {
+			c_MIVsProducerIdentifier result;
+			result = message_target_id.toString<c_MIVsProducerIdentifier>();
+			std::replace(result.begin(),result.end(),'.','@');
+			return result;
+		}
+
 		c_MIVs::shared_ptr c_MIVsHandler::getMIVs() {
 			if (!this->m_pMIVs) {
+				LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString("Correct last_created and last_applied delta index not yet implemented. Will set a domain common fixed value."));
 				c_DeltaIndex last_created_delta_index;
-				last_created_delta_index.setProducer(this->getId().toString<c_MIVsProducerIdentifier>());
-				last_created_delta_index.setBranch(c_DeltaBranchIdentifier("root"));
+				// TODO: Use MIVs unique producer Id and index when dM and dI handling is in place (needed to distribute producer id of created MIV to other MIVs)
+//				last_created_delta_index.setProducer(this->getMIVsProducerIdentifierOfMessageTargetId(this->getId()));
+				last_created_delta_index.setProducer(_UTF8sz("producer"));
+				last_created_delta_index.setBranch(c_DeltaBranchIdentifier("branch"));
 				last_created_delta_index.setSeqNo(0);
-				this->m_pMIVs = boost::make_shared<c_MIVs>(last_created_delta_index);
+				c_DeltaIndex last_applied_delta_index = last_created_delta_index;
+				this->m_pMIVs = boost::make_shared<c_MIVs>(last_created_delta_index,last_created_delta_index);
 			}
 			return this->m_pMIVs;
 		}

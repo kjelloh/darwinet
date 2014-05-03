@@ -1086,7 +1086,6 @@ namespace oprime {
 //				if (m_String.size() > 0) {
 //					m_String += _Asciic('.');
 //				}
-				static bool call_count = 0;
 				if (!m_is_reset) {
 					m_String += _Asciic('.'); // Add separator
 				}

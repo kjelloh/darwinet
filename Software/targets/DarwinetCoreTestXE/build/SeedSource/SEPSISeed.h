@@ -404,15 +404,15 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<c_V> shared_ptr;
 
-			const c_DeltaIndex& getState() const {return m_State;}
+//			const c_DeltaIndex& getState() const {return m_State;}
 			const c_Value& getValue() const {return m_Value;}
 			c_Value& getValue() {return m_Value;}
 
-			void setState(const c_DeltaIndex& state) {m_State = state;}
+//			void setState(const c_DeltaIndex& state) {m_State = state;}
 			void setValue(const c_Value& value) {m_Value = value;}
 
 		private:
-			c_DeltaIndex m_State;
+//			c_DeltaIndex m_State;
 			c_Value m_Value;
 		};
 
@@ -604,8 +604,9 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<c_MIVs> shared_ptr;
 
-			c_MIVs(const c_DeltaIndex& last_created_delta_index)
+			c_MIVs(const c_DeltaIndex& last_created_delta_index,const c_DeltaIndex& last_applied_delta_index)
 				:  m_LastCreatedDeltaIndex(last_created_delta_index)
+				  ,m_LastAppliedDeltaIndex(last_applied_delta_index)
 			{;}
 
 			c_Delta::shared_ptr createSetValueDelta(const c_MIVPath& id,c_Value_shared_ptr pNewValue);
@@ -647,6 +648,7 @@ namespace seedsrc {
 			c_Delta::shared_ptr createSetValueDelta(c_MIVPath id,c_Value_shared_ptr pNewValue);
 			c_SignalQueue::shared_ptr actOnDelta(c_Delta::shared_ptr pDelta);
 
+			c_MIVsProducerIdentifier getMIVsProducerIdentifierOfMessageTargetId(const c_MessageTargetId message_target_id);
 			c_MIVs::shared_ptr getMIVs();
 
 			c_MessageTargetId m_id;
