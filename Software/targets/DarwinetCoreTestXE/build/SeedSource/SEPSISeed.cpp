@@ -173,8 +173,8 @@ namespace seedsrc {
 				switch (eKey) {
 					case eDeltaOperationId_Undefined: sValue = _UTF8sz("Undefined"); break;
 					case eDeltaOperationId_IntDeltaAdd: sValue = _UTF8sz("IntDeltaAdd"); break;
-					case eDeltaOperationId_ArrayDeltaExtend: sValue = _UTF8sz("ArrayDeltaExtend"); break;
-					case eDeltaOperationId_ArrayDeltaContract: sValue = _UTF8sz("ArrayDeltaContract"); break;
+					case eDeltaOperationId_StringDeltaExtend: sValue = _UTF8sz("ArrayDeltaExtend"); break;
+					case eDeltaOperationId_StringDeltaContract: sValue = _UTF8sz("ArrayDeltaContract"); break;
 					case eDeltaOperationId_Unknown: sValue = _UTF8sz("Unknown"); break;
 				default:
 					;
@@ -450,12 +450,18 @@ namespace seedsrc {
 			c_CreateSetValueDeltaOperation(c_Value_shared_ptr pNewValue) : m_pNewValue(pNewValue) {};
 
 			c_DeltaOperation operator()(c_IntValue& current_value) const {
+				/**
+				  * Create Delta = Integer - Integer
+				  */
 				LOG_METHOD_SCOPE;
 				int integer_delta = boost::get<c_IntValue>(*m_pNewValue).getRawValue() - current_value.getRawValue();
 				return c_IntDeltaOperation(eIntOperationId_ADD,c_IntValue(integer_delta));
 			}
 
 			c_DeltaOperation operator()(const c_StringValue& current_value) const {
+				/**
+				  * Create Delta = String - String
+				  */
 				LOG_METHOD_SCOPE;
 				c_StringDeltaOperation result;
 				c_DarwinetString A = current_value.getRawValue(); // Current value
@@ -930,14 +936,14 @@ namespace seedsrc {
 											c_StringDeltaOperation string_delta_operation = boost::get<c_StringDeltaOperation>(*pDelta->getDeltaOperation());
 	//										,eSignalField_DeltaOperationId
 											if (string_delta_operation.getOperation() == eStringDeltaOperation_Extend) {
-												pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_ArrayDeltaExtend]);
+												pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_StringDeltaExtend]);
 	//											,eSignalField_StringDeltaOperationIndex
 												pDeltaSignal->addElement(eSignalField_StringDeltaOperationIndex,c_DataRepresentationFramework::intToDecimalString(string_delta_operation.getTargetIndex()));
 	//											,eSignalField_StringDeltaOperationValue
 												pDeltaSignal->addElement(eSignalField_StringDeltaOperationValue,string_delta_operation.getDeltaValue().getRawValue());
 											}
-											else if (string_delta_operation.getOperation() == eDeltaOperationId_ArrayDeltaContract) {
-												pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_ArrayDeltaContract]);
+											else if (string_delta_operation.getOperation() == eStringDeltaOperation_Contract) {
+												pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_StringDeltaContract]);
 	//											,eSignalField_StringDeltaOperationIndex
 												pDeltaSignal->addElement(eSignalField_StringDeltaOperationIndex,c_DataRepresentationFramework::intToDecimalString(string_delta_operation.getTargetIndex()));
 	//											,eSignalField_StringDeltaOperationValue
@@ -1021,12 +1027,20 @@ namespace seedsrc {
 							c_IntDeltaOperation int_delta_operation(int_operation_id,int_value);
 							pDelta->setDeltaOperation(boost::make_shared<c_DeltaOperation>(int_delta_operation));
 						}
-						else if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_DeltaOperationId]) == DELTA_OPERATION_MAPPER[eDeltaOperationId_ArrayDeltaExtend]) {
+						else if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_DeltaOperationId]) == DELTA_OPERATION_MAPPER[eDeltaOperationId_StringDeltaExtend]) {
 							int insert_index = c_DataRepresentationFramework::intValueOfDecimalString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_StringDeltaOperationIndex]));
 							c_DarwinetString raw_string_value = pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_StringDeltaOperationValue]);
 							c_StringValue string_value(raw_string_value);
 							e_StringDeltaOperation string_operation_id = eStringDeltaOperation_Extend;
 							c_StringDeltaOperation string_delta_operation(string_operation_id,insert_index,string_value);
+							pDelta->setDeltaOperation(boost::make_shared<c_DeltaOperation>(string_delta_operation));
+						}
+						else if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_DeltaOperationId]) == DELTA_OPERATION_MAPPER[eDeltaOperationId_StringDeltaContract]) {
+							int delete_index = c_DataRepresentationFramework::intValueOfDecimalString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_StringDeltaOperationIndex]));
+							c_DarwinetString raw_string_value = pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_StringDeltaOperationValue]);
+							c_StringValue string_value(raw_string_value);
+							e_StringDeltaOperation string_operation_id = eStringDeltaOperation_Contract;
+							c_StringDeltaOperation string_delta_operation(string_operation_id,delete_index,string_value);
 							pDelta->setDeltaOperation(boost::make_shared<c_DeltaOperation>(string_delta_operation));
 						}
 						else {
