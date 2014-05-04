@@ -427,16 +427,19 @@ namespace seedsrc {
 			class c_Snake {
 			public:
 
-				c_Snake(c_Point start,c_Point middle,c_Point end) : m_start(start),m_middle(middle), m_end(end) {;}
+				c_Snake(c_Point _start,c_Point _middle,c_Point _end) : start(_start),middle(_middle), end(_end) {;}
 
-				c_Point start() {return m_start;}
-				c_Point middle() {return m_middle;}
-				c_Point end() {return m_end;}
+//				c_Point& start() {return m_start;}
+//				c_Point& middle() {return m_middle;}
+//				c_Point& end() {return m_end;}
+//
+//				const c_Point& start() const {return m_start;}
+//				const c_Point& middle() const {return m_middle;}
+//				const c_Point& end() const {return m_end;}
 
-			private:
-				c_Point m_start;
-				c_Point m_middle;
-				c_Point m_end;
+				c_Point start;
+				c_Point middle;
+				c_Point end;
 
 			};
 
@@ -574,7 +577,42 @@ namespace seedsrc {
 							int yMid = xMid - k;
 							ses::c_Point middle(xMid,yMid);
 							// Insert this snake in the front of current snakes
-							snakes.insert(snakes.begin(),ses::c_Snake(start,middle,end));
+//							bool create_range_snake = false;
+							bool create_range_snake = true;
+							if (create_range_snake) {
+								// Extend the first snake if the one to add is simply an
+								// extension of its existing insert/delete range
+								if (snakes.size() > 0) {
+									bool new_snake_has_no_diagonal = ((middle.x == end.x) && (middle.y == end.y));
+									if (new_snake_has_no_diagonal) {
+										bool new_snake_is_down_snake = (start.y < middle.y);
+										bool existing_snake_is_down_snake = (snakes.begin()->start.y < snakes.begin()->middle.y);
+										if ((new_snake_is_down_snake == true) && (existing_snake_is_down_snake == true)) {
+											// Extend the existing down snake
+											snakes.begin()->start.y = start.y;
+										}
+										else if ((new_snake_is_down_snake == false) && (existing_snake_is_down_snake) == false) {
+											// extend the existing right snake (not down means it must a a horizontal one)
+											snakes.begin()->start.x = start.x;
+										}
+										else {
+											// Can't extend existing snake. The new snake has another direction than the existing one
+											snakes.insert(snakes.begin(),ses::c_Snake(start,middle,end));
+										}
+									}
+									else {
+										// Can't extend existing snake. The new snake has a range breaing diagonal tail
+										snakes.insert(snakes.begin(),ses::c_Snake(start,middle,end));
+									}
+								}
+								else {
+									// Nothing to extend
+									snakes.insert(snakes.begin(),ses::c_Snake(start,middle,end));
+								}
+							}
+							else {
+								snakes.insert(snakes.begin(),ses::c_Snake(start,middle,end));
+                            }
 							// move back to previous start point
 							p.x = xStart;
 							p.y = yStart;
@@ -610,23 +648,23 @@ namespace seedsrc {
 								c_LogString sMessage;
 								sMessage += _UTF8sz("\t");
 								sMessage += _UTF8sz("start(");
-								sMessage += c_DataRepresentationFramework::intToDecimalString(iter->start().x);
+								sMessage += c_DataRepresentationFramework::intToDecimalString(iter->start.x);
 								sMessage += _UTF8sz(",");
-								sMessage += c_DataRepresentationFramework::intToDecimalString(iter->start().y);
+								sMessage += c_DataRepresentationFramework::intToDecimalString(iter->start.y);
 								sMessage += _UTF8sz(")");
 
 								sMessage += _UTF8sz("\t");
 								sMessage += _UTF8sz("middle(");
-								sMessage += c_DataRepresentationFramework::intToDecimalString(iter->middle().x);
+								sMessage += c_DataRepresentationFramework::intToDecimalString(iter->middle.x);
 								sMessage += _UTF8sz(",");
-								sMessage += c_DataRepresentationFramework::intToDecimalString(iter->middle().y);
+								sMessage += c_DataRepresentationFramework::intToDecimalString(iter->middle.y);
 								sMessage += _UTF8sz(")");
 
 								sMessage += _UTF8sz("\t");
 								sMessage += _UTF8sz("end(");
-								sMessage += c_DataRepresentationFramework::intToDecimalString(iter->end().x);
+								sMessage += c_DataRepresentationFramework::intToDecimalString(iter->end.x);
 								sMessage += _UTF8sz(",");
-								sMessage += c_DataRepresentationFramework::intToDecimalString(iter->end().y);
+								sMessage += c_DataRepresentationFramework::intToDecimalString(iter->end.y);
 								sMessage += _UTF8sz(")");
 
 								LOG_BUSINESS(sMessage);
@@ -637,26 +675,51 @@ namespace seedsrc {
 						c_LogString sMessage("Edit Script=");
 						std::vector<c_StringDeltaOperation> string_deltas;
 						for (ses::c_Snakes::iterator iter = snakes.begin(); iter != snakes.end(); ++iter) {
+//							// each snake is either a right snake or down snake
+//							// Note 140430, currently each snake represents one insert or delete only.
+//							//              But we have the loop here for future use
+//							for (int x = iter->start.x + 1; x <= iter->middle.x; ++x) {
+//								// right snake = delete commands
+//								sMessage += c_DataRepresentationFramework::intToDecimalString(x) + _Asciisz("D");
+//								sMessage.anonymous() += A[x-1]; // x = 1..M string index = 0..M-1
+//								c_DarwinetString sDelta;
+//								sDelta.anonymous() += A[x-1];
+//								string_deltas.push_back(c_StringDeltaOperation(eStringDeltaOperation_Contract,x-1,c_StringValue(sDelta)));
+//							}
+//							// Note 140430, currently each snake represents one insert or delete only.
+//							//              But we have the loop here for future use
+//							for (int y = iter->start.y+1; y <= iter->middle.y; ++y) {
+//								// down snake = insert commands
+//								sMessage += c_DataRepresentationFramework::intToDecimalString(y) + _Asciisz("I");
+//								sMessage.anonymous() += B[y-1]; // y = 1..N string index = 0..N-1
+//								c_DarwinetString sDelta;
+//								sDelta.anonymous() += B[y-1];
+//								string_deltas.push_back(c_StringDeltaOperation(eStringDeltaOperation_Extend,y-1,c_StringValue(sDelta)));
+//							}
 							// each snake is either a right snake or down snake
-							// Note 140430, currently each snake represents one insert or delete only.
-							//              But we have the loop here for future use
-							for (int x = iter->start().x + 1; x <= iter->middle().x; ++x) {
-								// right snake = delete commands
-								sMessage += c_DataRepresentationFramework::intToDecimalString(x) + _Asciisz("D");
-								sMessage.anonymous() += A[x-1]; // x = 1..M string index = 0..M-1
+							{
 								c_DarwinetString sDelta;
-								sDelta.anonymous() += A[x-1];
-								string_deltas.push_back(c_StringDeltaOperation(eStringDeltaOperation_Contract,x-1,c_StringValue(sDelta)));
+								for (int x = iter->start.x + 1; x <= iter->middle.x; ++x) {
+									// right snake = delete commands
+									sMessage += c_DataRepresentationFramework::intToDecimalString(x) + _Asciisz("D");
+									sMessage.anonymous() += A[x-1]; // x = 1..M string index = 0..M-1
+									sDelta.anonymous() += A[x-1];
+								}
+								if (sDelta.length() > 0) {
+									string_deltas.push_back(c_StringDeltaOperation(eStringDeltaOperation_Contract,iter->start.x,c_StringValue(sDelta)));
+								}
 							}
-							// Note 140430, currently each snake represents one insert or delete only.
-							//              But we have the loop here for future use
-							for (int y = iter->start().y+1; y <= iter->middle().y; ++y) {
-								// down snake = insert commands
-								sMessage += c_DataRepresentationFramework::intToDecimalString(y) + _Asciisz("I");
-								sMessage.anonymous() += B[y-1]; // y = 1..N string index = 0..N-1
+							{
 								c_DarwinetString sDelta;
-								sDelta.anonymous() += B[y-1];
-								string_deltas.push_back(c_StringDeltaOperation(eStringDeltaOperation_Extend,y-1,c_StringValue(sDelta)));
+								for (int y = iter->start.y+1; y <= iter->middle.y; ++y) {
+									// down snake = insert commands
+									sMessage += c_DataRepresentationFramework::intToDecimalString(y) + _Asciisz("I");
+									sMessage.anonymous() += B[y-1]; // y = 1..N string index = 0..N-1
+									sDelta.anonymous() += B[y-1];
+								}
+								if (sDelta.length() > 0) {
+									string_deltas.push_back(c_StringDeltaOperation(eStringDeltaOperation_Extend,iter->start.y,c_StringValue(sDelta)));
+								}
 							}
 						}
 						LOG_BUSINESS(sMessage);
@@ -668,7 +731,14 @@ namespace seedsrc {
 							result = string_deltas[0];
 						}
 						else if (string_deltas.size() > 1) {
-							throw c_StringDeltaCreationFailed(c_LogString(" More than one string insert/delete detected. But we can handle only one char change for each Delta."));
+							throw c_StringDeltaCreationFailed(c_LogString(" More than one string insert/delete detected. But we can handle only one type of change for each Delta."));
+							/**
+							  * Note 140504, An actual single string insertion may still result in multipple Inserts!
+							  *              Insert "aa12" into "12121212" to create "12aa12121212" could be matched to edit script 2Iaa 8I12?
+							  *
+							  *              The same may be true for a single range deletion being matched as a multi deletion?
+							  *
+							  */
 						}
 					}
 					else {
