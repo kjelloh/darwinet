@@ -60,6 +60,7 @@ object MIVsViewFrame: TMIVsViewFrame
       MinValue = 0
       TabOrder = 0
       Value = 0
+      OnChange = myIntArrayxSpinEditChange
     end
     object myIntArrayListView: TListView
       Left = 82
@@ -76,6 +77,7 @@ object MIVsViewFrame: TMIVsViewFrame
         000C6D00790049006E007400410072007200610079002E003100}
       TabOrder = 1
       ViewStyle = vsList
+      OnSelectItem = myIntArrayListViewSelectItem
     end
   end
 end

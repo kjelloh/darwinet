@@ -25,6 +25,9 @@ __published:	// IDE-managed Components
 	TListView *myIntArrayListView;
 	void __fastcall MyIntSpinEditChange(TObject *Sender);
 	void __fastcall MyTextEditChange(TObject *Sender);
+	void __fastcall myIntArrayListViewSelectItem(TObject *Sender, TListItem *Item, bool Selected);
+	void __fastcall myIntArrayxSpinEditChange(TObject *Sender);
+
 private:	// User declarations
 	static unsigned int m_instanceCount;
 	unsigned int m_index;

@@ -10,6 +10,13 @@
 #pragma link "cspin"
 #pragma resource "*.dfm"
 TMIVsViewFrame *MIVsViewFrame;
+
+//---------------------------------------------------------------------------
+class c_IntegerObject  : public TObject {
+public:
+	c_IntegerObject(int value) : TObject(), m_value(value) {;}
+	int m_value;
+};
 //---------------------------------------------------------------------------
 typedef std::map<TMIVsViewFrame*,darwinet_seed::c_TestBenchClientSideProxy::shared_ptr> c_TestBenchClientSideProxyMap;
 c_TestBenchClientSideProxyMap TestBenchClientSideProxyMap;
@@ -126,6 +133,11 @@ __fastcall TMIVsViewFrame::TMIVsViewFrame(TComponent* Owner,unsigned int index)
 {
 	++m_instanceCount;
 	this->Name = String("MIVsViewFrame") + String(m_instanceCount);
+
+	// Ensure we have at least one integer in the myIntArray list
+	this->myIntArrayListView->Clear();
+	this->myIntArrayListView->AddItem("myIntArray:0.1:0",new c_IntegerObject(1));
+	LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString("MIV Path should be un-indexed. For now array MIV id uses both index 0 and .index mechanism (e.g. myInArray:0.1:0)"));
 	this->updateGUIToReflectChanges();
 }
 
@@ -153,8 +165,53 @@ void __fastcall TMIVsViewFrame::MyTextEditChange(TObject *Sender)
 		//       Note: We can't do it in the constructor as we have not yet been assigned our final windows handler there!
 		getTestBenchClientSideProxy(this)->getGUIClientproxy(m_index)->setGUIWindowhandle(this->WindowHandle);
 		getTestBenchClientSideProxy(this)->getGUIClientproxy(m_index)->setMIVsValue(_UTF8sz("myString:0"),_UTF8sz(AnsiString(this->MyTextEdit->Text).c_str()));
-    }
+	}
 }
 //---------------------------------------------------------------------------
 
+
+void __fastcall TMIVsViewFrame::myIntArrayListViewSelectItem(TObject *Sender, TListItem *Item,
+		  bool Selected)
+{
+	try {
+		// The user selected an item in the myIntArray. Update the spinner
+		if (Item != NULL) {
+			if (Selected) {
+				// Item is selected.
+				ShowMessage("Item is selcted");
+				this->myIntArrayxSpinEdit->Visible = Selected;
+				this->myIntArrayxLabel->Visible = this->myIntArrayxSpinEdit->Visible;
+				SCOPED_ONCHANGE_INHIBIT(this->myIntArrayxSpinEdit); // Don't trigger a change value (we are just mirroring the selected array item)
+
+				this->myIntArrayxSpinEdit->Value = reinterpret_cast<c_IntegerObject*>(Item->Data)->m_value;
+				this->myIntArrayxSpinEdit->TextHint = Item->Caption;
+			}
+			else {
+				// This item is no longer selected
+				ShowMessage("Item is no longer selcted");
+				this->myIntArrayxSpinEdit->Visible = Selected;
+				this->myIntArrayxLabel->Visible = this->myIntArrayxSpinEdit->Visible;
+			}
+		}
+	}
+	CATCH_AND_LOG_IDE_STD_AND_GENERAL_EXCEPTION_DESIGN_INSUFFICIENCY;
+}
+//---------------------------------------------------------------------------
+
+void __fastcall TMIVsViewFrame::myIntArrayxSpinEditChange(TObject *Sender)
+{
+	//
+	if (!InhibitGUIOnchangeHandler[this->myIntArrayxSpinEdit]) {
+		// It is a user change. Update corresponding MIV
+		// Update our Viewed MIVs with the new value
+		LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString("sets Proxy callback windows handle at each call."));
+		// TODO: Find a better way to report our windows handle to the GUI Client Proxy.
+		//       Note: We can't do it in the constructor as we have not yet been assigned our final windows handler there!
+		getTestBenchClientSideProxy(this)->getGUIClientproxy(m_index)->setGUIWindowhandle(this->WindowHandle);
+
+		AnsiString sMIVId = this->myIntArrayxSpinEdit->TextHint;
+		getTestBenchClientSideProxy(this)->getGUIClientproxy(m_index)->setMIVsValue(_UTF8sz(sMIVId.c_str()),_UTF8sz(AnsiString(this->myIntArrayxSpinEdit->Value).c_str()));
+	}
+}
+//---------------------------------------------------------------------------
 
