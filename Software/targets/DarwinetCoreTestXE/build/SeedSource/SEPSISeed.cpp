@@ -14,7 +14,6 @@
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
 
-
 /**
   * Seed Source namespace. This is working source that
   * are candiates to become part of the Darwinet framework
@@ -3574,6 +3573,8 @@ namespace lessons_learnt {
 				  * the &x pointer the function will be bound to
 				  * the x instance.
 				  */
+// Note: 140511, For some reason you get a compiler error here if you do not add #include <boost/bind.hpp>.
+//               And for some other onscure reason the include has to go into our header file. I do not have time to find the reason so I just settle that it works for now.
 				x.onX = boost::bind(&X::MemberDoIt,&x,_1);
 				/**
 				  * Bind to a copy of x.

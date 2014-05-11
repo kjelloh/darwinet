@@ -7,6 +7,7 @@
 #include <Vcl.Controls.hpp>
 #include <Vcl.StdCtrls.hpp>
 #include <Vcl.Forms.hpp>
+#include <Vcl.ComCtrls.hpp>
 #include <Vcl.Samples.Spin.hpp>
 #include <boost/shared_ptr.hpp>
 #include "DarwinetWindowsGUIInterface.h"
@@ -16,6 +17,12 @@ class TMIVsViewFrame : public TFrame
 __published:	// IDE-managed Components
 	TSpinEdit *MyIntSpinEdit;
 	TEdit *MyTextEdit;
+	TLabel *myIntLabel;
+	TLabel *myStringLabel;
+	TGroupBox *myIntArrayGroupBox;
+	TLabel *myIntArrayxLabel;
+	TSpinEdit *myIntArrayxSpinEdit;
+	TListView *myIntArrayListView;
 	void __fastcall MyIntSpinEditChange(TObject *Sender);
 	void __fastcall MyTextEditChange(TObject *Sender);
 private:	// User declarations

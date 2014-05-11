@@ -11,7 +11,9 @@
 #include <map>
 #include <list>
 #include <queue>
+#include <boost/bind.hpp> // 140511, only #include <boost/function.hpp> does not seem to cut it?
 #include <boost/function.hpp>
+
 #include "DarwinetWindowsGUIInterface.h"
 //---------------------------------------------------------------------------
 

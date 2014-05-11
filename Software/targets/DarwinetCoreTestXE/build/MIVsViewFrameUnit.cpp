@@ -7,6 +7,7 @@
 #include "SEPSISeed.h"
 //---------------------------------------------------------------------------
 #pragma package(smart_init)
+#pragma link "cspin"
 #pragma resource "*.dfm"
 TMIVsViewFrame *MIVsViewFrame;
 //---------------------------------------------------------------------------
@@ -155,4 +156,5 @@ void __fastcall TMIVsViewFrame::MyTextEditChange(TObject *Sender)
     }
 }
 //---------------------------------------------------------------------------
+
 
