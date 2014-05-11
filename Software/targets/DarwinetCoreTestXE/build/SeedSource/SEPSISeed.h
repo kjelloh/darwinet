@@ -60,7 +60,8 @@ namespace seedsrc {
 		typedef c_DarwinetString c_CaptionNode;
 		typedef oprime::c_KeyPath<c_CaptionNode> c_CaptionPath;
 		//-------------------------------------------------------------------
-		typedef oprime::c_KeyPath<oprime::c_IndexedKeyNode<c_CaptionNode> > c_MIVPath;
+//		typedef oprime::c_KeyPath<oprime::c_IndexedKeyNode<c_CaptionNode> > c_MIVPath;
+		typedef c_CaptionPath c_MIVPath;
 		typedef c_DarwinetString c_MIVsProducerIdentifier;
 		typedef c_DarwinetString c_DeltaBranchIdentifier;
 		typedef unsigned int t_DeltaSeqNo;

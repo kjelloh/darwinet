@@ -861,12 +861,14 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		bool c_MIVs::isIntV(const c_MIVPath& miv_path) {
 			c_DarwinetString sPath = miv_path.toString<c_DarwinetString>();
-			return (sPath == _UTF8sz("myInt:0"));
+//			return (sPath == _UTF8sz("myInt:0"));
+			return (sPath == _UTF8sz("myInt"));
 		}
 		//-------------------------------------------------------------------
 		bool c_MIVs::isStringV(const c_MIVPath& miv_path) {
 			c_DarwinetString sPath = miv_path.toString<c_DarwinetString>();
-			return (sPath == _UTF8sz("myString:0"));
+//			return (sPath == _UTF8sz("myString:0"));
+			return (sPath == _UTF8sz("myString"));
 		}
 
 		bool c_MIVs::isV(const c_MIVPath& miv_path) {
