@@ -80,23 +80,56 @@ void __fastcall TMIVsViewFrame::CMOnMIVsChange(TMessage Message) {
 			LOG_BUSINESS(c_LogString("Parsed Signal = ") + darwinet_seed::log::toLogString(signal));
 			darwinet_seed::c_GUIClientproxy::c_SignalString sReceiver = signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_SignalReceiver]);
 			darwinet_seed::c_GUIClientproxy::c_SignalString sEventId = signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventId]);
-//			darwinet_seed::c_GUIClientproxy::c_SignalString sEventId = signal.getValue(darwinet_seed::c_CaptionNode(" Body.MIVsEvent.Id"));
 			if (sEventId == darwinet_seed::MIVS_EVENT_MAPPER[darwinet_seed::eMIVsEventId_OnMIVValueChanged]) {
 				darwinet_seed::c_GUIClientproxy::c_SignalString sMIV_Element = signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventSourceId]);
-//				if (sMIV_Element == _UTF8sz("myInt:0")) {
-				if (sMIV_Element == _UTF8sz("myInt")) {
-					String sValue(signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventValue]).c_str());
-					SCOPED_ONCHANGE_INHIBIT(this->MyIntSpinEdit);
-					this->MyIntSpinEdit->Value = sValue.ToInt();
+				darwinet_seed::c_MIVPath miv_id_path = darwinet_seed::c_MIVPath::fromString(sMIV_Element);
+				if (miv_id_path.size() == 1) {
+					if (sMIV_Element == _UTF8sz("myInt")) {
+						String sValue(signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventValue]).c_str());
+						SCOPED_ONCHANGE_INHIBIT(this->MyIntSpinEdit);
+						this->MyIntSpinEdit->Value = sValue.ToInt();
+					}
+					else if (sMIV_Element == _UTF8sz("myString")) {
+						String sValue(signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventValue]).c_str());
+						SCOPED_ONCHANGE_INHIBIT(this->MyTextEdit);
+						this->MyTextEdit->Text = sValue;
+					}
+					else {
+						LOG_BUSINESS(c_LogString(METHOD_NAME + ", Received unknwon MIV Id = ") + sMIV_Element);
+					}
 				}
-//				else if (sMIV_Element == _UTF8sz("myString:0")) {
-				else if (sMIV_Element == _UTF8sz("myString")) {
-					String sValue(signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventValue]).c_str());
-					SCOPED_ONCHANGE_INHIBIT(this->MyTextEdit);
-					this->MyTextEdit->Text = sValue;
+				else if (miv_id_path.size() == 2) {
+					if (miv_id_path[0] == _UTF8sz("myIntArray")) {
+//						// Now the second node is the array index
+//						try {
+//							int index = c_DataRepresentationFramework::intValueOfDecimalString(miv_id_path[1]);
+//						}
+//						catch (...) {
+//							LOG_BUSINESS(c_LogString(METHOD_NAME + ", Array with now index MIV Id = ") + sMIV_Element);
+//						}
+						{
+							for (int i = 0; i < this->myIntArrayListView->Items->Count; ++i) {
+								if (this->myIntArrayListView->Items->operator [](i)->Caption == sMIV_Element.c_str()) {
+									String sValue(signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventValue]).c_str());
+									reinterpret_cast<c_IntegerObject*>(this->myIntArrayListView->Items->operator [](i)->Data)->m_value  = sValue.ToInt();
+									if (this->myIntArrayListView->Items->operator [](i) == this->myIntArrayListView->Selected) {
+										// Update the contents of selected item view
+										this->updateGUIToReflectChanges();
+									}
+									else {
+										LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" should receive changes only for visible MIVs. Implement listener design pattern."));
+									}
+									break;
+								}
+							}
+						}
+					}
+					else {
+						LOG_BUSINESS(c_LogString(METHOD_NAME + ", unrecognized 2 node MIV Id = ") + sMIV_Element);
+					}
 				}
 				else {
-					LOG_BUSINESS(c_LogString(METHOD_NAME + ", Received unknwon MIV Id = ") + sMIV_Element);
+					LOG_BUSINESS(c_LogString(METHOD_NAME + ", unrecognized node count of MIV Id = ") + sMIV_Element);
 				}
 			}
 			else {
@@ -119,6 +152,18 @@ void __fastcall TMIVsViewFrame::CMOnMIVsChange(TMessage Message) {
 //---------------------------------------------------------------------------
 void TMIVsViewFrame::updateGUIToReflectChanges() {
 	this->MyIntSpinEdit->Enabled = getTestBenchClientSideProxy(this)->getGUIClientproxy(m_index)->isOpen();
+
+	{
+		// Update selected MyIntArray item view
+		this->myIntArrayxSpinEdit->Visible = (this->myIntArrayListView->Selected != NULL);
+		this->myIntArrayxLabel->Visible = this->myIntArrayxSpinEdit->Visible;
+		if (this->myIntArrayListView->Selected != NULL) {
+			SCOPED_ONCHANGE_INHIBIT(this->myIntArrayxSpinEdit); // Don't trigger a change value (we are just mirroring the selected array item)
+			this->myIntArrayxSpinEdit->Value = reinterpret_cast<c_IntegerObject*>(this->myIntArrayListView->Selected->Data)->m_value;
+			this->myIntArrayxSpinEdit->TextHint = this->myIntArrayListView->Selected->Caption;
+			this->myIntArrayxLabel->Caption = this->myIntArrayxSpinEdit->TextHint;
+		}
+	}
 }
 
 
@@ -143,7 +188,6 @@ __fastcall TMIVsViewFrame::TMIVsViewFrame(TComponent* Owner,unsigned int index)
 	LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString("MIV Path should be un-indexed. For now array MIV id uses both index 0 and .index mechanism (e.g. myInArray:0.1:0)"));
 	this->updateGUIToReflectChanges();
 }
-
 //---------------------------------------------------------------------------
 void __fastcall TMIVsViewFrame::MyIntSpinEditChange(TObject *Sender)
 {
@@ -178,34 +222,35 @@ void __fastcall TMIVsViewFrame::MyTextEditChange(TObject *Sender)
 void __fastcall TMIVsViewFrame::myIntArrayListViewSelectItem(TObject *Sender, TListItem *Item,
 		  bool Selected)
 {
-	try {
-		// The user selected an item in the myIntArray. Update the spinner
-		if (Item != NULL) {
-			if (Selected) {
-				// Item is selected.
-//				ShowMessage("Item is selcted");
-				this->myIntArrayxSpinEdit->Visible = Selected;
-				this->myIntArrayxLabel->Visible = this->myIntArrayxSpinEdit->Visible;
-
-				SCOPED_ONCHANGE_INHIBIT(this->myIntArrayxSpinEdit); // Don't trigger a change value (we are just mirroring the selected array item)
-				this->myIntArrayxSpinEdit->Value = reinterpret_cast<c_IntegerObject*>(Item->Data)->m_value;
-				this->myIntArrayxSpinEdit->TextHint = Item->Caption;
-			}
-			else {
-				// This item is no longer selected
-//				ShowMessage("Item is no longer selcted");
-				this->myIntArrayxSpinEdit->Visible = Selected;
-				this->myIntArrayxLabel->Visible = this->myIntArrayxSpinEdit->Visible;
-			}
-		}
-	}
-	CATCH_AND_LOG_IDE_STD_AND_GENERAL_EXCEPTION_DESIGN_INSUFFICIENCY;
+//	try {
+//		// The user selected an item in the myIntArray. Update the spinner
+//		if (Item != NULL) {
+//			if (Selected) {
+//				// Item is selected.
+////				ShowMessage("Item is selcted");
+//				this->myIntArrayxSpinEdit->Visible = Selected;
+//				this->myIntArrayxLabel->Visible = this->myIntArrayxSpinEdit->Visible;
+//
+//				SCOPED_ONCHANGE_INHIBIT(this->myIntArrayxSpinEdit); // Don't trigger a change value (we are just mirroring the selected array item)
+//				this->myIntArrayxSpinEdit->Value = reinterpret_cast<c_IntegerObject*>(Item->Data)->m_value;
+//				this->myIntArrayxSpinEdit->TextHint = Item->Caption;
+//				this->myIntArrayxLabel->Caption = this->myIntArrayxSpinEdit->TextHint;
+//			}
+//			else {
+//				// This item is no longer selected
+////				ShowMessage("Item is no longer selcted");
+//				this->myIntArrayxSpinEdit->Visible = Selected;
+//				this->myIntArrayxLabel->Visible = this->myIntArrayxSpinEdit->Visible;
+//			}
+//		}
+//	}
+//	CATCH_AND_LOG_IDE_STD_AND_GENERAL_EXCEPTION_DESIGN_INSUFFICIENCY;
+	this->updateGUIToReflectChanges();
 }
 //---------------------------------------------------------------------------
 
 void __fastcall TMIVsViewFrame::myIntArrayxSpinEditChange(TObject *Sender)
 {
-	//
 	if (!InhibitGUIOnchangeHandler[this->myIntArrayxSpinEdit]) {
 		// It is a user change. Update corresponding MIV
 		// Update our Viewed MIVs with the new value

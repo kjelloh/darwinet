@@ -172,6 +172,7 @@ namespace seedsrc {
 		enum e_DeltaOperationId {
 			 eDeltaOperationId_Undefined
 			,eDeltaOperationId_IntDeltaAdd
+			,eDeltaOperationId_IntDeltaSub
 			,eDeltaOperationId_StringDeltaExtend
 			,eDeltaOperationId_StringDeltaContract
 			,eDeltaOperationId_Unknown
@@ -468,6 +469,7 @@ namespace seedsrc {
 		enum e_IntOperationId {
 			eIntOperationId_Undefined
 			,eIntOperationId_ADD
+			,eIntOperationId_SUB
 			,eIntOperationId_Unknown
 		};
 

@@ -172,6 +172,7 @@ namespace seedsrc {
 				switch (eKey) {
 					case eDeltaOperationId_Undefined: sValue = _UTF8sz("Undefined"); break;
 					case eDeltaOperationId_IntDeltaAdd: sValue = _UTF8sz("IntDeltaAdd"); break;
+					case eDeltaOperationId_IntDeltaSub: sValue = _UTF8sz("IntDeltaSub"); break;
 					case eDeltaOperationId_StringDeltaExtend: sValue = _UTF8sz("ArrayDeltaExtend"); break;
 					case eDeltaOperationId_StringDeltaContract: sValue = _UTF8sz("ArrayDeltaContract"); break;
 					case eDeltaOperationId_Unknown: sValue = _UTF8sz("Unknown"); break;
@@ -366,8 +367,12 @@ namespace seedsrc {
 					result.setRawValue(current_value.getRawValue() + m_delta_value.getRawValue());
 				}
 				break;
+				case eIntOperationId_SUB: {
+					result.setRawValue(current_value.getRawValue() - m_delta_value.getRawValue());
+				}
+				break;
 				default: {
-					throw c_UnknownDeltaOperation(c_LogString("c_IntDeltaOperation is not eIntOperationId_ADD"));
+					throw c_UnknownDeltaOperation(c_LogString("c_IntDeltaOperation is not eIntOperationId_ADD or eIntOperationId_SUB"));
 				}
 			}
 			return result;
@@ -457,7 +462,12 @@ namespace seedsrc {
 				  */
 				LOG_METHOD_SCOPE;
 				int integer_delta = boost::get<c_IntValue>(*m_pNewValue).getRawValue() - current_value.getRawValue();
-				return c_IntDeltaOperation(eIntOperationId_ADD,c_IntValue(integer_delta));
+				if (integer_delta > 0) {
+					return c_IntDeltaOperation(eIntOperationId_ADD,c_IntValue(integer_delta));
+				}
+				else {
+					return c_IntDeltaOperation(eIntOperationId_SUB,c_IntValue(-integer_delta));
+				}
 			}
 
 			c_DeltaOperation operator()(const c_StringValue& current_value) const {
@@ -860,9 +870,19 @@ namespace seedsrc {
 
 		//-------------------------------------------------------------------
 		bool c_MIVs::isIntV(const c_MIVPath& miv_path) {
-			c_DarwinetString sPath = miv_path.toString<c_DarwinetString>();
-//			return (sPath == _UTF8sz("myInt:0"));
-			return (sPath == _UTF8sz("myInt"));
+//			{
+//				c_DarwinetString sPath = miv_path.toString<c_DarwinetString>();
+//	//			return (sPath == _UTF8sz("myInt:0"));
+//				return (sPath == _UTF8sz("myInt"));
+//			}
+			bool result = false;
+			if (miv_path.size() == 1) {
+				result = (miv_path.back() == _UTF8sz("myInt"));
+			}
+			else if (miv_path.size() == 2) {
+				result = (miv_path[0] == _UTF8sz("myIntArray"));
+			}
+			return result;
 		}
 		//-------------------------------------------------------------------
 		bool c_MIVs::isStringV(const c_MIVPath& miv_path) {
@@ -1002,6 +1022,11 @@ namespace seedsrc {
 	//											,eSignalField_IntDeltaOperationValue
 												pDeltaSignal->addElement(eSignalField_IntDeltaOperationValue,c_DataRepresentationFramework::intToDecimalString(int_delta_operation.getValue().getRawValue()));
 											}
+											else if (int_delta_operation.getIntOperationId() == eIntOperationId_SUB) {
+												pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_IntDeltaSub]);
+	//											,eSignalField_IntDeltaOperationValue
+												pDeltaSignal->addElement(eSignalField_IntDeltaOperationValue,c_DataRepresentationFramework::intToDecimalString(int_delta_operation.getValue().getRawValue()));
+											}
 										}
 										else if (pDelta->getDeltaOperation()->type() == typeid(c_StringDeltaOperation)) {
 											c_StringDeltaOperation string_delta_operation = boost::get<c_StringDeltaOperation>(*pDelta->getDeltaOperation());
@@ -1098,6 +1123,13 @@ namespace seedsrc {
 							c_IntDeltaOperation int_delta_operation(int_operation_id,int_value);
 							pDelta->setDeltaOperation(boost::make_shared<c_DeltaOperation>(int_delta_operation));
 						}
+						else if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_DeltaOperationId]) == DELTA_OPERATION_MAPPER[eDeltaOperationId_IntDeltaSub]) {
+							int raw_int_value = c_DataRepresentationFramework::intValueOfDecimalString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_IntDeltaOperationValue]));
+							c_IntValue int_value(raw_int_value);
+							e_IntOperationId int_operation_id = eIntOperationId_SUB;
+							c_IntDeltaOperation int_delta_operation(int_operation_id,int_value);
+							pDelta->setDeltaOperation(boost::make_shared<c_DeltaOperation>(int_delta_operation));
+                        }
 						else if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_DeltaOperationId]) == DELTA_OPERATION_MAPPER[eDeltaOperationId_StringDeltaExtend]) {
 							int insert_index = c_DataRepresentationFramework::intValueOfDecimalString(pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_StringDeltaOperationIndex]));
 							c_DarwinetString raw_string_value = pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_StringDeltaOperationValue]);
