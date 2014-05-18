@@ -152,6 +152,7 @@ namespace seedsrc {
 
 		enum e_MIVsEventId {
 			eMIVsEventId_Undefined
+			,eMIVsEventId_OnMIVInstanceCreated
 			,eMIVsEventId_OnMIVValueChanged
 			,eMIVsEventId_Unknown
 		};
@@ -848,6 +849,7 @@ namespace seedsrc {
 			bool isOpen();
 
 			void setMIVsValue(c_GUIClientproxy::c_MIVId MIVId,c_GUIClientproxy::c_MIVValue value);
+			void instanciateBefore(c_GUIClientproxy::c_MIVId MIVId);
 
 			void setGUIWindowhandle(HWND pGUIWindow);
 

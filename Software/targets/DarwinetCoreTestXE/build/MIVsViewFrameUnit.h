@@ -9,6 +9,7 @@
 #include <Vcl.Forms.hpp>
 #include <Vcl.ComCtrls.hpp>
 #include <Vcl.Samples.Spin.hpp>
+#include <Vcl.Buttons.hpp>
 #include <boost/shared_ptr.hpp>
 #include "DarwinetWindowsGUIInterface.h"
 //---------------------------------------------------------------------------
@@ -23,10 +24,13 @@ __published:	// IDE-managed Components
 	TLabel *myIntArrayxLabel;
 	TSpinEdit *myIntArrayxSpinEdit;
 	TListView *myIntArrayListView;
+	TButton *AddAfterToMyIntArrayButton;
+	TButton *AddBeforeToMyIntArrayButton;
 	void __fastcall MyIntSpinEditChange(TObject *Sender);
 	void __fastcall MyTextEditChange(TObject *Sender);
 	void __fastcall myIntArrayListViewSelectItem(TObject *Sender, TListItem *Item, bool Selected);
 	void __fastcall myIntArrayxSpinEditChange(TObject *Sender);
+	void __fastcall AddBeforeToMyIntArrayButtonClick(TObject *Sender);
 
 private:	// User declarations
 	static unsigned int m_instanceCount;

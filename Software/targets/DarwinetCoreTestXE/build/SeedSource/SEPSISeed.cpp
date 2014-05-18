@@ -141,6 +141,7 @@ namespace seedsrc {
 				e_MIVsEventId eKey = static_cast<e_MIVsEventId>(i);
 				switch (eKey) {
 					case eMIVsEventId_Undefined: sValue = _UTF8sz("Undefined"); break;
+					case eMIVsEventId_OnMIVInstanceCreated: sValue = _UTF8sz("OnMIVInstanceCreated"); break;
 					case eMIVsEventId_OnMIVValueChanged: sValue = _UTF8sz("OnMIVValueChanged"); break;
 					case eMIVsEventId_Unknown: sValue = _UTF8sz("Unknown"); break;
 				default:
@@ -1724,9 +1725,7 @@ namespace seedsrc {
 					c_DarwinetString sSignal(toString(*pSignal));
 					char* szRawSignalString = new char[sSignal.length()+1];
 					strcpy(szRawSignalString,sSignal.c_str());
-//					PostMessage(this->m_pGUIWindow,WM_USER+1,0,reinterpret_cast<LPARAM>(szRawSignalString));
 					PostMessage(this->m_pGUIWindow,eWINDOWS_MESSAGE_ID_OnDarwinetSignal,0,reinterpret_cast<LPARAM>(szRawSignalString));
-
 				}
 				else {
 					LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" failed. NULL m_pGUIWindow"));
@@ -1742,6 +1741,72 @@ namespace seedsrc {
 			}
 
 		};
+
+		void c_GUIClientproxy::instanciateBefore(c_GUIClientproxy::c_MIVId MIVId) {
+			bool simulate_direct_call_back = true;
+			if (simulate_direct_call_back) {
+				// Create the response directly for test of interface
+				if (this->m_pGUIWindow) {
+					c_MIVPath miv_target_path = c_MIVPath::fromString(MIVId);
+					if (miv_target_path.size() == 2) {
+						if (miv_target_path[0] == _UTF8sz("myIntArray")) {
+							LOG_BUSINESS(c_LogString("Will simulate insertion of new element into myIntArray of 1 original member"));
+							/**
+							  * Implement the Client interface that handles array axtend as
+							  *   a) onNewMIVInstance for Last element of array after extension (regarded as new)
+							  *   b) All alements from the insertion point to last element as having new values (effect of shift right)
+							  * This simplifies the Client intelligence and works for any array.
+							  * NOTE: Client must add itself as listsner to the new last value of the array if it whants to receive upadtes for it.
+							  *       But this is a good thing as the array extension may cause the last element to scroll out of GUI viewport and thus the
+							  *       GUI do not need to listen to it.
+							  */
+							int target_index = c_DataRepresentationFramework::intValueOfDecimalString(miv_target_path[1]);
+							int new_index = target_index + 1; // Asume only one element in list before this call
+							c_Signal::shared_ptr pSignal = boost::make_shared<c_Signal>();
+							pSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_OnMIVEvent]);
+							pSignal->addElement(eSignalField_MIVsEventId,MIVS_EVENT_MAPPER[eMIVsEventId_OnMIVInstanceCreated]);
+							c_MIVPath new_miv_instance_path = miv_target_path;
+							new_miv_instance_path[1] = c_DataRepresentationFramework::intToDecimalString(new_index);
+							c_GUIClientproxy::c_MIVId sNewMIVInstanceId = new_miv_instance_path.toString<c_GUIClientproxy::c_MIVId>();
+							pSignal->addElement(eSignalField_MIVsEventSourceId,sNewMIVInstanceId);
+							{
+								c_DarwinetString sSignal(toString(*pSignal));
+								char* szRawSignalString = new char[sSignal.length()+1];
+								strcpy(szRawSignalString,sSignal.c_str());
+								PostMessage(this->m_pGUIWindow,eWINDOWS_MESSAGE_ID_OnDarwinetSignal,0,reinterpret_cast<LPARAM>(szRawSignalString));
+							}
+							// Report new value of inserted element
+							pSignal = boost::make_shared<c_Signal>();
+							pSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_OnMIVEvent]);
+							pSignal->addElement(eSignalField_MIVsEventId,MIVS_EVENT_MAPPER[eMIVsEventId_OnMIVValueChanged]);
+							pSignal->addElement(eSignalField_MIVsEventSourceId,MIVId);
+							pSignal->addElement(eSignalField_MIVsEventValue,_UTF8sz("0")); // Simulate new integer instance to have value 0
+							{
+								c_DarwinetString sSignal(toString(*pSignal));
+								char* szRawSignalString = new char[sSignal.length()+1];
+								strcpy(szRawSignalString,sSignal.c_str());
+								PostMessage(this->m_pGUIWindow,eWINDOWS_MESSAGE_ID_OnDarwinetSignal,0,reinterpret_cast<LPARAM>(szRawSignalString));
+							}
+							// Report new value of extended array last element
+							pSignal = boost::make_shared<c_Signal>();
+							pSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_OnMIVEvent]);
+							pSignal->addElement(eSignalField_MIVsEventId,MIVS_EVENT_MAPPER[eMIVsEventId_OnMIVValueChanged]);
+							pSignal->addElement(eSignalField_MIVsEventSourceId,sNewMIVInstanceId);
+							pSignal->addElement(eSignalField_MIVsEventValue,_UTF8sz("23")); // Fake value (we do not know the current value of this element)
+							{
+								c_DarwinetString sSignal(toString(*pSignal));
+								char* szRawSignalString = new char[sSignal.length()+1];
+								strcpy(szRawSignalString,sSignal.c_str());
+								PostMessage(this->m_pGUIWindow,eWINDOWS_MESSAGE_ID_OnDarwinetSignal,0,reinterpret_cast<LPARAM>(szRawSignalString));
+                            }
+						}
+					}
+				}
+			}
+			else {
+				// Call the Engine to do the work for real
+			}
+		}
 
 		void c_GUIClientproxy::setGUIWindowhandle(HWND pGUIWindow) {
 			LOG_METHOD_SCOPE;

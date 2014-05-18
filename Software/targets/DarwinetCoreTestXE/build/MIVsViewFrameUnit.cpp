@@ -163,6 +163,9 @@ void TMIVsViewFrame::updateGUIToReflectChanges() {
 			this->myIntArrayxSpinEdit->TextHint = this->myIntArrayListView->Selected->Caption;
 			this->myIntArrayxLabel->Caption = this->myIntArrayxSpinEdit->TextHint;
 		}
+		this->AddBeforeToMyIntArrayButton->Enabled = (this->myIntArrayListView->Selected != NULL);
+//		this->AddAfterToMyIntArrayButton->Enabled = this->AddBeforeToMyIntArrayButton->Enabled;
+		this->AddAfterToMyIntArrayButton->Enabled = false; // not yet implemented
 	}
 }
 
@@ -183,9 +186,7 @@ __fastcall TMIVsViewFrame::TMIVsViewFrame(TComponent* Owner,unsigned int index)
 
 	// Ensure we have at least one integer in the myIntArray list
 	this->myIntArrayListView->Clear();
-//	this->myIntArrayListView->AddItem("myIntArray:0.1:0",new c_IntegerObject(1));
 	this->myIntArrayListView->AddItem("myIntArray.1",new c_IntegerObject(1));
-	LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString("MIV Path should be un-indexed. For now array MIV id uses both index 0 and .index mechanism (e.g. myInArray:0.1:0)"));
 	this->updateGUIToReflectChanges();
 }
 //---------------------------------------------------------------------------
@@ -262,6 +263,27 @@ void __fastcall TMIVsViewFrame::myIntArrayxSpinEditChange(TObject *Sender)
 		AnsiString sMIVId = this->myIntArrayxSpinEdit->TextHint;
 		getTestBenchClientSideProxy(this)->getGUIClientproxy(m_index)->setMIVsValue(_UTF8sz(sMIVId.c_str()),_UTF8sz(AnsiString(this->myIntArrayxSpinEdit->Value).c_str()));
 	}
+}
+//---------------------------------------------------------------------------
+
+
+
+void __fastcall TMIVsViewFrame::AddBeforeToMyIntArrayButtonClick(TObject *Sender)
+
+{
+	// The user whants to add an integer to the myIntArray instance
+
+	if (this->myIntArrayListView->Selected != NULL) {
+		// There is an element selected. Insert a new element after the selected element
+		LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString("sets Proxy callback windows handle at each call."));
+		// TODO: Find a better way to report our windows handle to the GUI Client Proxy.
+		//       Note: We can't do it in the constructor as we have not yet been assigned our final windows handler there!
+		getTestBenchClientSideProxy(this)->getGUIClientproxy(m_index)->setGUIWindowhandle(this->WindowHandle);
+
+		AnsiString sMIVId = this->myIntArrayxSpinEdit->TextHint;
+		getTestBenchClientSideProxy(this)->getGUIClientproxy(m_index)->instanciateBefore(_UTF8sz(sMIVId.c_str()));
+	}
+
 }
 //---------------------------------------------------------------------------
 

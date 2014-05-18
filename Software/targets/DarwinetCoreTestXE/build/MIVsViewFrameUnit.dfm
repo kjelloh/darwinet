@@ -2,7 +2,7 @@ object MIVsViewFrame: TMIVsViewFrame
   Left = 0
   Top = 0
   Width = 261
-  Height = 185
+  Height = 195
   TabOrder = 0
   object myIntLabel: TLabel
     Left = 16
@@ -38,22 +38,22 @@ object MIVsViewFrame: TMIVsViewFrame
     OnChange = MyTextEditChange
   end
   object myIntArrayGroupBox: TGroupBox
-    Left = 16
+    Left = 3
     Top = 72
-    Width = 225
-    Height = 105
+    Width = 230
+    Height = 113
     Caption = 'myIntArray'
     TabOrder = 2
     object myIntArrayxLabel: TLabel
-      Left = 11
-      Top = 72
+      Left = 13
+      Top = 79
       Width = 65
       Height = 13
       Caption = 'myIntArray.x'
     end
     object myIntArrayxSpinEdit: TSpinEdit
-      Left = 82
-      Top = 71
+      Left = 95
+      Top = 79
       Width = 121
       Height = 22
       MaxValue = 0
@@ -63,8 +63,8 @@ object MIVsViewFrame: TMIVsViewFrame
       OnChange = myIntArrayxSpinEditChange
     end
     object myIntArrayListView: TListView
-      Left = 82
-      Top = 11
+      Left = 95
+      Top = 19
       Width = 123
       Height = 54
       Columns = <
@@ -78,6 +78,24 @@ object MIVsViewFrame: TMIVsViewFrame
       TabOrder = 1
       ViewStyle = vsList
       OnSelectItem = myIntArrayListViewSelectItem
+    end
+    object AddAfterToMyIntArrayButton: TButton
+      Left = 14
+      Top = 48
+      Width = 75
+      Height = 25
+      Caption = '+ After'
+      Enabled = False
+      TabOrder = 2
+    end
+    object AddBeforeToMyIntArrayButton: TButton
+      Left = 14
+      Top = 19
+      Width = 75
+      Height = 25
+      Caption = '+ Before'
+      TabOrder = 3
+      OnClick = AddBeforeToMyIntArrayButtonClick
     end
   end
 end
