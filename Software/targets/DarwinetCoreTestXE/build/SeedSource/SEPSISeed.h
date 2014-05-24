@@ -89,9 +89,9 @@ namespace seedsrc {
 			,eSignalField_DeltaTargetState
 			,eSignalField_DeltaTargetMIVId
 			,eSignalField_DeltaOperationId
-			,eSignalField_IntDeltaOperationValue
-			,eSignalField_StringDeltaOperationIndex
-			,eSignalField_StringDeltaOperationValue
+			,eSignalField_Int_dV_OperationValue
+			,eSignalField_String_dV_OperationIndex
+			,eSignalField_String_dV_OperationValue
 			,eSignalField_Unknown
 		};
 
@@ -133,7 +133,9 @@ namespace seedsrc {
 
 		enum e_MIVsOperation {
 			eMIVsOperation_Undefined
-			,eMIVsOperation_Assign
+			,eMIVsOperation_I_ArrayInsertBefore
+//			,eMIVsOperation_Assign
+			,eMIVsOperation_V_Assign
 			,eMIVsOperation_Unknown
 		};
 
@@ -172,10 +174,15 @@ namespace seedsrc {
 
 		enum e_DeltaOperationId {
 			 eDeltaOperationId_Undefined
-			,eDeltaOperationId_IntDeltaAdd
-			,eDeltaOperationId_IntDeltaSub
-			,eDeltaOperationId_StringDeltaExtend
-			,eDeltaOperationId_StringDeltaContract
+// 140524, name Delta id with dM, dI, dV to expose delta category
+//			,eDeltaOperationId_IntDeltaAdd
+//			,eDeltaOperationId_IntDeltaSub
+//			,eDeltaOperationId_StringDeltaExtend
+//			,eDeltaOperationId_StringDeltaContract
+			,eDeltaOperationId_Int_dV_Add
+			,eDeltaOperationId_Int_dV_Sub
+			,eDeltaOperationId_String_dV_Extend
+			,eDeltaOperationId_String_dV_Contract
 			,eDeltaOperationId_Unknown
 		};
 
@@ -312,8 +319,9 @@ namespace seedsrc {
 		DARWINET_EXCEPTION_CLASS(c_DeltaApplicationException," Failed to apply Delta. ");
 		DARWINET_EXCEPTION_CLASS(c_NULLMIVBodyException,"NULL MIV Body. ");
 		DARWINET_EXCEPTION_CLASS(c_UnknownDeltaOperation,"Unknown Delta Operation. ");
-		DARWINET_EXCEPTION_CLASS(c_StringDeltaCreationFailed,"String Delta Creation Failed. ");
+		DARWINET_EXCEPTION_CLASS(c_String_dV_CreationFailed,"String Delta Creation Failed. ");
 		DARWINET_EXCEPTION_CLASS(c_UnknownMIVValueType,"Unknown MIV Value Type. ");
+		DARWINET_EXCEPTION_CLASS(c_DirectCallbackSimulationNotImplemented,"Direct callback simulation not implemented");
 
 		//-------------------------------------------------------------------
 		c_DarwinetString toString(const c_Signal& signal);
@@ -474,9 +482,9 @@ namespace seedsrc {
 			,eIntOperationId_Unknown
 		};
 
-		class c_IntDeltaOperation {
+		class c_Int_dV_Operation {
 		public:
-			c_IntDeltaOperation(e_IntOperationId int_operation_id, const c_IntValue& delta_value);
+			c_Int_dV_Operation(e_IntOperationId int_operation_id, const c_IntValue& delta_value);
 
 			c_IntValue operator()(c_IntValue& current_value) const;
 
@@ -488,13 +496,13 @@ namespace seedsrc {
 			e_IntOperationId m_int_operation_id;
 		};
 
-		enum e_StringDeltaOperation {
-			 eStringDeltaOperation_Undefined
-			,eStringDeltaOperation_Extend
-			,eStringDeltaOperation_Contract
-			,eStringDeltaOperation_Unknown
+		enum e_String_dV_Operation {
+			 eString_dV_Operation_Undefined
+			,eString_dV_Operation_Extend
+			,eString_dV_Operation_Contract
+			,eString_dV_Operation_Unknown
 		};
-		class c_StringDeltaOperation {
+		class c_String_dV_Operation {
 		/*
 			Implement only "array expand" and "array contract"
 
@@ -528,25 +536,25 @@ namespace seedsrc {
 
 		public:
 
-			c_StringDeltaOperation(e_StringDeltaOperation StringDeltaOperation = eStringDeltaOperation_Undefined,unsigned int target_index=0,const c_StringValue& sDeltaValue = c_StringValue())
+			c_String_dV_Operation(e_String_dV_Operation String_dV_Operation = eString_dV_Operation_Undefined,unsigned int target_index=0,const c_StringValue& sDeltaValue = c_StringValue())
 				: m_sDeltaValue(sDeltaValue)
 				 ,m_target_index(target_index)
-				 ,m_StringDeltaOperation(StringDeltaOperation)
+				 ,m_String_dV_Operation(String_dV_Operation)
 			{;}
 
 			unsigned int getTargetIndex() const {return m_target_index;}
-			e_StringDeltaOperation getOperation() const {return m_StringDeltaOperation;}
+			e_String_dV_Operation getOperation() const {return m_String_dV_Operation;}
 			const c_StringValue& getDeltaValue() const {return m_sDeltaValue;}
 
 			c_StringValue operator()(c_StringValue& current_value) const;
 
 			void setTargetIndex(unsigned int target_index) {m_target_index = target_index;}
-			void setOperation(e_StringDeltaOperation StringDeltaOperation) {m_StringDeltaOperation = StringDeltaOperation;}
+			void setOperation(e_String_dV_Operation String_dV_Operation) {m_String_dV_Operation = String_dV_Operation;}
 			void setDeltaValue(const c_StringValue& sDeltaValue) {m_sDeltaValue = sDeltaValue;}
 
 		private:
 			unsigned int m_target_index;
-			e_StringDeltaOperation m_StringDeltaOperation;
+			e_String_dV_Operation m_String_dV_Operation;
 			c_StringValue m_sDeltaValue;
 		};
 
@@ -556,7 +564,7 @@ namespace seedsrc {
 		class c_ArrayDeltaOperation {
 		};
 
-		typedef boost::variant<c_IntDeltaOperation,c_StringDeltaOperation,c_RecordDeltaOperation, c_ArrayDeltaOperation> c_DeltaOperation;
+		typedef boost::variant<c_Int_dV_Operation,c_String_dV_Operation,c_RecordDeltaOperation, c_ArrayDeltaOperation> c_DeltaOperation;
 		typedef boost::shared_ptr<c_DeltaOperation> c_DeltaOperation_shared_ptr;
 
 		//-------------------------------------------------------------------
@@ -619,6 +627,7 @@ namespace seedsrc {
 
 			c_MIV::shared_ptr getMIV(const c_MIVPath& miv_path);
 
+			bool isIntArrayI(const c_MIVPath& miv_path);
 			bool isIntV(const c_MIVPath& miv_path);
 			bool isStringV(const c_MIVPath& miv_path);
 			bool isV(const c_MIVPath& miv_path);
@@ -766,13 +775,8 @@ namespace seedsrc {
 
 			// End c_SignalSinkIfc
 
-//			boost::function<void (const c_Signal::shared_ptr& pSignal)> onSignalToMIVs;
-//
-//			void actOnSignalFromMIVs(const c_Signal::shared_ptr& pSignal);
-//
-//			c_SignalQueue::shared_ptr testMIVChange();
-
 			void setMIVsValue(c_MIVPath MIVsId,c_TestClient::c_MIVsValue value);
+			void instanciateBefore(c_MIVPath MIVsId);
 
 		private:
 
