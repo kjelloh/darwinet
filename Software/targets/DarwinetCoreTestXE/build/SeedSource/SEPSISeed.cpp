@@ -7,7 +7,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/pointer_cast.hpp>
 # pragma warn -8072 // Seems to be a known Issue for  boost in Borland CPP 101112/KoH
-#include <boost/format.hpp>
+# include <boost/format.hpp>
 # pragma warn +8072 // Enable again. See above
 #include <algorithm> // std::find_if
 #include <boost/algorithm/string.hpp>
@@ -453,10 +453,38 @@ namespace seedsrc {
 
 		}
 
+		class c_CreateInstanceDeltaOperation : public boost::static_visitor<c_DeltaOperation> {
+		public:
+			c_CreateInstanceDeltaOperation(const c_MIVPath::Node& member_id) : m_member_id(member_id) {;}
+
+			c_DeltaOperation operator()(c_ArrayIBody& array_I_body) {
+				// Create member in array_I_body
+				throw c_NotImplemented(METHOD_NAME);
+			}
+
+			// c_MIVBody variant selector
+			c_DeltaOperation operator()(c_M& model) {
+				throw c_OperationNotApplicableToM(METHOD_NAME);
+			}
+			// c_MIVBody variant selector
+			c_DeltaOperation operator()(c_I& instance) {
+				return this->operator ()(instance);
+			}
+			// c_MIVBody variant selector
+			c_DeltaOperation operator()(c_V& value) {
+				throw c_OperationNotApplicableToM(METHOD_NAME);
+			}
+
+			// Defined additional aggregates here
+
+		private:
+			c_MIVPath::Node m_member_id;
+		};
+
 		class c_CreateSetValueDeltaOperation : public boost::static_visitor<c_DeltaOperation> {
 		public:
 
-			c_CreateSetValueDeltaOperation(c_Value_shared_ptr pNewValue) : m_pNewValue(pNewValue) {};
+			c_CreateSetValueDeltaOperation(c_Value_shared_ptr pNewValue) : m_pNewValue(pNewValue) {;}
 
 			c_DeltaOperation operator()(c_IntValue& current_value) const {
 				/**
@@ -779,6 +807,44 @@ namespace seedsrc {
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
+		c_Delta::shared_ptr c_MIVs::createInstanceDelta(const c_MIVPath& id) {
+			c_Delta::shared_ptr result;
+			// Create the instance with provided id
+			if (id.size() > 1) {
+				// It is an aggregated member. Get the aggregating instance
+				c_MIVPath aggregating_miv_path = id.getParentPath();
+				c_MIV::shared_ptr pAggregatingMIV = this->getMIV(aggregating_miv_path);
+				if (pAggregatingMIV) {
+					result = boost::make_shared<c_Delta>();
+					c_MIVTarget miv_target;
+					miv_target.setState(pAggregatingMIV->getState());
+					miv_target.setMIVId(aggregating_miv_path);
+					result->setMIVtarget(miv_target);
+					c_CreateInstanceDeltaOperation visitor(id.back()); // member id is the last node of the path
+					c_DeltaOperation_shared_ptr pDeltaOperation = boost::make_shared<c_DeltaOperation>(boost::apply_visitor(visitor,*pAggregatingMIV->getBody()));
+					result->setDeltaOperation(pDeltaOperation);
+				}
+				else {
+					throw c_NoSuchMIVException(METHOD_NAME + c_LogString(" failed. No MIV found for id=") + aggregating_miv_path.toString<c_LogString>());
+				}
+			}
+			else {
+				LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" failed. Creating non-aggregated member instance not yet implemented"));
+				/**
+				  * Consider to have top instances aggregated by a special root instance for this purpose so that all I's may be considered aggregated.
+				  * The alternative is to implement separate c_CreateInstanceDeltaOperation for aggregated and non-aggregated I's
+				  */
+			}
+			if (!result) {
+				c_LogString sMessage(METHOD_NAME);
+				sMessage += _UTF8sz("failed to create delta for instance create id=");
+				sMessage += id.toString<c_LogString>();
+				LOG_DESIGN_INSUFFICIENCY(sMessage);
+			}
+			return result;
+		}
+		//-------------------------------------------------------------------
+
 		c_Delta::shared_ptr c_MIVs::createSetValueDelta(const c_MIVPath& id,c_Value_shared_ptr pNewValue) {
 			LOG_METHOD_SCOPE;
 			c_Delta::shared_ptr result(new c_Delta());
@@ -797,9 +863,7 @@ namespace seedsrc {
 				}
 				result->setPredecessor(this->m_LastAppliedDeltaIndex);
 				c_CreateSetValueDeltaOperation visitor(pNewValue);
-
 				if (this->isV(id)) {
-					LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(", Will Asume provided MIV is a V"));
 					// Asume provided id leads to a V
 					c_V current_V = boost::get<c_V>(*pMIV->getBody());
 					c_Value current_value = current_V.getValue();
@@ -827,7 +891,7 @@ namespace seedsrc {
 					c_LogString sMessage("MIV Instance ");
 					sMessage += miv_path.toString<c_LogString>();
 					sMessage += _UTF8sz(" does not exist.");
-					sMessage += _UTF8sz(" Will auto-create it. Consider to remove when dM and dI processing is in place.");
+					sMessage += _UTF8sz(" Will try to auto-create it. Consider to remove when dM and dI processing is in place.");
 					LOG_DESIGN_INSUFFICIENCY(sMessage);
 					c_MIV::shared_ptr pNewMIV;
 					if (this->isIntV(miv_path)) {
@@ -858,6 +922,9 @@ namespace seedsrc {
 						{
 							LOG_DESIGN_INSUFFICIENCY(c_LogString("Auo-created MIV ") + miv_path.toString<c_LogString>() + c_LogString(" will have no corresponding M or I to describe it"));
 						}
+					}
+					else {
+						LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" auto-creation failed."));
 					}
 					if (pNewMIV) {
 						LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(", increment of Delta Index not yet implemented. Created MIV will have MIVs::m_LastCreatedDeltaIndex"));
@@ -964,7 +1031,7 @@ namespace seedsrc {
 						result->push(pReply);
 					}
 					else if (pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationId]) == MIVS_OPERATION_MAPPER[eMIVsOperation_I_ArrayInsertBefore]) {
-						// Array insert before request
+						// Instance change = Array insert before
 						bool simulate_direct_call_back = false;
 						if (simulate_direct_call_back) {
 							throw c_DirectCallbackSimulationNotImplemented(METHOD_NAME);
@@ -976,7 +1043,14 @@ namespace seedsrc {
 							c_MIVPath aggregate_miv_path = target_miv_path.getParentPath();
 							{
 								if (this->getMIVs()->isIntArrayI(aggregate_miv_path)) {
-									LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" TODO: Acting on eMIVsOperation_I_ArrayInsertBefore not implemented."));
+//									LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" TODO: Acting on eMIVsOperation_I_ArrayInsertBefore not implemented."));
+									c_Delta::shared_ptr pDelta;
+									pDelta = this->createInstanceDelta(target_miv_path);
+									if (pDelta) {
+										// Create a signal to distribute the delta
+										LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(", eMIVsOperation_I_ArrayInsertBefore delta distribution as signal not yet implemented."));
+										// TODO: Make Delta to Signal code below to a method and use it here to.
+									}
 								}
 							}
 						}
@@ -1217,6 +1291,12 @@ namespace seedsrc {
 		}
 
 		// End c_SignalSinkIfc
+		c_Delta::shared_ptr c_MIVsHandler::createInstanceDelta(const c_MIVPath& id) {
+			{
+				LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" should implement c_MIVs::createInstanceDelta() itself"));
+			}
+			return this->getMIVs()->createInstanceDelta(id);
+		}
 
 		c_Delta::shared_ptr c_MIVsHandler::createSetValueDelta(c_MIVPath id,c_Value_shared_ptr pNewValue) {
 			{

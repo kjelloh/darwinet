@@ -322,6 +322,10 @@ namespace seedsrc {
 		DARWINET_EXCEPTION_CLASS(c_String_dV_CreationFailed,"String Delta Creation Failed. ");
 		DARWINET_EXCEPTION_CLASS(c_UnknownMIVValueType,"Unknown MIV Value Type. ");
 		DARWINET_EXCEPTION_CLASS(c_DirectCallbackSimulationNotImplemented,"Direct callback simulation not implemented");
+		DARWINET_EXCEPTION_CLASS(c_OperationNotApplicableToM," Operation not applicable to M MIV");
+		DARWINET_EXCEPTION_CLASS(c_OperationNotApplicableToI," Operation not applicable to I MIV");
+		DARWINET_EXCEPTION_CLASS(c_OperationNotApplicableToV," Operation not applicable to V MIV");
+		DARWINET_EXCEPTION_CLASS(c_NotImplemented," Service not implemented. ");
 
 		//-------------------------------------------------------------------
 		c_DarwinetString toString(const c_Signal& signal);
@@ -431,10 +435,7 @@ namespace seedsrc {
 
 		typedef std::map<c_MIVPath,c_V::shared_ptr> c_MappedVs;
 
-		class c_I {
-		public:
-			typedef boost::shared_ptr<c_I> shared_ptr;
-
+		class c_PrimitiveIBody {
 			c_V::shared_ptr getV() {return m_pV;}
 			void setV(c_V::shared_ptr pV) {m_pV = pV;}
 
@@ -442,7 +443,39 @@ namespace seedsrc {
 			c_V::shared_ptr m_pV;
 		};
 
+		//-------------------------------------------------------------------
+		class c_ArrayIBody; // forward
+		typedef boost::variant<c_PrimitiveIBody,c_ArrayIBody> c_IBody;
+		//-------------------------------------------------------------------
+		/**
+		  * Aggregates an array of c_IBody
+		  */
+		class c_ArrayIBody : public std::vector<c_IBody> {
+		public:
+
+		};
+
+		//-------------------------------------------------------------------
+		class c_I {
+		public:
+			typedef boost::shared_ptr<c_I> shared_ptr;
+
+			c_IBody& body() {return m_body;}
+
+		private:
+			c_IBody m_body;
+
+// Moved to c_PrimitiveIBody
+//			c_V::shared_ptr getV() {return m_pV;}
+//			void setV(c_V::shared_ptr pV) {m_pV = pV;}
+//
+//		private:
+//			c_V::shared_ptr m_pV;
+		};
+
+		//-------------------------------------------------------------------
 		typedef std::map<c_MIVPath,c_I::shared_ptr> c_MappedIs;
+		//-------------------------------------------------------------------
 
 		class c_M {
 		public:
@@ -623,6 +656,7 @@ namespace seedsrc {
 				  ,m_LastAppliedDeltaIndex(last_applied_delta_index)
 			{;}
 
+			c_Delta::shared_ptr createInstanceDelta(const c_MIVPath& id);
 			c_Delta::shared_ptr createSetValueDelta(const c_MIVPath& id,c_Value_shared_ptr pNewValue);
 
 			c_MIV::shared_ptr getMIV(const c_MIVPath& miv_path);
@@ -660,6 +694,7 @@ namespace seedsrc {
 
 		private:
 
+			c_Delta::shared_ptr createInstanceDelta(const c_MIVPath& id);
 			c_Delta::shared_ptr createSetValueDelta(c_MIVPath id,c_Value_shared_ptr pNewValue);
 			c_SignalQueue::shared_ptr actOnDelta(c_Delta::shared_ptr pDelta);
 
