@@ -371,21 +371,22 @@ namespace seedsrc {
 			_RawValueType m_raw_value;
 		};
 
-		class c_ArrayValue {
-		public:
-			typedef boost::shared_ptr<c_ArrayValue> shared_ptr;
-			// Vector of same type c_V
-		};
+// 140526, Structured values now handled as structured instances (e.g. Array I), not structured values.
+//		class c_ArrayValue {
+//		public:
+//			typedef boost::shared_ptr<c_ArrayValue> shared_ptr;
+//			// Vector of same type c_V
+//		};
 
-		class c_RecordValue {
-		public:
-			typedef boost::shared_ptr<c_RecordValue> shared_ptr;
-			// Vector of different type c_V
-		};
+// 140526, Structured values now handled as structured instances (e.g. Array I), not structured values.
+//		class c_RecordValue {
+//		public:
+//			typedef boost::shared_ptr<c_RecordValue> shared_ptr;
+//			// Vector of different type c_V
+//		};
 
-		typedef boost::variant<c_IntValue,c_StringValue,c_RecordValue, c_ArrayValue> c_Value;
+		typedef boost::variant<c_IntValue,c_StringValue> c_Value;
 		typedef boost::shared_ptr<c_Value> c_Value_shared_ptr;
-
 
 		//-------------------------------------------------------------------
 		/**
@@ -417,6 +418,7 @@ namespace seedsrc {
 		};
 
 		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
 		class c_V {
 		public:
 			typedef boost::shared_ptr<c_V> shared_ptr;
@@ -435,6 +437,8 @@ namespace seedsrc {
 
 		typedef std::map<c_MIVPath,c_V::shared_ptr> c_MappedVs;
 
+		//-------------------------------------------------------------------
+		//-------------------------------------------------------------------
 		class c_PrimitiveIBody {
 			c_V::shared_ptr getV() {return m_pV;}
 			void setV(c_V::shared_ptr pV) {m_pV = pV;}
@@ -507,6 +511,18 @@ namespace seedsrc {
 			c_DeltaIndex m_State;
 			c_MIVPath m_MIVId;
 		};
+		//-------------------------------------------------------------------
+		class c_dI_Operation_ArrayInsertBefore {
+		public:
+
+			c_dI_Operation_ArrayInsertBefore(unsigned int index) : m_index(index) {;}
+
+			unsigned int getIndex() {return m_index;}
+
+		private:
+			unsigned int m_index; 	// Darwinet Array index 1...n
+		};
+
 		//-------------------------------------------------------------------
 		enum e_IntOperationId {
 			eIntOperationId_Undefined
@@ -591,13 +607,14 @@ namespace seedsrc {
 			c_StringValue m_sDeltaValue;
 		};
 
-		class c_RecordDeltaOperation {
-		};
+//		class c_RecordDeltaOperation {
+//		};
 
-		class c_ArrayDeltaOperation {
-		};
+// 140526, Replaced by c_dI_Operation_ArrayInsertBefore
+//		class c_ArrayDeltaOperation {
+//		};
 
-		typedef boost::variant<c_Int_dV_Operation,c_String_dV_Operation,c_RecordDeltaOperation, c_ArrayDeltaOperation> c_DeltaOperation;
+		typedef boost::variant<c_Int_dV_Operation,c_String_dV_Operation, c_dI_Operation_ArrayInsertBefore> c_DeltaOperation;
 		typedef boost::shared_ptr<c_DeltaOperation> c_DeltaOperation_shared_ptr;
 
 		//-------------------------------------------------------------------
@@ -837,6 +854,7 @@ namespace seedsrc {
 			c_DarwinetEngine::shared_ptr getDarwinetEngine();
 
 			c_Signal::shared_ptr createSignal(c_MessageTargetId senderMessageTargetId,c_MessageTargetId receiverMessageTargetId);
+			c_Signal::shared_ptr createSignal(c_MessageTargetId senderMessageTargetId,c_MessageTargetId receiverMessageTargetId,c_Delta::shared_ptr pDelta);
 
 			c_TestClient::shared_ptr getTestClient(unsigned int index);
 

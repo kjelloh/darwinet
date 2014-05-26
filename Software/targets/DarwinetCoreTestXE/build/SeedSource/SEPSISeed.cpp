@@ -459,7 +459,16 @@ namespace seedsrc {
 
 			c_DeltaOperation operator()(c_ArrayIBody& array_I_body) {
 				// Create member in array_I_body
-				throw c_NotImplemented(METHOD_NAME);
+				int index = c_DataRepresentationFramework::intValueOfDecimalString(m_member_id);
+				return c_dI_Operation_ArrayInsertBefore(index);
+			}
+
+			c_DeltaOperation operator()(c_PrimitiveIBody& primitive_I_body) {
+				// Create member in array_I_body
+				c_LogString sMessage(METHOD_NAME);
+				sMessage += _UTF8sz("(c_PrimitiveIBody& primitive_I_body) can't aggregate member=");
+				sMessage += m_member_id;
+				throw c_OperationNotApplicableToI(METHOD_NAME);
 			}
 
 			// c_MIVBody variant selector
@@ -468,7 +477,8 @@ namespace seedsrc {
 			}
 			// c_MIVBody variant selector
 			c_DeltaOperation operator()(c_I& instance) {
-				return this->operator ()(instance);
+				// apply us to the variant body
+				return boost::apply_visitor(*this,instance.body());
 			}
 			// c_MIVBody variant selector
 			c_DeltaOperation operator()(c_V& value) {
@@ -788,19 +798,21 @@ namespace seedsrc {
 				return result;
 			}
 
-			c_DeltaOperation operator()(const c_RecordValue& current_value) const {
-				LOG_METHOD_SCOPE;
-				c_RecordDeltaOperation result;
-				LOG_NOT_IMPLEMENTED;
-				return result;
-			}
+// 140526, Structured values now handled as structured instances (e.g. Array I), not structured values.
+//			c_DeltaOperation operator()(const c_RecordValue& current_value) const {
+//				LOG_METHOD_SCOPE;
+//				c_RecordDeltaOperation result;
+//				LOG_NOT_IMPLEMENTED;
+//				return result;
+//			}
 
-			c_DeltaOperation operator()(const c_ArrayValue& current_value) const {
-				LOG_METHOD_SCOPE;
-				c_ArrayDeltaOperation result;
-				LOG_NOT_IMPLEMENTED;
-				return result;
-			}
+// 140526, Structured values now handled as structured instances (e.g. Array I), not structured values.
+//			c_DeltaOperation operator()(const c_ArrayValue& current_value) const {
+//				LOG_METHOD_SCOPE;
+//				c_ArrayDeltaOperation result;
+//				LOG_NOT_IMPLEMENTED;
+//				return result;
+//			}
 		private:
 			c_Value_shared_ptr m_pNewValue;
 		};
@@ -894,8 +906,22 @@ namespace seedsrc {
 					sMessage += _UTF8sz(" Will try to auto-create it. Consider to remove when dM and dI processing is in place.");
 					LOG_DESIGN_INSUFFICIENCY(sMessage);
 					c_MIV::shared_ptr pNewMIV;
-					if (this->isIntV(miv_path)) {
-						// Create a new int V instance
+					if (this->isIntArrayI(miv_path)) {
+						// auto-Create an integer array
+						{
+							c_LogString sMessage("TODO: Auto-created I MIV = ");
+							sMessage += miv_path.toString<c_LogString>();
+							sMessage += _UTF8sz(" should be created by a domain dI");
+							LOG_DESIGN_INSUFFICIENCY(sMessage);
+                        }
+						pNewMIV = boost::make_shared<c_MIV>();
+						c_I new_I;
+						c_ArrayIBody array_I_body;
+						new_I.body() = array_I_body;
+						pNewMIV->setBody(boost::make_shared<c_MIVBody>(new_I));
+					}
+					else if (this->isIntV(miv_path)) {
+						// auto-Create a new int V instance
 						{
 							LOG_DESIGN_INSUFFICIENCY(c_LogString("Auo-created MIV ") + miv_path.toString<c_LogString>() + c_LogString(" will be set to integer V = 0. Auto-creation of M or I not yet implemented."));
 						}
@@ -910,7 +936,7 @@ namespace seedsrc {
 						}
 					}
 					else if (this->isStringV(miv_path)) {
-						// Create a new int V instance
+						// auto-Create a new string V instance
 						{
 							LOG_DESIGN_INSUFFICIENCY(c_LogString("Auo-created MIV ") + miv_path.toString<c_LogString>() + c_LogString(" will be set to String V = \"\". Auto-creation of M or I not yet implemented."));
 						}
@@ -1043,13 +1069,15 @@ namespace seedsrc {
 							c_MIVPath aggregate_miv_path = target_miv_path.getParentPath();
 							{
 								if (this->getMIVs()->isIntArrayI(aggregate_miv_path)) {
-//									LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" TODO: Acting on eMIVsOperation_I_ArrayInsertBefore not implemented."));
 									c_Delta::shared_ptr pDelta;
 									pDelta = this->createInstanceDelta(target_miv_path);
 									if (pDelta) {
-										// Create a signal to distribute the delta
-										LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(", eMIVsOperation_I_ArrayInsertBefore delta distribution as signal not yet implemented."));
-										// TODO: Make Delta to Signal code below to a method and use it here to.
+										c_MessageTargetIds_shared_ptr pMIVHanlderIds =  c_DarwinetTestBench::instance()->getAllMIVHandlerIds();
+										for (c_MessageTargetIds::iterator iter = pMIVHanlderIds->begin(); iter != pMIVHanlderIds->end(); ++iter) {
+											// Create a signal to distribute the delta
+											c_Signal::shared_ptr pDeltaSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),*iter,pDelta);
+											result->push(pDeltaSignal);
+										}
 									}
 								}
 							}
@@ -1110,73 +1138,74 @@ namespace seedsrc {
 									result->append(pDeltaCreationResponse);
 								}
 								else {
-									c_LogString sMessage(METHOD_NAME + c_LogString(", Distribution of created Delta to remote Nodes not yet Implemented"));
+									c_LogString sMessage(METHOD_NAME + c_LogString(", delta distribution implemented to local MIVs only (no distribution to foreign nodes)"));
 									LOG_DESIGN_INSUFFICIENCY(sMessage);
 									// Create a signal of pDelta and distribute to all local MIVs
 									c_MessageTargetIds_shared_ptr pMIVHanlderIds =  c_DarwinetTestBench::instance()->getAllMIVHandlerIds();
 									for (c_MessageTargetIds::iterator iter = pMIVHanlderIds->begin(); iter != pMIVHanlderIds->end(); ++iter) {
-										c_Signal::shared_ptr pDeltaSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),*iter);
-										pDeltaSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_DeltaMIV]);
-	//									,eSignalField_DeltaPredecessorIx
-										c_CaptionPath delta_predecessor_ix_path;
-										delta_predecessor_ix_path += c_CaptionPath::Node(pDelta->getPredecessor().getProducer());
-										delta_predecessor_ix_path += c_CaptionPath::Node(pDelta->getPredecessor().getBranch());
-										delta_predecessor_ix_path += c_CaptionPath::Node(c_DataRepresentationFramework::intToDecimalString(pDelta->getPredecessor().getSeqNo()));
-										pDeltaSignal->addElement(eSignalField_DeltaPredecessorIx,delta_predecessor_ix_path.toString<c_CaptionNode>());
-	//									,eSignalField_DeltaIx
-										c_CaptionPath delta_ix_path;
-										delta_ix_path += c_CaptionPath::Node(pDelta->getIndex().getProducer());
-										delta_ix_path += c_CaptionPath::Node(pDelta->getIndex().getBranch());
-										delta_ix_path += c_CaptionPath::Node(c_DataRepresentationFramework::intToDecimalString(pDelta->getIndex().getSeqNo()));
-										pDeltaSignal->addElement(eSignalField_DeltaIx,delta_ix_path.toString<c_CaptionNode>());
-	//									,eSignalField_DeltaTargetState
-										c_CaptionPath delta_target_state_path;
-										delta_target_state_path += c_CaptionPath::Node(pDelta->getMIVtarget().getState().getProducer());
-										delta_target_state_path += c_CaptionPath::Node(pDelta->getMIVtarget().getState().getBranch());
-										delta_target_state_path += c_CaptionPath::Node(c_DataRepresentationFramework::intToDecimalString(pDelta->getMIVtarget().getState().getSeqNo()));
-										pDeltaSignal->addElement(eSignalField_DeltaTargetState,delta_target_state_path.toString<c_CaptionNode>());
-	//									,eSignalField_DeltaTargetMIVId
-										pDeltaSignal->addElement(eSignalField_DeltaTargetMIVId,pDelta->getMIVtarget().getMIVId().toString<c_CaptionNode>());
-										// Create Signal from *Integer* dV
-										if (pDelta->getDeltaOperation()->type() == typeid(c_Int_dV_Operation)) {
-											c_Int_dV_Operation int_delta_operation = boost::get<c_Int_dV_Operation>(*pDelta->getDeltaOperation());
-	//										,eSignalField_DeltaOperationId
-											if (int_delta_operation.getIntOperationId() == eIntOperationId_ADD) {
-												pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_Int_dV_Add]);
-	//											,eSignalField_Int_dV_OperationValue
-												pDeltaSignal->addElement(eSignalField_Int_dV_OperationValue,c_DataRepresentationFramework::intToDecimalString(int_delta_operation.getValue().getRawValue()));
-											}
-											else if (int_delta_operation.getIntOperationId() == eIntOperationId_SUB) {
-												pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_Int_dV_Sub]);
-	//											,eSignalField_Int_dV_OperationValue
-												pDeltaSignal->addElement(eSignalField_Int_dV_OperationValue,c_DataRepresentationFramework::intToDecimalString(int_delta_operation.getValue().getRawValue()));
-											}
-										}
-										// Create Signal from *String* dV
-										else if (pDelta->getDeltaOperation()->type() == typeid(c_String_dV_Operation)) {
-											c_String_dV_Operation string_delta_operation = boost::get<c_String_dV_Operation>(*pDelta->getDeltaOperation());
-	//										,eSignalField_DeltaOperationId
-											if (string_delta_operation.getOperation() == eString_dV_Operation_Extend) {
-												pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_String_dV_Extend]);
-	//											,eSignalField_String_dV_OperationIndex
-												pDeltaSignal->addElement(eSignalField_String_dV_OperationIndex,c_DataRepresentationFramework::intToDecimalString(string_delta_operation.getTargetIndex()));
-	//											,eSignalField_String_dV_OperationValue
-												pDeltaSignal->addElement(eSignalField_String_dV_OperationValue,string_delta_operation.getDeltaValue().getRawValue());
-											}
-											else if (string_delta_operation.getOperation() == eString_dV_Operation_Contract) {
-												pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_String_dV_Contract]);
-	//											,eSignalField_String_dV_OperationIndex
-												pDeltaSignal->addElement(eSignalField_String_dV_OperationIndex,c_DataRepresentationFramework::intToDecimalString(string_delta_operation.getTargetIndex()));
-	//											,eSignalField_String_dV_OperationValue
-												pDeltaSignal->addElement(eSignalField_String_dV_OperationValue,string_delta_operation.getDeltaValue().getRawValue());
-											}
-											else {
-												throw c_UnknownDeltaOperation(c_LogString("No signal created for provided e_String_dV_Operation = ") + c_DataRepresentationFramework::intToDecimalString(string_delta_operation.getOperation()));
-											}
-										}
-										else {
-											throw c_UnknownDeltaOperation(c_LogString("No signal created for unknown Delta"));
-										}
+//										c_Signal::shared_ptr pDeltaSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),*iter);
+										c_Signal::shared_ptr pDeltaSignal = c_DarwinetTestBench::instance()->createSignal(this->getId(),*iter,pDelta);
+//										pDeltaSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_DeltaMIV]);
+//	//									,eSignalField_DeltaPredecessorIx
+//										c_CaptionPath delta_predecessor_ix_path;
+//										delta_predecessor_ix_path += c_CaptionPath::Node(pDelta->getPredecessor().getProducer());
+//										delta_predecessor_ix_path += c_CaptionPath::Node(pDelta->getPredecessor().getBranch());
+//										delta_predecessor_ix_path += c_CaptionPath::Node(c_DataRepresentationFramework::intToDecimalString(pDelta->getPredecessor().getSeqNo()));
+//										pDeltaSignal->addElement(eSignalField_DeltaPredecessorIx,delta_predecessor_ix_path.toString<c_CaptionNode>());
+//	//									,eSignalField_DeltaIx
+//										c_CaptionPath delta_ix_path;
+//										delta_ix_path += c_CaptionPath::Node(pDelta->getIndex().getProducer());
+//										delta_ix_path += c_CaptionPath::Node(pDelta->getIndex().getBranch());
+//										delta_ix_path += c_CaptionPath::Node(c_DataRepresentationFramework::intToDecimalString(pDelta->getIndex().getSeqNo()));
+//										pDeltaSignal->addElement(eSignalField_DeltaIx,delta_ix_path.toString<c_CaptionNode>());
+//	//									,eSignalField_DeltaTargetState
+//										c_CaptionPath delta_target_state_path;
+//										delta_target_state_path += c_CaptionPath::Node(pDelta->getMIVtarget().getState().getProducer());
+//										delta_target_state_path += c_CaptionPath::Node(pDelta->getMIVtarget().getState().getBranch());
+//										delta_target_state_path += c_CaptionPath::Node(c_DataRepresentationFramework::intToDecimalString(pDelta->getMIVtarget().getState().getSeqNo()));
+//										pDeltaSignal->addElement(eSignalField_DeltaTargetState,delta_target_state_path.toString<c_CaptionNode>());
+//	//									,eSignalField_DeltaTargetMIVId
+//										pDeltaSignal->addElement(eSignalField_DeltaTargetMIVId,pDelta->getMIVtarget().getMIVId().toString<c_CaptionNode>());
+//										// Create Signal from *Integer* dV
+//										if (pDelta->getDeltaOperation()->type() == typeid(c_Int_dV_Operation)) {
+//											c_Int_dV_Operation int_delta_operation = boost::get<c_Int_dV_Operation>(*pDelta->getDeltaOperation());
+//	//										,eSignalField_DeltaOperationId
+//											if (int_delta_operation.getIntOperationId() == eIntOperationId_ADD) {
+//												pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_Int_dV_Add]);
+//	//											,eSignalField_Int_dV_OperationValue
+//												pDeltaSignal->addElement(eSignalField_Int_dV_OperationValue,c_DataRepresentationFramework::intToDecimalString(int_delta_operation.getValue().getRawValue()));
+//											}
+//											else if (int_delta_operation.getIntOperationId() == eIntOperationId_SUB) {
+//												pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_Int_dV_Sub]);
+//	//											,eSignalField_Int_dV_OperationValue
+//												pDeltaSignal->addElement(eSignalField_Int_dV_OperationValue,c_DataRepresentationFramework::intToDecimalString(int_delta_operation.getValue().getRawValue()));
+//											}
+//										}
+//										// Create Signal from *String* dV
+//										else if (pDelta->getDeltaOperation()->type() == typeid(c_String_dV_Operation)) {
+//											c_String_dV_Operation string_delta_operation = boost::get<c_String_dV_Operation>(*pDelta->getDeltaOperation());
+//	//										,eSignalField_DeltaOperationId
+//											if (string_delta_operation.getOperation() == eString_dV_Operation_Extend) {
+//												pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_String_dV_Extend]);
+//	//											,eSignalField_String_dV_OperationIndex
+//												pDeltaSignal->addElement(eSignalField_String_dV_OperationIndex,c_DataRepresentationFramework::intToDecimalString(string_delta_operation.getTargetIndex()));
+//	//											,eSignalField_String_dV_OperationValue
+//												pDeltaSignal->addElement(eSignalField_String_dV_OperationValue,string_delta_operation.getDeltaValue().getRawValue());
+//											}
+//											else if (string_delta_operation.getOperation() == eString_dV_Operation_Contract) {
+//												pDeltaSignal->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_String_dV_Contract]);
+//	//											,eSignalField_String_dV_OperationIndex
+//												pDeltaSignal->addElement(eSignalField_String_dV_OperationIndex,c_DataRepresentationFramework::intToDecimalString(string_delta_operation.getTargetIndex()));
+//	//											,eSignalField_String_dV_OperationValue
+//												pDeltaSignal->addElement(eSignalField_String_dV_OperationValue,string_delta_operation.getDeltaValue().getRawValue());
+//											}
+//											else {
+//												throw c_UnknownDeltaOperation(c_LogString("No signal created for provided e_String_dV_Operation = ") + c_DataRepresentationFramework::intToDecimalString(string_delta_operation.getOperation()));
+//											}
+//										}
+//										else {
+//											throw c_UnknownDeltaOperation(c_LogString("No signal created for unknown Delta"));
+//										}
 										result->push(pDeltaSignal);
 									}
 								}
@@ -1312,6 +1341,10 @@ namespace seedsrc {
 		public:
 			c_ApplyDeltaToMIVBody(const c_MIVBody_shared_ptr& pMIVBody) : m_pMIVBody(pMIVBody) {;}
 
+			void operator()(c_dI_Operation_ArrayInsertBefore& op) {
+				LOG_BUSINESS(METHOD_NAME + c_LogString(", Applying c_dI_Operation_ArrayInsertBefore"));
+				throw c_NotImplemented(METHOD_NAME + c_LogString(" for c_dI_Operation_ArrayInsertBefore"));
+			}
 			void operator()(c_Int_dV_Operation& op) {
 				LOG_BUSINESS(METHOD_NAME + c_LogString(", Applying c_Int_dV_Operation"));
 				try {
@@ -1348,13 +1381,14 @@ namespace seedsrc {
 					}
 			}
 
-			void operator()(c_RecordDeltaOperation& op) {
-				LOG_NOT_IMPLEMENTED;
-			}
-
-			void operator()(c_ArrayDeltaOperation& op) {
-				LOG_NOT_IMPLEMENTED;
-			}
+// 140526, Structured values now handled as structured instances (e.g. Array I), not structured values.
+//			void operator()(c_RecordDeltaOperation& op) {
+//				LOG_NOT_IMPLEMENTED;
+//			}
+//
+//			void operator()(c_ArrayDeltaOperation& op) {
+//				LOG_NOT_IMPLEMENTED;
+//			}
 
 		private:
 			c_MIVBody_shared_ptr m_pMIVBody;
@@ -1664,6 +1698,72 @@ namespace seedsrc {
 			result->push_back(std::make_pair(SIGNAL_FIELD_MAPPER[eSignalField_SignalSender],senderMessageTargetId.toString<c_DarwinetString>()));
 			result->push_back(std::make_pair(SIGNAL_FIELD_MAPPER[eSignalField_SignalReceiver],receiverMessageTargetId.toString<c_DarwinetString>()));
 			LOG_NOT_IMPLEMENTED;
+			return result;
+		}
+
+		c_Signal::shared_ptr c_DarwinetTestBench::createSignal(c_MessageTargetId senderMessageTargetId,c_MessageTargetId receiverMessageTargetId,c_Delta::shared_ptr pDelta) {
+			c_Signal::shared_ptr result = c_DarwinetTestBench::instance()->createSignal(senderMessageTargetId,receiverMessageTargetId);
+			result->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_DeltaMIV]);
+//			,eSignalField_DeltaPredecessorIx
+			c_CaptionPath delta_predecessor_ix_path;
+			delta_predecessor_ix_path += c_CaptionPath::Node(pDelta->getPredecessor().getProducer());
+			delta_predecessor_ix_path += c_CaptionPath::Node(pDelta->getPredecessor().getBranch());
+			delta_predecessor_ix_path += c_CaptionPath::Node(c_DataRepresentationFramework::intToDecimalString(pDelta->getPredecessor().getSeqNo()));
+			result->addElement(eSignalField_DeltaPredecessorIx,delta_predecessor_ix_path.toString<c_CaptionNode>());
+//			,eSignalField_DeltaIx
+			c_CaptionPath delta_ix_path;
+			delta_ix_path += c_CaptionPath::Node(pDelta->getIndex().getProducer());
+			delta_ix_path += c_CaptionPath::Node(pDelta->getIndex().getBranch());
+			delta_ix_path += c_CaptionPath::Node(c_DataRepresentationFramework::intToDecimalString(pDelta->getIndex().getSeqNo()));
+			result->addElement(eSignalField_DeltaIx,delta_ix_path.toString<c_CaptionNode>());
+//			,eSignalField_DeltaTargetState
+			c_CaptionPath delta_target_state_path;
+			delta_target_state_path += c_CaptionPath::Node(pDelta->getMIVtarget().getState().getProducer());
+			delta_target_state_path += c_CaptionPath::Node(pDelta->getMIVtarget().getState().getBranch());
+			delta_target_state_path += c_CaptionPath::Node(c_DataRepresentationFramework::intToDecimalString(pDelta->getMIVtarget().getState().getSeqNo()));
+			result->addElement(eSignalField_DeltaTargetState,delta_target_state_path.toString<c_CaptionNode>());
+//			,eSignalField_DeltaTargetMIVId
+			result->addElement(eSignalField_DeltaTargetMIVId,pDelta->getMIVtarget().getMIVId().toString<c_CaptionNode>());
+			// Create Signal from *Integer* dV
+			if (pDelta->getDeltaOperation()->type() == typeid(c_Int_dV_Operation)) {
+				c_Int_dV_Operation int_delta_operation = boost::get<c_Int_dV_Operation>(*pDelta->getDeltaOperation());
+//				,eSignalField_DeltaOperationId
+				if (int_delta_operation.getIntOperationId() == eIntOperationId_ADD) {
+					result->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_Int_dV_Add]);
+//					,eSignalField_Int_dV_OperationValue
+					result->addElement(eSignalField_Int_dV_OperationValue,c_DataRepresentationFramework::intToDecimalString(int_delta_operation.getValue().getRawValue()));
+				}
+				else if (int_delta_operation.getIntOperationId() == eIntOperationId_SUB) {
+					result->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_Int_dV_Sub]);
+//					,eSignalField_Int_dV_OperationValue
+					result->addElement(eSignalField_Int_dV_OperationValue,c_DataRepresentationFramework::intToDecimalString(int_delta_operation.getValue().getRawValue()));
+				}
+			}
+			// Create Signal from *String* dV
+			else if (pDelta->getDeltaOperation()->type() == typeid(c_String_dV_Operation)) {
+				c_String_dV_Operation string_delta_operation = boost::get<c_String_dV_Operation>(*pDelta->getDeltaOperation());
+//				,eSignalField_DeltaOperationId
+				if (string_delta_operation.getOperation() == eString_dV_Operation_Extend) {
+					result->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_String_dV_Extend]);
+//					,eSignalField_String_dV_OperationIndex
+					result->addElement(eSignalField_String_dV_OperationIndex,c_DataRepresentationFramework::intToDecimalString(string_delta_operation.getTargetIndex()));
+//					,eSignalField_String_dV_OperationValue
+					result->addElement(eSignalField_String_dV_OperationValue,string_delta_operation.getDeltaValue().getRawValue());
+				}
+				else if (string_delta_operation.getOperation() == eString_dV_Operation_Contract) {
+					result->addElement(eSignalField_DeltaOperationId,DELTA_OPERATION_MAPPER[eDeltaOperationId_String_dV_Contract]);
+//					,eSignalField_String_dV_OperationIndex
+					result->addElement(eSignalField_String_dV_OperationIndex,c_DataRepresentationFramework::intToDecimalString(string_delta_operation.getTargetIndex()));
+//					,eSignalField_String_dV_OperationValue
+					result->addElement(eSignalField_String_dV_OperationValue,string_delta_operation.getDeltaValue().getRawValue());
+				}
+				else {
+					throw c_UnknownDeltaOperation(c_LogString("No signal created for provided e_String_dV_Operation = ") + c_DataRepresentationFramework::intToDecimalString(string_delta_operation.getOperation()));
+				}
+			}
+			else {
+				throw c_UnknownDeltaOperation(c_LogString("No signal created for unknown Delta"));
+			}
 			return result;
 		}
 
