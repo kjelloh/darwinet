@@ -89,6 +89,9 @@ namespace seedsrc {
 			,eSignalField_DeltaTargetState
 			,eSignalField_DeltaTargetMIVId
 			,eSignalField_DeltaOperationId
+			// dI operation fields
+			,eSignalField_Array_dI_TargetIndex
+			// dV Operation fields
 			,eSignalField_Int_dV_OperationValue
 			,eSignalField_String_dV_OperationIndex
 			,eSignalField_String_dV_OperationValue
@@ -174,11 +177,9 @@ namespace seedsrc {
 
 		enum e_DeltaOperationId {
 			 eDeltaOperationId_Undefined
-// 140524, name Delta id with dM, dI, dV to expose delta category
-//			,eDeltaOperationId_IntDeltaAdd
-//			,eDeltaOperationId_IntDeltaSub
-//			,eDeltaOperationId_StringDeltaExtend
-//			,eDeltaOperationId_StringDeltaContract
+			// dI operation enumeration
+			,eDeltaOperationId_Array_dI_InsertBefore
+			// dV operation enumeration
 			,eDeltaOperationId_Int_dV_Add
 			,eDeltaOperationId_Int_dV_Sub
 			,eDeltaOperationId_String_dV_Extend
@@ -450,11 +451,12 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 		class c_ArrayIBody; // forward
 		typedef boost::variant<c_PrimitiveIBody,c_ArrayIBody> c_IBody;
+		typedef boost::shared_ptr<c_IBody> c_IBody_shared_ptr;
 		//-------------------------------------------------------------------
 		/**
 		  * Aggregates an array of c_IBody
 		  */
-		class c_ArrayIBody : public std::vector<c_IBody> {
+		class c_ArrayIBody : public std::vector<c_IBody_shared_ptr> {
 		public:
 
 		};
@@ -512,37 +514,51 @@ namespace seedsrc {
 			c_MIVPath m_MIVId;
 		};
 		//-------------------------------------------------------------------
-		class c_dI_Operation_ArrayInsertBefore {
+		enum e_ArrayIOperationId {
+			eArrayIOperationId_Undefined
+			,eArrayIOperationId_InsertBefore
+			,eArrayIOperationId_RemoveAt
+			,eArrayIOperationId_Unknown
+		};
+
+		class c_Array_dI_Operation {
 		public:
 
-			c_dI_Operation_ArrayInsertBefore(unsigned int index) : m_index(index) {;}
+			c_Array_dI_Operation(e_ArrayIOperationId array_I_operation_id,unsigned int index)
+				:  m_index(index)
+				  ,m_array_I_operation_id(array_I_operation_id)
+			{;}
 
-			unsigned int getIndex() {return m_index;}
+			c_ArrayIBody& operator()(c_ArrayIBody& array_instance) const;
+
+			unsigned int getTargetIndex() {return m_index;}
+			e_ArrayIOperationId getArrayIOperationId() {return m_array_I_operation_id;}
 
 		private:
 			unsigned int m_index; 	// Darwinet Array index 1...n
+			e_ArrayIOperationId m_array_I_operation_id;
 		};
 
 		//-------------------------------------------------------------------
-		enum e_IntOperationId {
-			eIntOperationId_Undefined
-			,eIntOperationId_ADD
-			,eIntOperationId_SUB
-			,eIntOperationId_Unknown
+		enum e_IntVOperationId {
+			eIntVOperationId_Undefined
+			,eIntVOperationId_ADD
+			,eIntVOperationId_SUB
+			,eIntVOperationId_Unknown
 		};
 
 		class c_Int_dV_Operation {
 		public:
-			c_Int_dV_Operation(e_IntOperationId int_operation_id, const c_IntValue& delta_value);
+			c_Int_dV_Operation(e_IntVOperationId int_V_operation_id, const c_IntValue& delta_value);
 
-			c_IntValue operator()(c_IntValue& current_value) const;
+			c_IntValue& operator()(c_IntValue& current_value) const;
 
 			c_IntValue getValue() const {return m_delta_value;}
-			e_IntOperationId getIntOperationId() const {return m_int_operation_id;}
+			e_IntVOperationId getIntVOperationId() const {return m_int_V_operation_id;}
 
 		private:
 			c_IntValue m_delta_value;
-			e_IntOperationId m_int_operation_id;
+			e_IntVOperationId m_int_V_operation_id;
 		};
 
 		enum e_String_dV_Operation {
@@ -607,14 +623,7 @@ namespace seedsrc {
 			c_StringValue m_sDeltaValue;
 		};
 
-//		class c_RecordDeltaOperation {
-//		};
-
-// 140526, Replaced by c_dI_Operation_ArrayInsertBefore
-//		class c_ArrayDeltaOperation {
-//		};
-
-		typedef boost::variant<c_Int_dV_Operation,c_String_dV_Operation, c_dI_Operation_ArrayInsertBefore> c_DeltaOperation;
+		typedef boost::variant<c_Int_dV_Operation,c_String_dV_Operation, c_Array_dI_Operation> c_DeltaOperation;
 		typedef boost::shared_ptr<c_DeltaOperation> c_DeltaOperation_shared_ptr;
 
 		//-------------------------------------------------------------------
