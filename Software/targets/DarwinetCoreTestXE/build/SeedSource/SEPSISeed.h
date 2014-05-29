@@ -5,6 +5,8 @@
 //---------------------------------------------------------------------------
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
+#include <boost/make_shared.hpp>
 #include <vector>
 #include <boost/variant.hpp>
 #include "DarwinetBase.h"
@@ -13,6 +15,7 @@
 #include <queue>
 #include <boost/bind.hpp> // 140511, only #include <boost/function.hpp> does not seem to cut it?
 #include <boost/function.hpp>
+#include <boost/signal.hpp>
 
 #include "DarwinetWindowsGUIInterface.h"
 //---------------------------------------------------------------------------
@@ -372,20 +375,6 @@ namespace seedsrc {
 			_RawValueType m_raw_value;
 		};
 
-// 140526, Structured values now handled as structured instances (e.g. Array I), not structured values.
-//		class c_ArrayValue {
-//		public:
-//			typedef boost::shared_ptr<c_ArrayValue> shared_ptr;
-//			// Vector of same type c_V
-//		};
-
-// 140526, Structured values now handled as structured instances (e.g. Array I), not structured values.
-//		class c_RecordValue {
-//		public:
-//			typedef boost::shared_ptr<c_RecordValue> shared_ptr;
-//			// Vector of different type c_V
-//		};
-
 		typedef boost::variant<c_IntValue,c_StringValue> c_Value;
 		typedef boost::shared_ptr<c_Value> c_Value_shared_ptr;
 
@@ -447,7 +436,6 @@ namespace seedsrc {
 		private:
 			c_V::shared_ptr m_pV;
 		};
-
 		//-------------------------------------------------------------------
 		class c_ArrayIBody; // forward
 		typedef boost::variant<c_PrimitiveIBody,c_ArrayIBody> c_IBody;
@@ -458,7 +446,45 @@ namespace seedsrc {
 		  */
 		class c_ArrayIBody : public std::vector<c_IBody_shared_ptr> {
 		public:
+//			c_ArrayIBody() {LOG_METHOD_SCOPE; LOG_DEVELOPMENT_TRACE(METHOD_NAME + c_LogString(" default construct"));}
+//			c_ArrayIBody(const c_ArrayIBody& other_instance) {LOG_METHOD_SCOPE; LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" copy construct not safe. Copy will have no listeners!"));}
+//			c_ArrayIBody(c_ArrayIBody&& other_instance) {LOG_METHOD_SCOPE; LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" move construct not safe! Listeners are not moved to copy"));}
 
+			void insert_before(unsigned int index) {
+				LOG_METHOD_SCOPE;
+				this->insert(this->begin() + (index-1),c_IBody_shared_ptr());
+//				this->onArrayInsertBefore()(index);
+			}
+
+//			boost::signal<void (unsigned int)>& onArrayInsertBefore() {
+//				LOG_METHOD_SCOPE;
+//				/**
+//				  * This accessor is here only to be able to log and detect that we unintentinally copy an instance
+//				  * and thus loose any registered listeners (e.g. registered to m_onArrayInsertBefore).
+//				  * boost::signal is not copyable (makes sense as you listen to objects, not classes).
+//				  * TODO: It is probably c_IBody being a boost::variant that requires copy construct of us. If so,
+//				  * this should not be a problem?
+//				  */
+//				LOG_DEVELOPMENT_TRACE(METHOD_NAME + c_LogString(" accessed. Please check that the access is not to a copy"));
+//				if (!this->m_pOnArrayInsertBefore) {
+////					this->m_pOnArrayInsertBefore = boost::make_shared<boost::signal<void (unsigned int)> >();
+///* ==> Cause null-ptr access exception ==> */					new boost::signal<void (unsigned int)>(); // Why?
+//				}
+//				return *this->m_pOnArrayInsertBefore;
+//			}
+
+		private:
+			/**
+			  * signals cant be copied (they shall remain with a specific instance). In this
+			  * way listeners can be sure they listen to the correct instance and not to a copy.
+			  * But this class is used in c_IBody being a boost variant that seems to require its
+			  * variants to be copy constructable.
+			  * The solution is to manage the signal instance through a shared pointer.
+			  * TODO: In C++11 use a std::c_unique_ptr that allows move construct but not copy construct.
+			  *       Then c_IBody should become move cunstructable but not copy constructable which
+			  *       is what we whant (existing c_IBody should not be copyable. The client needs to create new ones)
+			  */
+			boost::shared_ptr<boost::signal<void (unsigned int)> > m_pOnArrayInsertBefore;
 		};
 
 		//-------------------------------------------------------------------

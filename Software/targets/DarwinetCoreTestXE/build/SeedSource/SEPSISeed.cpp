@@ -4,7 +4,6 @@
 
 #include "SEPSISeed.h"
 #include "BusinessLogUnit.h"
-#include <boost/make_shared.hpp>
 #include <boost/pointer_cast.hpp>
 # pragma warn -8072 // Seems to be a known Issue for  boost in Borland CPP 101112/KoH
 # include <boost/format.hpp>
@@ -358,7 +357,24 @@ namespace seedsrc {
 		//-------------------------------------------------------------------
 
 		c_ArrayIBody& c_Array_dI_Operation::operator()(c_ArrayIBody& array_instance) const {
-			array_instance.insert(array_instance.begin() + (this->m_index-1),c_IBody_shared_ptr());
+			switch (this->m_array_I_operation_id) {
+				case eArrayIOperationId_Undefined:
+					throw c_NotImplemented(METHOD_NAME + c_LogString(" for eArrayIOperationId_Undefined"));
+				break;
+				case eArrayIOperationId_InsertBefore: {
+					array_instance.insert_before(this->m_index);
+				}
+				break;
+				case eArrayIOperationId_RemoveAt:
+					throw c_NotImplemented(METHOD_NAME + c_LogString(" for eArrayIOperationId_RemoveAt"));
+				break;
+				case eArrayIOperationId_Unknown:
+					throw c_NotImplemented(METHOD_NAME + c_LogString(" for eArrayIOperationId_Unknown"));
+				break;
+			default:
+				throw c_NotImplemented(METHOD_NAME + c_LogString(" default switch reached."));
+				;
+			}
 			return array_instance;
 		}
 
@@ -940,8 +956,8 @@ namespace seedsrc {
                         }
 						pNewMIV = boost::make_shared<c_MIV>();
 						c_I new_I;
-						c_ArrayIBody array_I_body;
-						new_I.body() = array_I_body;
+//						c_ArrayIBody array_I_body;
+						new_I.body() = c_ArrayIBody();
 						pNewMIV->setBody(boost::make_shared<c_MIVBody>(new_I));
 					}
 					else if (this->isIntV(miv_path)) {
