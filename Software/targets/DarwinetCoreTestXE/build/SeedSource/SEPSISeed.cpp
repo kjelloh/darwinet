@@ -35,12 +35,14 @@ namespace seedsrc {
 					case eSignalField_SignalSender: sSignalFieldIdString = _UTF8sz("head.Sender"); break;
 					case eSignalField_SignalReceiver: sSignalFieldIdString = _UTF8sz("head.Receiver"); break;
 					case eSignalField_SignalIdentifier: sSignalFieldIdString = _UTF8sz("Head.SignalId"); break;
+					// Client <--> MIVs
 					case eSignalField_MIVsOperationId: sSignalFieldIdString = _UTF8sz("Body.MIVsOperation.Id"); break;
 					case eSignalField_MIVsOperationTargetId: sSignalFieldIdString = _UTF8sz("Body.MIVsOperation.Target"); break;
-					case eSignalField_MIVsOperationNewValue: sSignalFieldIdString = _UTF8sz("Body.MIVsOperation.NewValue"); break;
+					case eSignalField_MIVs_V_Operation_NewValue: sSignalFieldIdString = _UTF8sz("Body.MIVsOperation.NewValue"); break;
 					case eSignalField_MIVsEventId: sSignalFieldIdString = _UTF8sz("Body.MIVsEvent.Id"); break;
 					case eSignalField_MIVsEventSourceId: sSignalFieldIdString = _UTF8sz("Body.MIVsEvent.Source"); break;
-					case eSignalField_MIVsEventValue: sSignalFieldIdString = _UTF8sz("Body.MIVsEvent.Value"); break;
+					case eSignalField_MIVs_I_ChangedEvent_NewMember: sSignalFieldIdString = _UTF8sz("Body.MIVsEvent.I.NewMember"); break;
+					case eSignalField_MIVs_V_ChangedEvent_NewValue: sSignalFieldIdString = _UTF8sz("Body.MIVsEvent.V.NewValue"); break;
 					case eSignalField_DeltaPredecessorIx: sSignalFieldIdString = _UTF8sz("Body.dMIV.PredecessorIndex"); break;
 					case eSignalField_DeltaIx: sSignalFieldIdString = _UTF8sz("Body.dMIV.Index"); break;
 					case eSignalField_DeltaTargetState: sSignalFieldIdString = _UTF8sz("Body.dMIV.Target.State"); break;
@@ -142,7 +144,7 @@ namespace seedsrc {
 				e_MIVsEventId eKey = static_cast<e_MIVsEventId>(i);
 				switch (eKey) {
 					case eMIVsEventId_Undefined: sValue = _UTF8sz("Undefined"); break;
-					case eMIVsEventId_OnMIVInstanceCreated: sValue = _UTF8sz("OnMIVInstanceCreated"); break;
+					case eMIVsEventId_On_I_ArrayAppend: sValue = _UTF8sz("On_I_ArrayAppend"); break;
 					case eMIVsEventId_OnMIVValueChanged: sValue = _UTF8sz("OnMIVValueChanged"); break;
 					case eMIVsEventId_Unknown: sValue = _UTF8sz("Unknown"); break;
 				default:
@@ -164,7 +166,6 @@ namespace seedsrc {
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
-
 		c_DeltaOperationIdMapper::c_DeltaOperationIdMapper()
 		{
 			// Fill the map
@@ -362,7 +363,7 @@ namespace seedsrc {
 					throw c_NotImplemented(METHOD_NAME + c_LogString(" for eArrayIOperationId_Undefined"));
 				break;
 				case eArrayIOperationId_InsertBefore: {
-					array_instance.insert_before(this->m_index);
+					array_instance.perform_insert_before(this->m_index);
 				}
 				break;
 				case eArrayIOperationId_RemoveAt:
@@ -1141,14 +1142,14 @@ namespace seedsrc {
 
 							pReply->addElement(eSignalField_MIVsEventId,MIVS_EVENT_MAPPER[eMIVsEventId_OnMIVValueChanged]);
 							pReply->addElement(eSignalField_MIVsEventSourceId,pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationTargetId]));
-							pReply->addElement(eSignalField_MIVsEventValue,pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationNewValue]));
+							pReply->addElement(eSignalField_MIVs_V_ChangedEvent_NewValue,pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVs_V_Operation_NewValue]));
 							result->push(pReply);
 						}
 						else {
 							// Get the MIV we want to change
 							c_DarwinetString sTargetId = pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationTargetId]);
 							c_MIVPath target_miv_path = c_MIVPath::fromString(sTargetId);
-							c_DarwinetString sNewValue = pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVsOperationNewValue]);
+							c_DarwinetString sNewValue = pSignal->getValue(SIGNAL_FIELD_MAPPER[eSignalField_MIVs_V_Operation_NewValue]);
 							c_Delta::shared_ptr pDelta;
 							{
 								if (this->getMIVs()->isIntV(target_miv_path)) {
@@ -1470,13 +1471,59 @@ namespace seedsrc {
 							pReply->addElement(eSignalField_SignalSender,this->getId().toString<c_DarwinetString>());
 							pReply->addElement(eSignalField_SignalReceiver,this->m_listening_client_id.toString<c_DarwinetString>()); // Report event to client
 							pReply->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_OnMIVEvent]);
-
 							pReply->addElement(eSignalField_MIVsEventSourceId,pDelta->getMIVtarget().getMIVId().toString<c_DarwinetString>());
-
+							// Decorate signal with Event fields
 							if (pTargetMIV->getBody()->type() == typeid(c_I)) {
-								LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString("dI application result report to clients not yet implemented"));
-								// TODO 140527: Let each MIV report its change to listening clients
-								LOG_DESIGN_INSUFFICIENCY(c_LogString("TODO: Change so that each dMIV(MIV) reports any change directly to listeners"));
+
+								if (pDelta->getDeltaOperation()->type() == typeid(c_Array_dI_Operation)) {
+									// Asume array extend
+									LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" asumes I array event is extend"));
+									pReply->addElement(eSignalField_MIVsEventId,MIVS_EVENT_MAPPER[eMIVsEventId_On_I_ArrayAppend]);
+
+									unsigned int target_index = boost::get<c_Array_dI_Operation>(*pDelta->getDeltaOperation()).getTargetIndex();
+									int array_size = boost::get<c_ArrayIBody>(boost::get<c_I>(*pTargetMIV->getBody()).body()).size();
+									// (1) Report the last element as the appended (new) one
+									pReply->addElement(eSignalField_MIVs_I_ChangedEvent_NewMember,c_DataRepresentationFramework::intToDecimalString(array_size));
+									result->push(pReply);
+
+									// Now report all members from insertion point to the new one as having new values
+									for (int i = target_index; i < array_size; ++i) {
+										c_Signal::shared_ptr pReply = boost::make_shared<c_Signal>();
+										pReply->addElement(eSignalField_SignalSender,this->getId().toString<c_DarwinetString>());
+										pReply->addElement(eSignalField_SignalReceiver,this->m_listening_client_id.toString<c_DarwinetString>()); // Report event to client
+										pReply->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_OnMIVEvent]);
+
+										c_MIVPath member_miv_path(pDelta->getMIVtarget().getMIVId());
+										member_miv_path += c_DataRepresentationFramework::intToDecimalString(i);
+										c_MIV::shared_ptr pMemberMIV = this->getMIVs()->getMIV(member_miv_path);
+										if (pMemberMIV) {
+											pReply->addElement(eSignalField_MIVsEventSourceId,member_miv_path.toString<c_DarwinetString>());
+											if (pMemberMIV->getBody()->type() == typeid(c_V)) {
+												// It is a V
+												pReply->addElement(eSignalField_MIVsEventId,MIVS_EVENT_MAPPER[eMIVsEventId_OnMIVValueChanged]);
+												c_V newV = boost::get<c_V>(*pMemberMIV->getBody());
+												if (newV.getValue().type() == typeid(c_IntValue)) {
+													c_IntValue newIntValue = boost::get<c_IntValue>(newV.getValue());
+													pReply->addElement(eSignalField_MIVs_V_ChangedEvent_NewValue,c_DataRepresentationFramework::intToDecimalString(newIntValue.getRawValue()));
+												}
+												else if (newV.getValue().type() == typeid(c_StringValue)) {
+													c_StringValue newStringValue = boost::get<c_StringValue>(newV.getValue());
+													pReply->addElement(eSignalField_MIVs_V_ChangedEvent_NewValue,newStringValue.getRawValue());
+												}
+												else {
+													throw c_UnknownMIVValueType(c_LogString("Failed array member Value change back to Client."));
+												}
+												result->push(pReply);
+											}
+											else {
+												LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" failed to send value change for Array member that is not a c_V"));
+											}
+										}
+									}
+								}
+								else {
+									LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" unrecognized dI operation type. Signal will lack explicit delta operation fields"));
+								}
 							}
 							else if (pTargetMIV->getBody()->type() == typeid(c_V)) {
 								// It is a V
@@ -1484,20 +1531,20 @@ namespace seedsrc {
 								c_V newV = boost::get<c_V>(*pTargetMIV->getBody());
 								if (newV.getValue().type() == typeid(c_IntValue)) {
 									c_IntValue newIntValue = boost::get<c_IntValue>(newV.getValue());
-									pReply->addElement(eSignalField_MIVsEventValue,c_DataRepresentationFramework::intToDecimalString(newIntValue.getRawValue()));
+									pReply->addElement(eSignalField_MIVs_V_ChangedEvent_NewValue,c_DataRepresentationFramework::intToDecimalString(newIntValue.getRawValue()));
 								}
 								else if (newV.getValue().type() == typeid(c_StringValue)) {
 									c_StringValue newStringValue = boost::get<c_StringValue>(newV.getValue());
-									pReply->addElement(eSignalField_MIVsEventValue,newStringValue.getRawValue());
+									pReply->addElement(eSignalField_MIVs_V_ChangedEvent_NewValue,newStringValue.getRawValue());
 								}
 								else {
 									throw c_UnknownMIVValueType(c_LogString("Failed to report Value change back to Client."));
 								}
+								result->push(pReply);
 							}
 							else {
 								LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString("failed. Unrecognized target of target MIV"));
-                            }
-							result->push(pReply);
+							}
 						}
 					}
 					else {
@@ -1697,7 +1744,7 @@ namespace seedsrc {
 					c_Signal::shared_ptr pSignal = boost::make_shared<c_Signal>();
 					pSignal->addElement(eSignalField_MIVsEventId,MIVS_EVENT_MAPPER[eMIVsEventId_OnMIVValueChanged]);
 					pSignal->addElement(eSignalField_MIVsEventSourceId,MIVsId.toString<c_DarwinetString>());
-					pSignal->addElement(eSignalField_MIVsEventValue,value);
+					pSignal->addElement(eSignalField_MIVs_V_ChangedEvent_NewValue,value);
 					this->m_pClientProxy->actOnSignal(pSignal);
 				}
 				else {
@@ -1709,7 +1756,7 @@ namespace seedsrc {
 				pSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_ModifyMIVRequest]);
 				pSignal->addElement(eSignalField_MIVsOperationId,MIVS_OPERATION_MAPPER[eMIVsOperation_V_Assign]);
 				pSignal->addElement(eSignalField_MIVsOperationTargetId,MIVsId.toString<c_DarwinetString>());
-				pSignal->addElement(eSignalField_MIVsOperationNewValue,value);
+				pSignal->addElement(eSignalField_MIVs_V_Operation_NewValue,value);
 				c_DarwinetTestBench::instance()->sendMessage(pSignal);
 			}
 		}
@@ -2052,7 +2099,7 @@ namespace seedsrc {
 					pSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_OnMIVEvent]);
 					pSignal->addElement(eSignalField_MIVsEventId,MIVS_EVENT_MAPPER[eMIVsEventId_OnMIVValueChanged]);
 					pSignal->addElement(eSignalField_MIVsEventSourceId,MIVId);
-					pSignal->addElement(eSignalField_MIVsEventValue,_UTF8sz("23"));
+					pSignal->addElement(eSignalField_MIVs_V_ChangedEvent_NewValue,_UTF8sz("23"));
 					c_DarwinetString sSignal(toString(*pSignal));
 					char* szRawSignalString = new char[sSignal.length()+1];
 					strcpy(szRawSignalString,sSignal.c_str());
@@ -2087,7 +2134,7 @@ namespace seedsrc {
 							  *   a) onNewMIVInstance for Last element of array after extension (regarded as new)
 							  *   b) All alements from the insertion point to last element as having new values (effect of shift right)
 							  * This simplifies the Client intelligence and works for any array.
-							  * NOTE: Client must add itself as listsner to the new last value of the array if it whants to receive upadtes for it.
+							  * NOTE: Client must add itself as listener to the new last value of the array if it whants to receive upadtes for it.
 							  *       But this is a good thing as the array extension may cause the last element to scroll out of GUI viewport and thus the
 							  *       GUI do not need to listen to it.
 							  */
@@ -2095,7 +2142,7 @@ namespace seedsrc {
 							int new_index = target_index + 1; // Asume only one element in list before this call
 							c_Signal::shared_ptr pSignal = boost::make_shared<c_Signal>();
 							pSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_OnMIVEvent]);
-							pSignal->addElement(eSignalField_MIVsEventId,MIVS_EVENT_MAPPER[eMIVsEventId_OnMIVInstanceCreated]);
+							pSignal->addElement(eSignalField_MIVsEventId,MIVS_EVENT_MAPPER[eMIVsEventId_On_I_ArrayAppend]);
 							c_MIVPath new_miv_instance_path = miv_target_path;
 							new_miv_instance_path[1] = c_DataRepresentationFramework::intToDecimalString(new_index);
 							c_GUIClientproxy::c_MIVId sNewMIVInstanceId = new_miv_instance_path.toString<c_GUIClientproxy::c_MIVId>();
@@ -2111,7 +2158,7 @@ namespace seedsrc {
 							pSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_OnMIVEvent]);
 							pSignal->addElement(eSignalField_MIVsEventId,MIVS_EVENT_MAPPER[eMIVsEventId_OnMIVValueChanged]);
 							pSignal->addElement(eSignalField_MIVsEventSourceId,MIVId);
-							pSignal->addElement(eSignalField_MIVsEventValue,_UTF8sz("0")); // Simulate new integer instance to have value 0
+							pSignal->addElement(eSignalField_MIVs_V_ChangedEvent_NewValue,_UTF8sz("0")); // Simulate new integer instance to have value 0
 							{
 								c_DarwinetString sSignal(toString(*pSignal));
 								char* szRawSignalString = new char[sSignal.length()+1];
@@ -2123,13 +2170,13 @@ namespace seedsrc {
 							pSignal->addElement(eSignalField_SignalIdentifier,SIGNAL_IDENTIFIER_MAPPER[eSignalIdentifier_OnMIVEvent]);
 							pSignal->addElement(eSignalField_MIVsEventId,MIVS_EVENT_MAPPER[eMIVsEventId_OnMIVValueChanged]);
 							pSignal->addElement(eSignalField_MIVsEventSourceId,sNewMIVInstanceId);
-							pSignal->addElement(eSignalField_MIVsEventValue,_UTF8sz("23")); // Fake value (we do not know the current value of this element)
+							pSignal->addElement(eSignalField_MIVs_V_ChangedEvent_NewValue,_UTF8sz("23")); // Fake value (we do not know the current value of this element)
 							{
 								c_DarwinetString sSignal(toString(*pSignal));
 								char* szRawSignalString = new char[sSignal.length()+1];
 								strcpy(szRawSignalString,sSignal.c_str());
 								PostMessage(this->m_pGUIWindow,eWINDOWS_MESSAGE_ID_OnDarwinetSignal,0,reinterpret_cast<LPARAM>(szRawSignalString));
-                            }
+							}
 						}
 					}
 				}

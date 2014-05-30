@@ -79,13 +79,17 @@ namespace seedsrc {
 			,eSignalField_SignalSender
 			,eSignalField_SignalReceiver
 			,eSignalField_SignalIdentifier
-			// ModifyMIVRequest
+
+			// Client --> MIVs
 			,eSignalField_MIVsOperationId
 			,eSignalField_MIVsOperationTargetId
-			,eSignalField_MIVsOperationNewValue
+			,eSignalField_MIVs_V_Operation_NewValue
+			// Client <-- MIVs
 			,eSignalField_MIVsEventId
 			,eSignalField_MIVsEventSourceId
-			,eSignalField_MIVsEventValue
+			,eSignalField_MIVs_I_ChangedEvent_NewMember
+			,eSignalField_MIVs_V_ChangedEvent_NewValue
+			// MIVs <---> MIVs
 			// Delta Signal elements
 			,eSignalField_DeltaPredecessorIx
 			,eSignalField_DeltaIx
@@ -114,6 +118,8 @@ namespace seedsrc {
 
 		};
 
+		//-------------------------------------------------------------------
+		// eSignalField_SignalIdentifier value enumerator
 		enum e_SignalIdentifier {
 			eSignalIdentifier_Undefined
 			,eSignalIdentifier_getMIVs
@@ -124,6 +130,7 @@ namespace seedsrc {
 			,eSignalIdentifier_Unknown
 		};
 
+		// eSignalField_SignalIdentifier value enumerator mapper
 		class c_SignalIdentifierMapper
 			: public std::map<e_SignalIdentifier,c_DarwinetString>
 		{
@@ -137,10 +144,10 @@ namespace seedsrc {
 
 		};
 
+		//-------------------------------------------------------------------
 		enum e_MIVsOperation {
 			eMIVsOperation_Undefined
 			,eMIVsOperation_I_ArrayInsertBefore
-//			,eMIVsOperation_Assign
 			,eMIVsOperation_V_Assign
 			,eMIVsOperation_Unknown
 		};
@@ -158,9 +165,10 @@ namespace seedsrc {
 
 		};
 
+		//-------------------------------------------------------------------
 		enum e_MIVsEventId {
 			eMIVsEventId_Undefined
-			,eMIVsEventId_OnMIVInstanceCreated
+			,eMIVsEventId_On_I_ArrayAppend
 			,eMIVsEventId_OnMIVValueChanged
 			,eMIVsEventId_Unknown
 		};
@@ -178,6 +186,7 @@ namespace seedsrc {
 
 		};
 
+		//-------------------------------------------------------------------
 		enum e_DeltaOperationId {
 			 eDeltaOperationId_Undefined
 			// dI operation enumeration
@@ -208,7 +217,6 @@ namespace seedsrc {
 		static c_MIVsOperationMapper MIVS_OPERATION_MAPPER;
 		static c_MIVsEventIdMapper MIVS_EVENT_MAPPER;
 		static c_DeltaOperationIdMapper DELTA_OPERATION_MAPPER;
-
 		//-------------------------------------------------------------------
 		class c_Signal : public std::vector<std::pair<c_CaptionNode,c_CaptionNode> > {
 		private:
@@ -446,45 +454,10 @@ namespace seedsrc {
 		  */
 		class c_ArrayIBody : public std::vector<c_IBody_shared_ptr> {
 		public:
-//			c_ArrayIBody() {LOG_METHOD_SCOPE; LOG_DEVELOPMENT_TRACE(METHOD_NAME + c_LogString(" default construct"));}
-//			c_ArrayIBody(const c_ArrayIBody& other_instance) {LOG_METHOD_SCOPE; LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" copy construct not safe. Copy will have no listeners!"));}
-//			c_ArrayIBody(c_ArrayIBody&& other_instance) {LOG_METHOD_SCOPE; LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(" move construct not safe! Listeners are not moved to copy"));}
-
-			void insert_before(unsigned int index) {
+			void perform_insert_before(unsigned int index) {
 				LOG_METHOD_SCOPE;
 				this->insert(this->begin() + (index-1),c_IBody_shared_ptr());
-//				this->onArrayInsertBefore()(index);
 			}
-
-//			boost::signal<void (unsigned int)>& onArrayInsertBefore() {
-//				LOG_METHOD_SCOPE;
-//				/**
-//				  * This accessor is here only to be able to log and detect that we unintentinally copy an instance
-//				  * and thus loose any registered listeners (e.g. registered to m_onArrayInsertBefore).
-//				  * boost::signal is not copyable (makes sense as you listen to objects, not classes).
-//				  * TODO: It is probably c_IBody being a boost::variant that requires copy construct of us. If so,
-//				  * this should not be a problem?
-//				  */
-//				LOG_DEVELOPMENT_TRACE(METHOD_NAME + c_LogString(" accessed. Please check that the access is not to a copy"));
-//				if (!this->m_pOnArrayInsertBefore) {
-////					this->m_pOnArrayInsertBefore = boost::make_shared<boost::signal<void (unsigned int)> >();
-///* ==> Cause null-ptr access exception ==> */					new boost::signal<void (unsigned int)>(); // Why?
-//				}
-//				return *this->m_pOnArrayInsertBefore;
-//			}
-
-		private:
-			/**
-			  * signals cant be copied (they shall remain with a specific instance). In this
-			  * way listeners can be sure they listen to the correct instance and not to a copy.
-			  * But this class is used in c_IBody being a boost variant that seems to require its
-			  * variants to be copy constructable.
-			  * The solution is to manage the signal instance through a shared pointer.
-			  * TODO: In C++11 use a std::c_unique_ptr that allows move construct but not copy construct.
-			  *       Then c_IBody should become move cunstructable but not copy constructable which
-			  *       is what we whant (existing c_IBody should not be copyable. The client needs to create new ones)
-			  */
-			boost::shared_ptr<boost::signal<void (unsigned int)> > m_pOnArrayInsertBefore;
 		};
 
 		//-------------------------------------------------------------------

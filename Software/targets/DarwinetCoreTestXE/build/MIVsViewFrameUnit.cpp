@@ -85,12 +85,12 @@ void __fastcall TMIVsViewFrame::CMOnMIVsChange(TMessage Message) {
 				darwinet_seed::c_MIVPath miv_id_path = darwinet_seed::c_MIVPath::fromString(sMIV_Element);
 				if (miv_id_path.size() == 1) {
 					if (sMIV_Element == _UTF8sz("myInt")) {
-						String sValue(signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventValue]).c_str());
+						String sValue(signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVs_V_ChangedEvent_NewValue]).c_str());
 						SCOPED_ONCHANGE_INHIBIT(this->MyIntSpinEdit);
 						this->MyIntSpinEdit->Value = sValue.ToInt();
 					}
 					else if (sMIV_Element == _UTF8sz("myString")) {
-						String sValue(signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventValue]).c_str());
+						String sValue(signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVs_V_ChangedEvent_NewValue]).c_str());
 						SCOPED_ONCHANGE_INHIBIT(this->MyTextEdit);
 						this->MyTextEdit->Text = sValue;
 					}
@@ -100,17 +100,11 @@ void __fastcall TMIVsViewFrame::CMOnMIVsChange(TMessage Message) {
 				}
 				else if (miv_id_path.size() == 2) {
 					if (miv_id_path[0] == _UTF8sz("myIntArray")) {
-//						// Now the second node is the array index
-//						try {
-//							int index = c_DataRepresentationFramework::intValueOfDecimalString(miv_id_path[1]);
-//						}
-//						catch (...) {
-//							LOG_BUSINESS(c_LogString(METHOD_NAME + ", Array with now index MIV Id = ") + sMIV_Element);
-//						}
+						// Now the second node is the array index
 						{
 							for (int i = 0; i < this->myIntArrayListView->Items->Count; ++i) {
 								if (this->myIntArrayListView->Items->operator [](i)->Caption == sMIV_Element.c_str()) {
-									String sValue(signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVsEventValue]).c_str());
+									String sValue(signal.getValue(darwinet_seed::SIGNAL_FIELD_MAPPER[darwinet_seed::eSignalField_MIVs_V_ChangedEvent_NewValue]).c_str());
 									reinterpret_cast<c_IntegerObject*>(this->myIntArrayListView->Items->operator [](i)->Data)->m_value  = sValue.ToInt();
 									if (this->myIntArrayListView->Items->operator [](i) == this->myIntArrayListView->Selected) {
 										// Update the contents of selected item view
