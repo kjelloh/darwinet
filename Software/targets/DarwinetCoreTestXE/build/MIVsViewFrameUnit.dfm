@@ -1,7 +1,7 @@
 object MIVsViewFrame: TMIVsViewFrame
   Left = 0
   Top = 0
-  Width = 261
+  Width = 249
   Height = 195
   TabOrder = 0
   object myIntLabel: TLabel

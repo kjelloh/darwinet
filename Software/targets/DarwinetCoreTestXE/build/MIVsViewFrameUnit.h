@@ -36,11 +36,8 @@ private:	// User declarations
 	static unsigned int m_instanceCount;
 	unsigned int m_index;
 
-//	void __fastcall CMOnMIVsChange(TWMNoParams Message);
 	void __fastcall CMOnMIVsChange(TMessage Message);
 	BEGIN_MESSAGE_MAP
-//	   MESSAGE_HANDLER(WM_USER+1, TWMNoParams, CMOnMIVsChange)
-//	   MESSAGE_HANDLER(WM_USER+1, TMessage, CMOnMIVsChange)
 	   MESSAGE_HANDLER(darwinet_seed::eWINDOWS_MESSAGE_ID_OnDarwinetSignal, TMessage, CMOnMIVsChange)
 
 	END_MESSAGE_MAP(TFrame)

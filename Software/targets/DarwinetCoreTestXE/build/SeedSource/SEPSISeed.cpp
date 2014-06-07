@@ -354,6 +354,7 @@ namespace seedsrc {
 			}
 			return result;
 		}
+
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
 
@@ -860,6 +861,17 @@ namespace seedsrc {
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
+		c_MIVs::c_MIVs(const c_DeltaIndex& last_created_delta_index,const c_DeltaIndex& last_applied_delta_index)
+			:  m_LastCreatedDeltaIndex(last_created_delta_index)
+			  ,m_LastAppliedDeltaIndex(last_applied_delta_index)
+			  ,m_MappedMIVs()
+		{
+			// Define empty path as the root record
+			c_MIV::shared_ptr pMIV = boost::make_shared<c_MIV>(boost::make_shared<c_MIVBody>(c_M(c_DefinitionMBody(c_MIVPath(c_DarwinetString("darwinet.record"))))));
+			pMIV->setState(last_applied_delta_index); // Dummy state to make it work
+			m_MappedMIVs[c_MIVPath(c_DarwinetString(""))] = pMIV;
+		}
+
 		c_Delta::shared_ptr c_MIVs::createInstanceDelta(const c_MIVPath& id) {
 			c_Delta::shared_ptr result;
 			// Create the instance with provided id
@@ -954,7 +966,7 @@ namespace seedsrc {
 							sMessage += miv_path.toString<c_LogString>();
 							sMessage += _UTF8sz(" should be created by a domain dI");
 							LOG_DESIGN_INSUFFICIENCY(sMessage);
-                        }
+						}
 						pNewMIV = boost::make_shared<c_MIV>();
 						c_I new_I;
 //						c_ArrayIBody array_I_body;
@@ -1393,6 +1405,9 @@ namespace seedsrc {
 		public:
 			c_ApplyDeltaToMIVBody(const c_MIVBody_shared_ptr& pMIVBody) : m_pMIVBody(pMIVBody) {;}
 
+			void operator()(c_dM_Operation_Define_Member& op) {
+				LOG_NOT_IMPLEMENTED;
+			}
 			void operator()(c_Array_dI_Operation& op) {
 				LOG_BUSINESS(METHOD_NAME + c_LogString(", Applying c_Array_dI_Operation"));
 				try {
@@ -1570,7 +1585,9 @@ namespace seedsrc {
 		}
 
 		c_MIVs::shared_ptr c_MIVsHandler::getMIVs() {
+			LOG_METHOD_SCOPE;
 			if (!this->m_pMIVs) {
+				LOG_SCOPE_S(c_LogString("if (!this->m_pMIVs)"));
 				LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString("Correct last_created and last_applied delta index not yet implemented. Will set a domain common fixed value."));
 				c_DeltaIndex last_created_delta_index;
 				// TODO: Use MIVs unique producer Id and index when dM and dI handling is in place (needed to distribute producer id of created MIV to other MIVs)
@@ -1580,6 +1597,28 @@ namespace seedsrc {
 				last_created_delta_index.setSeqNo(0);
 				c_DeltaIndex last_applied_delta_index = last_created_delta_index;
 				this->m_pMIVs = boost::make_shared<c_MIVs>(last_created_delta_index,last_created_delta_index);
+
+				// Initiate MIVs state from Domain persisten storage
+				{
+					// dM define_member myInt darwinet.integer
+					LOG_DESIGN_INSUFFICIENCY(METHOD_NAME + c_LogString(", hard coded Model initiation. Replace when initiate from Domain persisten storage is implemented."));
+					c_Delta::shared_ptr pDelta = boost::make_shared<c_Delta>();
+					pDelta->setPredecessor(last_created_delta_index);
+					pDelta->setIndex(last_created_delta_index);
+					c_MIVTarget miv_target;
+					miv_target.setState(last_created_delta_index);
+					miv_target.setMIVId(c_MIVPath(c_DarwinetString("")));
+					pDelta->setMIVtarget(miv_target);
+					c_DeltaOperation_shared_ptr pDeltaOperation = boost::make_shared<c_DeltaOperation>(c_dM_Operation_Define_Member(c_MIVPath::Node(c_DarwinetString("myInt"))));
+					pDelta->setDeltaOperation(pDeltaOperation);
+					this->actOnDelta(pDelta);
+				}
+				// dM define_member myString darwinet.string
+				// dM define_member myIntArray darwinet.array darwinet.integer
+				// dI create myInt
+				// dI create myString
+				// dI create myIntArray
+
 			}
 			return this->m_pMIVs;
 		}

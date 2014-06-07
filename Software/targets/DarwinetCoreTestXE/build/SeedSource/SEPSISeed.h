@@ -469,23 +469,39 @@ namespace seedsrc {
 
 		private:
 			c_IBody m_body;
-
-// Moved to c_PrimitiveIBody
-//			c_V::shared_ptr getV() {return m_pV;}
-//			void setV(c_V::shared_ptr pV) {m_pV = pV;}
-//
-//		private:
-//			c_V::shared_ptr m_pV;
 		};
 
 		//-------------------------------------------------------------------
 		typedef std::map<c_MIVPath,c_I::shared_ptr> c_MappedIs;
 		//-------------------------------------------------------------------
+		class c_IntegerDeclarationMBody {
+		};
+		class c_StringDeclarationMBody {
+		};
+		class c_ArrayDeclarationMBody {
+		};
+		class c_RecordDeclarationMBody {
+		};
+		class c_DefinitionMBody {
+		public:
+			c_DefinitionMBody(const c_MIVPath& declaration_path) : m_declaration_path(declaration_path) {;}
+			c_DefinitionMBody& operator=(const c_DefinitionMBody& other_instance) {m_declaration_path = other_instance.m_declaration_path; return *this;}
 
+			c_MIVPath getDeclarationPath() {return m_declaration_path;}
+		private:
+			c_MIVPath m_declaration_path;
+		};
+
+		typedef boost::variant<c_IntegerDeclarationMBody,c_StringDeclarationMBody,c_ArrayDeclarationMBody,c_RecordDeclarationMBody,c_DefinitionMBody> c_MBody;
+
+		//-------------------------------------------------------------------
 		class c_M {
 		public:
 			typedef boost::shared_ptr<c_M> shared_ptr;
+			c_M(const c_MBody& body = c_MBody()) : m_body(body) {;}
+			c_MBody& body() {return m_body;}
 		private:
+			c_MBody m_body;
 			typedef std::vector<c_I::shared_ptr> c_Is;
 		};
 
@@ -511,6 +527,19 @@ namespace seedsrc {
 		private:
 			c_DeltaIndex m_State;
 			c_MIVPath m_MIVId;
+		};
+		//-------------------------------------------------------------------
+
+		class c_dM_Operation_Define_Member {
+		public:
+			c_dM_Operation_Define_Member(const c_MIVPath::Node& member_id) : m_member_id(member_id) {;}
+
+			c_M& operator()(c_M& aggregating_M) {
+				LOG_NOT_IMPLEMENTED;
+				return aggregating_M;
+			}
+		private:
+			c_MIVPath::Node m_member_id;
 		};
 		//-------------------------------------------------------------------
 		enum e_ArrayIOperationId {
@@ -622,7 +651,7 @@ namespace seedsrc {
 			c_StringValue m_sDeltaValue;
 		};
 
-		typedef boost::variant<c_Int_dV_Operation,c_String_dV_Operation, c_Array_dI_Operation> c_DeltaOperation;
+		typedef boost::variant<c_dM_Operation_Define_Member,c_Int_dV_Operation,c_String_dV_Operation, c_Array_dI_Operation> c_DeltaOperation;
 		typedef boost::shared_ptr<c_DeltaOperation> c_DeltaOperation_shared_ptr;
 
 		//-------------------------------------------------------------------
@@ -655,6 +684,7 @@ namespace seedsrc {
 		class c_MIV {
 		public:
 			typedef boost::shared_ptr<c_MIV> shared_ptr;
+			c_MIV(const c_MIVBody_shared_ptr& pMIVBody = c_MIVBody_shared_ptr()) : m_pMIVBody(pMIVBody) {;}
 			c_DeltaIndex getState() {return m_State;}
 //			c_MIVBody& getBody() {return m_MIVBody;} // Return ref to allow variant visitor to visit
 			c_MIVBody_shared_ptr getBody() {return m_pMIVBody;}
@@ -676,10 +706,7 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<c_MIVs> shared_ptr;
 
-			c_MIVs(const c_DeltaIndex& last_created_delta_index,const c_DeltaIndex& last_applied_delta_index)
-				:  m_LastCreatedDeltaIndex(last_created_delta_index)
-				  ,m_LastAppliedDeltaIndex(last_applied_delta_index)
-			{;}
+			c_MIVs(const c_DeltaIndex& last_created_delta_index,const c_DeltaIndex& last_applied_delta_index);
 
 			c_Delta::shared_ptr createInstanceDelta(const c_MIVPath& id);
 			c_Delta::shared_ptr createSetValueDelta(const c_MIVPath& id,c_Value_shared_ptr pNewValue);
