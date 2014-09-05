@@ -1,0 +1,36 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{B6FAB198-6093-4E57-A1F6-BCCA936320B0}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="MIVConsoleFM.cbproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="MIVConsoleFM">
+        <MSBuild Projects="MIVConsoleFM.cbproj"/>
+    </Target>
+    <Target Name="MIVConsoleFM:Clean">
+        <MSBuild Projects="MIVConsoleFM.cbproj" Targets="Clean"/>
+    </Target>
+    <Target Name="MIVConsoleFM:Make">
+        <MSBuild Projects="MIVConsoleFM.cbproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="MIVConsoleFM"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="MIVConsoleFM:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="MIVConsoleFM:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
