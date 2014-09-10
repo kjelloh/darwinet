@@ -69,12 +69,114 @@ namespace seedsrc {
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
 		};
 
+		class c_DeltaOperation {
+		private:
+			typedef c_DeltaOperation C_THIS;
+		public:
+			typedef boost::shared_ptr<C_THIS> shared_ptr;
+		};
 		//-------------------------------------------------------------------
+		typedef std::string c_MIVsProducerIdentifier;
+		typedef std::string c_DeltaBranchIdentifier;
+		typedef std::string t_DeltaSeqNo;
+		//-------------------------------------------------------------------
+		class c_DeltaIndex {
+		public:
+
+			c_DeltaIndex(c_MIVsProducerIdentifier producer_id,c_DeltaBranchIdentifier branch_id,t_DeltaSeqNo seqno);
+
+			c_MIVsProducerIdentifier getProducer() const {return m_Producer;}
+			c_DeltaBranchIdentifier getBranch() const {return m_Branch;}
+			t_DeltaSeqNo getSeqNo() const {return m_SeqNo;}
+
+			bool operator==(const c_DeltaIndex& other_value) const {
+				return (      (m_Producer == other_value.m_Producer)
+						   && (m_Branch == other_value.m_Branch)
+						   && (m_SeqNo == other_value.m_SeqNo));
+			}
+
+		private:
+			c_MIVsProducerIdentifier m_Producer;
+			c_DeltaBranchIdentifier m_Branch;
+			t_DeltaSeqNo m_SeqNo;
+		};
+		//-------------------------------------------------------------------
+		class c_DeltaTarget {
+		public:
+
+			c_DeltaTarget(c_DeltaIndex target_miv_state, c_MIVId target_miv_id);
+
+			c_DeltaIndex getState() const {return m_target_miv_state;}
+			c_MIVId getId() const {return m_target_miv_id;}
+
+		private:
+			c_DeltaIndex m_target_miv_state;
+			c_MIVId m_target_miv_id;
+		};
+		//-------------------------------------------------------------------
+
 		class c_Delta {
 		private:
 			typedef c_Delta C_THIS;
 		public:
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
+
+			c_DeltaBase(c_DeltaTarget target, c_DeltaIndex index, c_DeltaOperation delta_operation);
+
+			c_DeltaTarget getTarget() const;
+			c_DeltaIndex getIndex() const;
+			c_DeltaOperation getDeltaOperation() const ;
+		private:
+
+			c_DeltaTarget m_DeltaTarget;
+			c_DeltaIndex m_DeltaIndex;
+			c_DeltaOperation m_delta_operation;
+
+		};
+		//-------------------------------------------------------------------
+		class c_ForwardDelta
+			: public c_Delta
+		{
+		private:
+			typedef c_ForwardDelta C_THIS;
+		public:
+			typedef boost::shared_ptr<C_THIS> shared_ptr;
+
+			c_ForwardDelta(c_DeltaTarget target, c_DeltaIndex index, c_DeltaOperation delta_operation,c_DeltaIndex predecessor) : c_DeltaBase(target, index, delta_operation),m_predecessor(predecessor) {;}
+
+			c_DeltaIndex getPredecessor() const;
+
+		private:
+
+			c_DeltaIndex m_predecessor;
+		};
+
+		//-------------------------------------------------------------------
+		class c_BackwardDelta
+			: public c_Delta
+		{
+		private:
+			typedef c_BackwardDelta C_THIS;
+		public:
+			typedef boost::shared_ptr<C_THIS> shared_ptr;
+
+			c_BackwardDelta(c_DeltaTarget target, c_DeltaIndex index, c_DeltaOperation delta_operation,c_DeltaIndex succsessor) : c_DeltaBase(target, index, delta_operation),m_succsessor(succsessor) {;}
+
+			c_DeltaIndex getSuccessor() const;
+
+		private:
+
+			c_DeltaIndex m_succsessor;
+		};
+
+		class c_ForwardDeltaSignal {
+		private:
+			typedef c_DeltaSignal C_THIS;
+		public:
+			typedef boost::shared_ptr<C_THIS> shared_ptr;
+
+		private:
+			c_ForwardDelta m_delta;
 		};
 
 		//-------------------------------------------------------------------
@@ -87,12 +189,28 @@ namespace seedsrc {
 			// Begin c_CommandSinkIfc
 
 			/**
-			  * Execute provided command and return created Delta.
+			  * Execute provided command and return created Delta operation.
 			  */
-			virtual c_Delta::shared_ptr executeCommand(c_Command::shared_ptr pCommand) = 0;
+			virtual c_ForwardDelta::shared_ptr executeCommand(c_Command::shared_ptr pCommand) = 0;
 
 			// End c_CommandSinkIfc
 
+		};
+
+		class c_DeltaOperationSinkIfc {
+		private:
+			typedef c_DeltaOperationSinkIfc C_THIS;
+		public:
+			typedef boost::shared_ptr<C_THIS> shared_ptr;
+
+			// Begin c_DeltaOperationSinkIfc
+
+			/**
+			  * Apply provided delta operation and return Event about made change
+			  */
+			virtual c_Event::shared_ptr applyDeltaOperation(c_DeltaOperation::shared_ptr pDeltaOperation) = 0;
+
+			// End c_DeltaOperationSinkIfc
 		};
 
 		//-------------------------------------------------------------------
@@ -107,47 +225,22 @@ namespace seedsrc {
 			/**
 			  * Apply provided delta and return Event about made change
 			  */
-			virtual c_Event::shared_ptr applyDelta(c_Delta::shared_ptr pDelta) = 0;
+			virtual c_Event::shared_ptr applyForwardDelta(c_ForwardDelta::shared_ptr pForwardDelta) = 0;
 
 			// End c_DeltaSinkIfc
 
 		};
 
 		//-------------------------------------------------------------------
-		class c_MIV:
-			 public c_CommandSinkIfc
-			,public c_DeltaSinkIfc
+		class c_MIV
 		{
 		private:
 			typedef c_DeltaSinkIfc C_THIS;
 		public:
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
 
-			// Begin c_CommandSinkIfc
+		private:
 
-			/**
-			  * Execute provided command and return created Delta.
-			  */
-			virtual c_Delta::shared_ptr executeCommand(c_Command::shared_ptr pCommand) {
-				c_Delta::shared_ptr result;
-				LOG_NOT_IMPLEMENTED;
-				return result;
-			}
-
-			// End c_CommandSinkIfc
-
-			// Begin c_DeltaSinkIfc
-
-			/**
-			  * Apply provided delta and return Event about made change
-			  */
-			virtual c_Event::shared_ptr applyDelta(c_Delta::shared_ptr pDelta) {
-				c_Event::shared_ptr result;
-				LOG_NOT_IMPLEMENTED;
-				return result;
-			}
-
-			// End c_DeltaSinkIfc
 
 		};
 
@@ -183,9 +276,40 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
 
+			c_MIV::shared_ptr getMIV(const c_MIVId& id);
 			c_M::shared_ptr getM(const c_MIVId& id);
 			c_I::shared_ptr getI(const c_MIVId& id);
 			c_V::shared_ptr getV(const c_MIVId& id);
+
+			// Begin c_CommandSinkIfc
+
+			/**
+			  * Execute provided command and return created Delta operation.
+			  */
+			virtual c_ForwardDelta::shared_ptr executeCommand(c_Command::shared_ptr pCommand) {
+				c_ForwardDelta::shared_ptr result;
+				LOG_NOT_IMPLEMENTED;
+				// 1. Find the command target
+				// 2. Apply the Command operation to the target
+				return result;
+			}
+
+			// End c_CommandSinkIfc
+
+			// Begin c_DeltaSinkIfc
+
+			/**
+			  * Apply provided delta and return Event about made change
+			  */
+			virtual c_Event::shared_ptr applyForwardDelta(c_ForwardDelta::shared_ptr pForwardDelta) {
+				c_Event::shared_ptr result;
+				LOG_NOT_IMPLEMENTED;
+				// 1. Find the delta target
+				// 2. Apply the delta operation to the target
+				return result;
+			}
+
+			// End c_DeltaSinkIfc
 
 		private:
 		};
