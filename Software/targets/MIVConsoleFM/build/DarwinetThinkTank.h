@@ -51,7 +51,6 @@ namespace seedsrc {
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
 		};
 
-
 		//-------------------------------------------------------------------
 		class c_CommandFactory {
 		private:
@@ -121,7 +120,7 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
 
-			c_DeltaBase(c_DeltaTarget target, c_DeltaIndex index, c_DeltaOperation delta_operation);
+			c_Delta(c_DeltaTarget target, c_DeltaIndex index, c_DeltaOperation delta_operation);
 
 			c_DeltaTarget getTarget() const;
 			c_DeltaIndex getIndex() const;
@@ -142,7 +141,7 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
 
-			c_ForwardDelta(c_DeltaTarget target, c_DeltaIndex index, c_DeltaOperation delta_operation,c_DeltaIndex predecessor) : c_DeltaBase(target, index, delta_operation),m_predecessor(predecessor) {;}
+			c_ForwardDelta(c_DeltaTarget target, c_DeltaIndex index, c_DeltaOperation delta_operation,c_DeltaIndex predecessor) : c_Delta(target, index, delta_operation),m_predecessor(predecessor) {;}
 
 			c_DeltaIndex getPredecessor() const;
 
@@ -160,23 +159,13 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
 
-			c_BackwardDelta(c_DeltaTarget target, c_DeltaIndex index, c_DeltaOperation delta_operation,c_DeltaIndex succsessor) : c_DeltaBase(target, index, delta_operation),m_succsessor(succsessor) {;}
+			c_BackwardDelta(c_DeltaTarget target, c_DeltaIndex index, c_DeltaOperation delta_operation,c_DeltaIndex succsessor) : c_Delta(target, index, delta_operation),m_succsessor(succsessor) {;}
 
 			c_DeltaIndex getSuccessor() const;
 
 		private:
 
 			c_DeltaIndex m_succsessor;
-		};
-
-		class c_ForwardDeltaSignal {
-		private:
-			typedef c_DeltaSignal C_THIS;
-		public:
-			typedef boost::shared_ptr<C_THIS> shared_ptr;
-
-		private:
-			c_ForwardDelta m_delta;
 		};
 
 		//-------------------------------------------------------------------
@@ -232,41 +221,49 @@ namespace seedsrc {
 		};
 
 		//-------------------------------------------------------------------
-		class c_MIV
-		{
-		private:
-			typedef c_DeltaSinkIfc C_THIS;
-		public:
-			typedef boost::shared_ptr<C_THIS> shared_ptr;
+		class c_I; // Forward
 
-		private:
-
-
-		};
-
-		//-------------------------------------------------------------------
-		class c_M : public c_MIV
-		{
+		class c_M {
 		private:
 			typedef c_M C_THIS;
 		public:
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
+
+			c_M(c_M::shared_ptr pParent = c_M::shared_ptr()) : m_pParent(pParent) {;}
+
+			boost::shared_ptr<c_I> getI(const c_MIVId& id);
+
+		private:
+			c_M::shared_ptr m_pParent;
 		};
 
 		//-------------------------------------------------------------------
-		class c_I : public c_MIV {
+		class c_V; // Forward
+
+		class c_I {
 		private:
 			typedef c_I C_THIS;
 		public:
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
+
+			c_I(c_M::shared_ptr pM) : m_pM(pM) {;}
+
+			boost::shared_ptr<c_V> getV(const c_MIVId& id);
+
+		private:
+			c_M::shared_ptr m_pM;
 		};
 
-		//-------------------------------------------------------------------
-		class c_V : public c_MIV {
+		class c_V {
 		private:
 			typedef c_V C_THIS;
 		public:
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
+
+			c_V(c_I::shared_ptr pI) : m_pI(pI) {;}
+		private:
+			c_I::shared_ptr m_pI;
+
 		};
 
 		//-------------------------------------------------------------------
@@ -276,10 +273,7 @@ namespace seedsrc {
 		public:
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
 
-			c_MIV::shared_ptr getMIV(const c_MIVId& id);
 			c_M::shared_ptr getM(const c_MIVId& id);
-			c_I::shared_ptr getI(const c_MIVId& id);
-			c_V::shared_ptr getV(const c_MIVId& id);
 
 			// Begin c_CommandSinkIfc
 
@@ -312,6 +306,8 @@ namespace seedsrc {
 			// End c_DeltaSinkIfc
 
 		private:
+
+			c_M m_rootM;
 		};
 		//-------------------------------------------------------------------
 

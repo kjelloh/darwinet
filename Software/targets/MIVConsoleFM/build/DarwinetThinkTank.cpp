@@ -46,18 +46,6 @@ namespace seedsrc {
 			return result;
 		}
 
-		c_I::shared_ptr c_MIVs::getI(const c_MIVId& id) {
-			c_I::shared_ptr result(new c_I());
-			LOG_NOT_IMPLEMENTED;
-			return result;
-		}
-
-		c_V::shared_ptr c_MIVs::getV(const c_MIVId& id) {
-			c_V::shared_ptr result(new c_V());
-			LOG_NOT_IMPLEMENTED;
-			return result;
-		}
-
 	} // namespace miv6
 
 } // namespace seedsrc
