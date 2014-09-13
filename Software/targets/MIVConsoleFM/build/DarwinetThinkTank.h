@@ -4,7 +4,7 @@
 #define DarwinetThinkTankH
 #include <boost/shared_ptr.hpp> // Boost Requires e.g., $(CG_64_BOOST_ROOT) in the include path
 #include "BusinessLogUnit.h"
-
+#include <vector>
 //---------------------------------------------------------------------------
 /**
   * Seed Source namespace. This is working source that
@@ -28,7 +28,6 @@ namespace seedsrc {
 		void test();
 		//-------------------------------------------------------------------
 		typedef std::string c_DarwinetString;
-		typedef c_DarwinetString c_MIVId;
 		//-------------------------------------------------------------------
 
 		class c_DarwinetException
@@ -44,11 +43,29 @@ namespace seedsrc {
 		DARWINET_EXCEPTION_CLASS(c_UnknownMIVId,"Unknown MIV Id. ");
 
 		//-------------------------------------------------------------------
+		typedef c_DarwinetString c_MIVMemberId;
+		//-------------------------------------------------------------------
+		class c_CommandOperation {
+		private:
+			typedef c_CommandOperation C_THIS;
+		public:
+			typedef boost::shared_ptr<C_THIS> shared_ptr;
+
+		};
+		//-------------------------------------------------------------------
 		class c_Command {
 		private:
 			typedef c_Command C_THIS;
 		public:
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
+
+
+			c_MIVMemberId getTarget() {return m_pTarget;}
+			c_CommandOperation::shared_ptr getOperation() {return m_pOperation;}
+
+		private:
+			c_MIVMemberId m_pTarget;
+			c_CommandOperation::shared_ptr m_pOperation;
 		};
 
 		//-------------------------------------------------------------------
@@ -68,6 +85,7 @@ namespace seedsrc {
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
 		};
 
+		//-------------------------------------------------------------------
 		class c_DeltaOperation {
 		private:
 			typedef c_DeltaOperation C_THIS;
@@ -75,99 +93,69 @@ namespace seedsrc {
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
 		};
 		//-------------------------------------------------------------------
-		typedef std::string c_MIVsProducerIdentifier;
-		typedef std::string c_DeltaBranchIdentifier;
-		typedef std::string t_DeltaSeqNo;
+		typedef c_DarwinetString c_DeltaProducerId;
+		typedef c_DarwinetString c_DeltaBranchId;
+		typedef c_DarwinetString c_DeltaSeqNo;
 		//-------------------------------------------------------------------
 		class c_DeltaIndex {
-		public:
-
-			c_DeltaIndex(c_MIVsProducerIdentifier producer_id,c_DeltaBranchIdentifier branch_id,t_DeltaSeqNo seqno);
-
-			c_MIVsProducerIdentifier getProducer() const {return m_Producer;}
-			c_DeltaBranchIdentifier getBranch() const {return m_Branch;}
-			t_DeltaSeqNo getSeqNo() const {return m_SeqNo;}
-
-			bool operator==(const c_DeltaIndex& other_value) const {
-				return (      (m_Producer == other_value.m_Producer)
-						   && (m_Branch == other_value.m_Branch)
-						   && (m_SeqNo == other_value.m_SeqNo));
-			}
-
 		private:
-			c_MIVsProducerIdentifier m_Producer;
-			c_DeltaBranchIdentifier m_Branch;
-			t_DeltaSeqNo m_SeqNo;
+			typedef c_DeltaIndex C_THIS;
+		public:
+			typedef boost::shared_ptr<C_THIS> shared_ptr;
+		private:
+			c_DeltaProducerId m_Producer;
+			c_DeltaBranchId m_Branch;
+			c_DeltaSeqNo m_SeqNo;
 		};
 		//-------------------------------------------------------------------
 		class c_DeltaTarget {
-		public:
-
-			c_DeltaTarget(c_DeltaIndex target_miv_state, c_MIVId target_miv_id);
-
-			c_DeltaIndex getState() const {return m_target_miv_state;}
-			c_MIVId getId() const {return m_target_miv_id;}
-
 		private:
-			c_DeltaIndex m_target_miv_state;
-			c_MIVId m_target_miv_id;
+			typedef c_DeltaTarget C_THIS;
+		public:
+			typedef boost::shared_ptr<C_THIS> shared_ptr;
+		private:
+			c_DeltaIndex m_State;
+			c_MIVMemberId m_MIVMemberId;
 		};
 		//-------------------------------------------------------------------
-
 		class c_Delta {
 		private:
 			typedef c_Delta C_THIS;
 		public:
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
 
-			c_Delta(c_DeltaTarget target, c_DeltaIndex index, c_DeltaOperation delta_operation);
+			c_DeltaTarget::shared_ptr getTarget() {return m_pTarget;}
+			c_DeltaIndex::shared_ptr getIndex() {return m_pIndex;}
+			c_DeltaOperation::shared_ptr getOperation() {return m_pOperation;}
 
-			c_DeltaTarget getTarget() const;
-			c_DeltaIndex getIndex() const;
-			c_DeltaOperation getDeltaOperation() const ;
 		private:
+			c_DeltaTarget::shared_ptr m_pTarget;
+			c_DeltaIndex::shared_ptr m_pIndex;
 
-			c_DeltaTarget m_DeltaTarget;
-			c_DeltaIndex m_DeltaIndex;
-			c_DeltaOperation m_delta_operation;
-
+			c_DeltaOperation::shared_ptr m_pOperation;
 		};
+
 		//-------------------------------------------------------------------
-		class c_ForwardDelta
-			: public c_Delta
-		{
+		class c_ForwardDelta : public c_Delta {
+		private:
+			typedef c_ForwardDelta C_THIS;
+			c_DeltaIndex::shared_ptr getPredecessor() {return m_pPredecessor;}
+		public:
+			typedef boost::shared_ptr<C_THIS> shared_ptr;
+		private:
+			c_DeltaIndex::shared_ptr m_pPredecessor;
+		};
+
+		//-------------------------------------------------------------------
+		class c_BackwardDelta : public c_Delta {
 		private:
 			typedef c_ForwardDelta C_THIS;
 		public:
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
-
-			c_ForwardDelta(c_DeltaTarget target, c_DeltaIndex index, c_DeltaOperation delta_operation,c_DeltaIndex predecessor) : c_Delta(target, index, delta_operation),m_predecessor(predecessor) {;}
-
-			c_DeltaIndex getPredecessor() const;
-
+			c_DeltaIndex::shared_ptr getSuccessor() {return m_pSuccessor;}
 		private:
-
-			c_DeltaIndex m_predecessor;
+			c_DeltaIndex::shared_ptr m_pSuccessor;
 		};
-
-		//-------------------------------------------------------------------
-		class c_BackwardDelta
-			: public c_Delta
-		{
-		private:
-			typedef c_BackwardDelta C_THIS;
-		public:
-			typedef boost::shared_ptr<C_THIS> shared_ptr;
-
-			c_BackwardDelta(c_DeltaTarget target, c_DeltaIndex index, c_DeltaOperation delta_operation,c_DeltaIndex succsessor) : c_Delta(target, index, delta_operation),m_succsessor(succsessor) {;}
-
-			c_DeltaIndex getSuccessor() const;
-
-		private:
-
-			c_DeltaIndex m_succsessor;
-		};
-
 		//-------------------------------------------------------------------
 		class c_CommandSinkIfc {
 		private:
@@ -178,28 +166,12 @@ namespace seedsrc {
 			// Begin c_CommandSinkIfc
 
 			/**
-			  * Execute provided command and return created Delta operation.
+			  * Execute provided command and return created Delta.
 			  */
 			virtual c_ForwardDelta::shared_ptr executeCommand(c_Command::shared_ptr pCommand) = 0;
 
 			// End c_CommandSinkIfc
 
-		};
-
-		class c_DeltaOperationSinkIfc {
-		private:
-			typedef c_DeltaOperationSinkIfc C_THIS;
-		public:
-			typedef boost::shared_ptr<C_THIS> shared_ptr;
-
-			// Begin c_DeltaOperationSinkIfc
-
-			/**
-			  * Apply provided delta operation and return Event about made change
-			  */
-			virtual c_Event::shared_ptr applyDeltaOperation(c_DeltaOperation::shared_ptr pDeltaOperation) = 0;
-
-			// End c_DeltaOperationSinkIfc
 		};
 
 		//-------------------------------------------------------------------
@@ -212,81 +184,95 @@ namespace seedsrc {
 			// Begin c_DeltaSinkIfc
 
 			/**
-			  * Apply provided delta and return Event about made change
+			  * Apply provided delta and return Event about result
 			  */
-			virtual c_Event::shared_ptr applyForwardDelta(c_ForwardDelta::shared_ptr pForwardDelta) = 0;
+			virtual c_Event::shared_ptr applyDelta(c_Delta::shared_ptr pDelta) = 0;
 
 			// End c_DeltaSinkIfc
 
 		};
 
-		//-------------------------------------------------------------------
-		class c_I; // Forward
+		class c_MIVMember {
+		private:
+			typedef c_MIVMember C_THIS;
+		public:
+			typedef boost::shared_ptr<C_THIS> shared_ptr;
 
-		class c_M {
+			c_MIVMemberId getId() {return m_id;}
+
+			// Begin c_MIVMember
+
+			virtual c_ForwardDelta::shared_ptr applyCommandOperation(c_CommandOperation::shared_ptr pCommandOperation) = 0;
+			virtual c_Event::shared_ptr applyDeltaOperation(c_DeltaOperation::shared_ptr pDeltaOperation) = 0;
+
+			// End c_MIVMember
+
+		private:
+			c_MIVMemberId m_id;
+		};
+		//-------------------------------------------------------------------
+		class c_MIV; // Forward
+		class c_I; // Forward
+		class c_M : public c_MIVMember {
 		private:
 			typedef c_M C_THIS;
 		public:
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
 
-			c_M(c_M::shared_ptr pParent = c_M::shared_ptr()) : m_pParent(pParent) {;}
+			boost::shared_ptr<c_I> getI() {return m_pI;}
 
-			boost::shared_ptr<c_I> getI(const c_MIVId& id);
+			// Begin c_MIVMember
+
+			virtual c_ForwardDelta::shared_ptr applyCommandOperation(c_CommandOperation::shared_ptr pCommandOperation) {
+				c_ForwardDelta::shared_ptr result;
+				LOG_NOT_IMPLEMENTED;
+				return result;
+			}
+
+			// End c_MIVMember
 
 		private:
-			c_M::shared_ptr m_pParent;
+			boost::shared_ptr<c_I> m_pI;
+			boost::shared_ptr<c_MIV> m_pMIV;
 		};
 
 		//-------------------------------------------------------------------
-		class c_V; // Forward
-
-		class c_I {
+		class c_V; // Forward;
+		class c_I  {
 		private:
 			typedef c_I C_THIS;
 		public:
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
-
-			c_I(c_M::shared_ptr pM) : m_pM(pM) {;}
-
-			boost::shared_ptr<c_V> getV(const c_MIVId& id);
-
 		private:
+			boost::shared_ptr<c_V> m_pV;
 			c_M::shared_ptr m_pM;
 		};
 
-		class c_V {
+		//-------------------------------------------------------------------
+		class c_V  {
 		private:
 			typedef c_V C_THIS;
 		public:
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
-
-			c_V(c_I::shared_ptr pI) : m_pI(pI) {;}
 		private:
 			c_I::shared_ptr m_pI;
-
 		};
-
 		//-------------------------------------------------------------------
-		class c_MIVs {
+		class c_MIV:
+			 public c_CommandSinkIfc
+			,public c_DeltaSinkIfc
+		{
 		private:
-			typedef c_MIVs C_THIS;
+			typedef c_MIV C_THIS;
 		public:
 			typedef boost::shared_ptr<C_THIS> shared_ptr;
-
-			c_M::shared_ptr getM(const c_MIVId& id);
 
 			// Begin c_CommandSinkIfc
 
 			/**
-			  * Execute provided command and return created Delta operation.
+			  * Execute provided command and return created Delta.
 			  */
-			virtual c_ForwardDelta::shared_ptr executeCommand(c_Command::shared_ptr pCommand) {
-				c_ForwardDelta::shared_ptr result;
-				LOG_NOT_IMPLEMENTED;
-				// 1. Find the command target
-				// 2. Apply the Command operation to the target
-				return result;
-			}
+			virtual c_ForwardDelta::shared_ptr executeCommand(c_Command::shared_ptr pCommand);
 
 			// End c_CommandSinkIfc
 
@@ -295,21 +281,81 @@ namespace seedsrc {
 			/**
 			  * Apply provided delta and return Event about made change
 			  */
-			virtual c_Event::shared_ptr applyForwardDelta(c_ForwardDelta::shared_ptr pForwardDelta) {
-				c_Event::shared_ptr result;
-				LOG_NOT_IMPLEMENTED;
-				// 1. Find the delta target
-				// 2. Apply the delta operation to the target
-				return result;
-			}
+			virtual c_Event::shared_ptr applyDelta(c_Delta::shared_ptr pDelta);
 
 			// End c_DeltaSinkIfc
 
+			c_MIVMember::shared_ptr getMember(const c_MIVMemberId& id);
+			c_MIVMember::shared_ptr getMember(c_DeltaTarget::shared_ptr pDeltaTarget);
+
 		private:
 
-			c_M m_rootM;
+			c_M::shared_ptr m_pRootM; // Only M members imppemented
+
 		};
 		//-------------------------------------------------------------------
+		class c_ViewPoint {
+		private:
+			typedef c_ViewPoint C_THIS;
+		public:
+			typedef boost::shared_ptr<C_THIS> shared_ptr;
+		};
+
+		class c_View {
+		private:
+			typedef c_View C_THIS;
+		public:
+			typedef boost::shared_ptr<C_THIS> shared_ptr;
+
+			c_View() {;}
+
+			c_MIV::shared_ptr getMIV() {
+				if (!m_pMIV) {
+					m_pMIV = boost::make_shared<c_MIV>();
+				}
+				return m_pMIV;
+			}
+
+		private:
+
+			c_ViewPoint::shared_ptr m_pViewPoint;
+			c_ViewPoint::shared_ptr getViewPoint() {
+				if (!m_pViewPoint) {
+					m_pViewPoint = boost::make_shared<c_ViewPoint>();
+				}
+				return m_pViewPoint;
+			}
+
+			c_MIV::shared_ptr m_pMIV;
+
+		};
+
+		class c_dMIVs {
+		private:
+			typedef c_dMIVs C_THIS;
+		public:
+			typedef boost::shared_ptr<C_THIS> shared_ptr;
+		private:
+			std::vector<c_BackwardDelta::shared_ptr> m_BackwardDeltas;
+		};
+
+		class c_Domain {
+		private:
+			typedef c_Domain C_THIS;
+		public:
+			typedef boost::shared_ptr<C_THIS> shared_ptr;
+
+			c_dMIVs::shared_ptr getdMIVs() {
+				if (!m_pdMIVs) {
+					m_pdMIVs = boost::make_shared<c_dMIVs>();
+				}
+				return m_pdMIVs;
+			}
+
+		private:
+			c_dMIVs::shared_ptr m_pdMIVs;
+		};
+
 
 	}
 }

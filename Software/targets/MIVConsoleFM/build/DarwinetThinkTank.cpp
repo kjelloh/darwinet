@@ -8,7 +8,7 @@
 
 /**
   * Seed Source namespace. This is working source that
-  * candidates to become part of the Darwinet framework
+  * are candiates to become part of the Darwinet framework
   */
 
 namespace seedsrc {
@@ -17,14 +17,14 @@ namespace seedsrc {
 
 		void test() {
 			LOG_NOT_IMPLEMENTED;
-			c_MIVs::shared_ptr pMIVs(new c_MIVs());
+			c_View::shared_ptr pView(new c_View());
 			c_CommandFactory::shared_ptr pCommandFactory(new c_CommandFactory());
 
 			// 1. Simulate client calling root M to execute a command
-			c_ForwardDelta::shared_ptr pDelta = pMIVs->executeCommand(pCommandFactory->newNullCommand());
+			auto pDelta = pView->getMIV()->executeCommand(pCommandFactory->newNullCommand());
 			// 2. The created Delta should here be P2P distributed into all MIVs in the Domain
 			// 3. Simulate applying Delta to ourselves.
-			c_Event::shared_ptr pEvent = pMIVs->applyForwardDelta(pDelta);
+			auto pEvent = pView->getMIV()->applyDelta(pDelta);
 			// 4. The Event should here be sent to all listeners
 		}
 
@@ -38,13 +38,58 @@ namespace seedsrc {
 
 		//-------------------------------------------------------------------
 		//-------------------------------------------------------------------
+		// Begin c_CommandSinkIfc
 
-		c_M::shared_ptr c_MIVs::getM(const c_MIVId& id) {
-			c_M::shared_ptr result(new c_M());
+		/**
+		  * Execute provided command and return created Delta.
+		  */
+		c_ForwardDelta::shared_ptr c_MIV::executeCommand(c_Command::shared_ptr pCommand) {
+			c_ForwardDelta::shared_ptr result;
 			LOG_NOT_IMPLEMENTED;
-			throw c_NotImplemented(__func__);
+			c_MIVMember::shared_ptr pMIVMember = this->getMember(pCommand->getTarget());
+			if (pMIVMember) {
+				result = pMIVMember->applyCommandOperation(pCommand->getOperation());
+			}
 			return result;
 		}
+
+		// End c_CommandSinkIfc
+
+		// Begin c_DeltaSinkIfc
+
+		/**
+		  * Apply provided delta and return Event about made change
+		  */
+		c_Event::shared_ptr c_MIV::applyDelta(c_Delta::shared_ptr pDelta) {
+			c_Event::shared_ptr result;
+			LOG_NOT_IMPLEMENTED;
+			c_MIVMember::shared_ptr pMIVMember = this->getMember(pDelta->getTarget());
+			if (pMIVMember) {
+				result = pMIVMember->applyDeltaOperation(pDelta->getOperation());
+			}
+			return result;
+		}
+
+		// End c_DeltaSinkIfc
+
+		c_MIVMember::shared_ptr c_MIV::getMember(const c_MIVMemberId& id) {
+			c_MIVMember::shared_ptr result;
+			LOG_NOT_IMPLEMENTED;
+			throw c_NotImplemented("c_MIV::getMember");
+//			throw c_NotImplemented(__FUNCTION__);
+//			throw c_NotImplemented(typeid(*this).name());
+			return result;
+		}
+
+		c_MIVMember::shared_ptr c_MIV::getMember(c_DeltaTarget::shared_ptr pDeltaTarget) {
+			c_MIVMember::shared_ptr result;
+			LOG_NOT_IMPLEMENTED;
+			throw c_NotImplemented("c_MIV::getMember");
+//			throw c_NotImplemented(__FUNCTION__);
+//			throw c_NotImplemented(typeid(*this).name());
+			return result;
+		}
+
 
 	} // namespace miv6
 
