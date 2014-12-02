@@ -3,6 +3,7 @@
 #ifndef DarwinetThinkTankH
 #define DarwinetThinkTankH
 #include <boost/shared_ptr.hpp> // Boost Requires e.g., $(CG_64_BOOST_ROOT) in the include path
+#include <boost/make_shared.hpp>
 #include "BusinessLogUnit.h"
 #include <vector>
 //---------------------------------------------------------------------------

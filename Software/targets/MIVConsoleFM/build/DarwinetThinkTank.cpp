@@ -75,7 +75,7 @@ namespace seedsrc {
 		c_MIVMember::shared_ptr c_MIV::getMember(const c_MIVMemberId& id) {
 			c_MIVMember::shared_ptr result;
 			LOG_NOT_IMPLEMENTED;
-			throw c_NotImplemented("c_MIV::getMember");
+			throw c_NotImplemented(METHOD_NAME);
 //			throw c_NotImplemented(__FUNCTION__);
 //			throw c_NotImplemented(typeid(*this).name());
 			return result;
@@ -84,7 +84,7 @@ namespace seedsrc {
 		c_MIVMember::shared_ptr c_MIV::getMember(c_DeltaTarget::shared_ptr pDeltaTarget) {
 			c_MIVMember::shared_ptr result;
 			LOG_NOT_IMPLEMENTED;
-			throw c_NotImplemented("c_MIV::getMember");
+			throw c_NotImplemented(METHOD_NAME);
 //			throw c_NotImplemented(__FUNCTION__);
 //			throw c_NotImplemented(typeid(*this).name());
 			return result;
