@@ -1,0 +1,173 @@
+3d77f47 2014-12-02 MIVConsoleFM - Updated DarwinetRADLibFM + Added a couple of FMX compatible RAD Lib units. - No support for local file yet (FireMonkey has no local-exe-file/folder concept) - Logging will throw excpetion due to lack of application root folder (no logging path created) - Not logging window in UX yet. + Compiles and runs
+fff464b 2014-09-13 MIVConsoleFM - Intermediate check-in + More depth to MIV(Command) = Delta and MIVConsoleFM.cbproj(Delta) = Event. + MIV finds member for Command and delegates to member to apply Command operation. + Similar MIV finds member for Delta and delegates to member to apply Delta operation. ? Are we on the right track this time (May command and delta find its M,I or V to operate on) ?
+f4230fa 2014-09-11 MIVConsoleFM - Intermediate check-in + Decided on c_M -> c_I -> c_V design (let dMIV operator find its target M,I or V)
+1792f66 2014-09-10 MIVconsoleFM - Intermediate check-in + Added skeleton code for MIV(Command) = Delta and MIV(Delta) = OnChangeEvent
+d4ad712 2014-09-05 Initiated Win64 darwinet/code/trunc/Software/targets/MIVConsoleFM - FireMonkey based.
+b933d47 2014-06-07 DarwinetCoreTestXE - Intermediate check-in + Added myInt model initiation - Redesign for M,I and V having the same path not yet done! (auto-creation can't be based on target path) * TODO: Move auto-creation to getM, getI and getV accessors.
+8b92d8c 2014-05-30 DarwinetCoreTestXE - Intermediate check-in + Implemented client call back for (Array append) event. - Does not yet work. design problems. * Problem 1: Auto created members of myIntArray does not update c_I_ArrayBody or c_I * Problem 2: the c_V of a c_I will have the same MIV path (can't co-exist in MIV repository)
+589f43d 2014-05-29 DarwinetCoreTestXE - Intermediate check-in + Tried to implement listener interface to c_Array_I_Body using signals but gets mysterious null-ptr-access violation. - failing code commented out.
+594dc06 2014-05-27 DarwinetCoreTestXE - Intermediate check-in + dI creation, distribution as signal and application by receiver implement for myIntArray op = Insert Before - Actaul report of change to clients not yet implemented. * TODO: Consider to let each MIV report any change to listeners.
+292e906 2014-05-26 DarwinetCoreTestXE - Intermediate check-in + internal myIntArray dI created but conversion to signal not in place. + Removed structured V MIV code (structured value handled as structured instances)
+9220ba9 2014-05-25 DarwinetCoreTestXE - Intermediate check-in + More work on Instance create "Array insert before" + Delta creation functor in place but does not yet create a delta.
+a5a2226 2014-05-24 DarwinetCoreTestXE - Intermediate check-in + Began introducing dI for hard coded myIntArray
+937d8e6 2014-05-18 DarwinetCoreTestXE - Intermediate check-in + Added simulated call-back to myIntArray extenstion with new instance - GUI does not yet respond to onMIVInstanceCreated event. - Actual MIVs implementation not yet in place
+13e6604 2014-05-13 DarwinetCoreTestXE - Intermediate check-in + Added GUI and signaling for myIntArray.1 + Implemented Integer subtract delta - Integer delta now always positive but can't handle onMIVValueChange to a negative result (can't parse provided string with a '-' sign in it)
+d730e7d 2014-05-11 DarwinetCoreTestXE - Intermediate check-in + Changed MIV id to un-indexed (i.e. array myIntArray have member myIntArray.1 not myIntArray:0.1:0 myIntArray:1) * MIV id for arrays thus use the same "member.member.member" structure as all MIV objects.
+c3295e3 2014-05-11 DarwinetCoreTestXE - Intermediate check-in + GUI change of myIntArray.1 value triggers a set signal to MIVs. - MIV Path should be changed to un-indexed and instead use ".index" for arrays?
+78a5eb9 2014-05-11 DarwinetCoreTestXE - Intermediade check-in + Added GUI for Integer array + Fixed boost::bind compiler error if the include directory did not contain boost/tr1/tr1 (added include boost/bind.hpp)
+c9dec9b 2014-05-04 DarwinetCoreTestXE - String range insert/Delete now works + Crude implementation (for clarity of algorithm) just to make it work. - Multi insert Delta not yet implemented and single string insert may be matched by SES to multiple insert (See code comment) * Todo: Implement composite Delta to handle multiple string insert/Delete per Delta.
+7d5edbe 2014-05-04 DarwinetCoreTestXE - String insert/Delete now works + One char insert/Delete now detected, delta created, distributed and applied and GUI updated for three clients.
+86a47fa 2014-05-03 DarwinetCoreTestXE - Integer Add and String insert now synchronized between MIVs without target index error + Each Delta now uses a domain common fix predecessor, own and target index - Creation and distribution of dM and dI for created V not yet implemented (needed to implement Delta sequencing)
+96dcf99 2014-05-02 DarwinetCoreTestXE - Intermediate check-in + Brute forced the SES algorithm to work for insertion (not pretty but seems to work for now) + Inserting chars in one GUI view updates the same text in the others ok. - Deletion of char not mapped to Delta creation/distribution/update
+b69fc26 2014-05-01 DarwinetCoreTestXE - Intermediate check-in + String insert now works for the first char (delta detect, signal, apply and report OnValueChange) - Second insert does not work (error in SES algorithm)
+791a460 2014-04-30 DarwinetCoreTestXE - Intermediate check-in + Now creates and distributes Signal for String extend Delta - Recreation of String extend Delta from signal not yet implemented - Extend two characters at once causes access violation (error in ses-function?) * Note: Two characters extend is caused on second add because String Value MIV is not updated on first add.
+5d4f497 2014-04-21 DarwinetCoreTestXE - quick and dirty implementation of edit script creation + Now correctly identifies and logs insertion of one char into myString. - Actual creation, distribution and application of string delta not yet in place.
+aee287f 2014-04-21 DarwinetCoreTestXE - Began implementing String delta using SES algorithm + SES algorithm implemented but Edit script creation not yet in place
+a0cad42 2014-04-20 DarwinetCoreTestXE - began on String Deltas + Added comment and class for string deltas. + Added GUI for client String myString:0 edit. - Actual String delta creation, distribution and application not yet implemented.
+c913bac 2014-04-18 DarwinetCoreTestXE - Now synchronizes the integer myInt:0 in three MIVs! + Delta creation, distribution and application for a simple integer in place + Event about change and GUI update in place
+dfb6c19 2014-04-17 DarwinetCoreTestXE - Delta -> Signal -> Delta in place + View::1 processes its own delta ok. - The other views fails due to not having myInt instance created.
+018eef8 2014-04-17 KeyPath - Now handles paths with empty strong nodes correctly * Before the toString added separator '.' only if produced string length > 0
+a7e6c7f 2014-04-17 DarwinetCoreTestXE - Intermediate check-in + Now Distributes Delta as signal to all MIVs - Applying received Signal Delta not yet implemented.
+fe17f68 2014-04-17 DarwinetCoreTestXE - Intermediate check-in
+1da2e87 2014-04-16 DarwinetCoreTestXE - Intermediate check-in + Delta creation and Delta application now uses boost::variant and visitor pattern - Actual Delta application not yet fully implemented - Return of MIV change event to Client not yet implemented
+1cb16c9 2014-04-16 DarwinetCoreTestXE - Check-in prior to test c_MIVs being a map of c_MIV = variant c_M, c_I, c_V
+48c2eff 2014-04-15 DarwinetCoreTestXE - Intermediate check-in + More work on Actual delta creation and application (not yet activated) + Added c_M, c_I c_V structure + Added boost::variant c_V and setValue variant visitor. * See TODO marker in c_MIVs::createSetValueDelta.
+f254370 2014-04-14 DarwinetCoreTestXE - Intermediadet check-in + Scalable Client MIVs Id + Signal Send logging
+73a12ca 2014-03-27 DarwinetCoreTestXE - Intermediadet check-in + Windows GUI now connects with windows handles correctly on start-up (first call to Main form OnShow)
+d03d5cc 2014-03-21 DarwinetCoreTestXE - Intermediate check-in + Signalling GUI Spinner -> Proxy -> Client -> MIVs and back works (short cut in MIVs)
+e86edf6 2014-03-20 DarwinetCoreTestXE - Made GUI update on windows message callback work + Client proxy returns signal as string to GUI window + GUI window creates signal and unpacks the value and updates spinner. + Signal <-> String code in place (basic)
+60df70d 2014-03-17 DarwinetCoreTest - Intermediate check-in + Added GUI and callback to GUI using Windows messages + GUI uses Testbench and Client Proxies to hide GUI connection to Darwinet Engine in this test code - Windows message codes for callback not yet defined. - Actual update of GUI on callbacks not yet implemented.
+ca63c6e 2014-03-15 DarwinetCoreTestXE - Made sender/Receiver messaging worj client -> MIVs. + Made receiver Id an oprime::c_KeyPath<c_IndexedKey<AsciiString> > + made c_KeyPath able to recreate indexed string node from string (Before only indexed intergral nodes was handled) * WARNING: c_KeyPath::fromString change NOT FULLY TESTED. May cause problem for existing usage on indexed enumeration paths?
+19531df 2014-03-14 DarwinetCoreTest - progress on Darwinet test messaging and some adaptation to Win64 + Added Darwinet test message loop and framework to pass Signals between Client, MIVs, View and Domain. + KeyPath adapted to stricter BCC64 typename usage. + Added Win64 platform to MIVConsoleXE application (win64 platform does still not compile)
+ad82286 2014-03-11 DarwinetCoreTest - Got queue pipes using boost function pointers to work + SEPSISeed test now pipes an empty signal from a Client through a chained queue to a MIVs = asynchronous emulation in place
+e9767c4 2014-03-10 DarwinetCoreTestXE - Intermediate check-in + Implemented function pointers to pipe signals through queues (target are "actOnSignal" function pointer)
+f23223b 2014-03-07 Upgraded to IDE XE5 + Started Iteration 8 of SEPSISeed. + Aiming at Delta with {Predecessor, Target, Index} design.
+a05b428 2014-02-06 DarwinetCoreTestXE/build/externals - Added common as https link. + https link seems to work better than ssl link.
+dbd513f 2014-02-06 Software/externals - Added link to common + common is a top repository so it is possible to link it as an external from the darwinet folder tree.
+1c150f8 2014-01-17 The Darwinet Open P2P Service Cloud Specification - Fixed an format error of the released document. + Fixed Word link in Welcome chapter that caused word to insert the linked contents and show as link label (known word error) + published pdf should now look fine.
+b8673b6 2014-01-03 DarwinetCoreTest - Intermediate check-in + Dummy MODEL, INSTANCE and VALUE Changes initiated from CLIENT to VIEW + Semi-dummy dM, dI, and dV signals generated from VIEW to DOMAIN and distributed between Node 1 and 2. + VIEW generates producer and sequence number for dMIVs - True dMIVs not yet produced (No MIV in place) - True application of received dMIVs not implemented (No MIV in place)
+e5b2eab 2014-01-03 The Darwinet Open P2P Service Cloud Specification - Added “Delta Processing Sequence Diagram” with an UML diagram
+936a6d7 2014-01-03 DarwinetCoreTest - Intermediate check-in + Logging now identifies peer 1 or 2
+16b5be2 2014-01-03 DarwinetRADLib - Made (path + node) work for const path.
+dace738 2014-01-02 DarwinetCoreTest - Intermediated check-in + Implemented Roundtrip Client1 - Client2 - Client1 for Model Change - Actual MIV model not yet in place - Instance change and Value Change not yet implemented. * Good base design to test asynchronous P2P messaging through Darwinet Stack :)
+4151f81 2013-12-31 DarwinetCoreTest - Asynchronous signal mechanism client to client in place. + A client at peer 1 may initiate a "change" which will initiate signaling down peer 1 stack and then up through peer 2 stack. - Only Dummy signals - No actual Darwinet Functionality in place
+3441553 2013-12-31 Upgraded code to compile with Embarcadero XE5 + Initiated iteration 7 of SEPSISeed approach. + project files updated for XE5 + DataRepresentationFrameWork edited to compile with XE5 + SEPSISeed iteration 7 using asynchronous signal exchange between all layers of Darwinet Stack (client, view, domain...)
+4bb7ef3 2013-11-22 The Darwinet Open P2P Service Cloud Specification - 1.0 Revision 10 + Updated "Delta Synchronization" to reflect the latest thoughts.
+159c2c9 2013-11-18 DarwinetCoreTest - Initiated miv3 (iteration 6) + Defined dMIV for core, client, view, domain - no actual dMIV processing in place yet.
+e3ff4de 2013-11-16 DarwinetCoreTest - Intermediate check-in + Now generates a dM on SEPSI initiatedM() call and processes through Evolution Manager and back. + Should be rape for testing with multipple views (add M to one view and it will be added to the other too) - dI and dV not yet implemented. - internal storage still inefficient doubling paths in map and instances.
+9117f8e 2013-11-16 DarwinetCoreTest - Intermdiate check-in + stub to generate dM from addM call to SEPSI.
+476eb58 2013-11-15 DarwinetCoreTest - miv2 dM processing + dM processing using index in place. - dm nor M not yet carries type. - dI and dV not yet implemented.
+460335a 2013-11-15 DarwinetCoreTest - Intermediate check-in of miv2. + miv2 now processes target index and miv path before applying dM. - dI and dV not yet implemented.
+174e795 2013-11-13 DarwinetCoreTest - miv1 namespace now performs dM. + Model with anonymous c_ModelMember and specialized c_DataModelMember + dM-Signal carries source, index and dM. + DeltaManager and MIVController may control index and manage branching on conflicts. - dM-Signal source and index not checked.
+76cebf7 2013-11-13 DarwinetCoreTest - Intermediate check-in namespace miv1. + miv1 is iteration 4 of the core. + Now eaxh delta is processed as a signal with source and index to enable sync. - Only stub of model += integer yet in place. - Needs to apply MIV += instance, MIV += Value and transfer of delta between MIV's to test this phase.
+e0d5808 2013-11-11 DarwinetCoreTest - Intemediate cehck-in of integrate3 + began associative model usage
+c3a71a3 2013-11-09 DarwinetCoreTest - Integrate2 now performs dM, dI and dV for an int :)
+709e089 2013-11-08 DarwinetCoreTest - Intermediate check-in + Implemented integrate2::delta M,I,V application to MIV. + Add model and create instance seems to work from delta. - Actual Value change not yet implemented.
+b837382 2013-11-08 DarwinetCoreTest - Intermediate check-in + Implemented integrate2::delta M,I,V application to MIV. - Actual MIV change not yet implemented.
+410e0d5 2013-11-08 DarwinetCoreTest - Intermediate check-in + Created integrate2 namespace for second try on core MIV design
+22bc5ea 2013-11-06 DarwinetCoreTest - Intermediate check-in + Added object creation from Delta + Runs but generates Design insufficiency log entries - actual mapping, path to object, does not yet work.
+bff6e40 2013-11-05 DarwinetCoreTest - Intermediate check-in + Added "create Integer Object Instance" Delta.
+b8b6605 2013-11-04 DarwinetCoreTest - Intermediate check-in + Now compiles and runs with Design Insufficiency (Delta target does not yet exist)
+4143cd9 2013-11-04 Darwinet - IDE upgrade and seed add + Upgraded to RAD Studi XE5 + Added Seed namespace and code to develop core Darwinet delta integration
+2d1b126 2013-10-24 Updated DarwinetCOMServer to use DarwinetBase as external ref to common repository
+edb9570 2013-10-24 Prepared to share common code through external to common code repository + enables each target to have shared version controlled code as sub-folder - May cause problems to administrate? We will see.
+9f21421 2013-10-24 Moved COM Server code to Common
+b505419 2013-08-02 Darwinet COM XE - Integer Delta processing now complete all the way back to COM Client + Server now fires onValueChange event back to COM client + Server COM Impl-object registers and unregisters as listener to Darwinet framework MIV Value instance - Dummy value hard-coded. Path-defined value not implemented.
+b310633 2013-07-31 Darwinet COM XE - Delta Processing now performed all the way up to the Value Instance in Engine + Actual Integer Delta received in Mail added to Value Instance + COM Interface reference counting now works for Queried Value Instance COM Object - Event firing back to Client for Value change not yet implemented
+ef93eda 2013-07-29 Darwinet COM XE - Server now parses received BERTLV encoded deltas + Calls SEPSI to process received delta - Actual SEPSI update not yet impl.
+5a441cc 2013-07-26 Darwinet COM XE - Now sends Delta as BERTLV encoded ASN.1 integer + Delta mailed as BERTLV encoded ASN.1 Integer - True change not sent (hard coded to 17)
+ac957ca 2013-06-09 Darwinet COM XE - Intermediate check-in + Now reads incoming mail from IMAP account - The sent mail does not contain a proper Darwinet Message - The Received Mail contents is not transformed into a Delta for processing - The same mails are read over and over - GetMessage returns only the contents of the last mail.
+132cde2 2013-06-07 Darwinet COM XE - Added poll of incoming messages from IMAP Account + Polling calls method in Frame with IMAP component. - Actual reading of any mail not yet implemented.
+ede689f 2013-05-31 Darwinet COM XE - First version that actually sends a mail with a MIV Delta + Sends a mail to darwinet2@itfied.se using SMTP (SASL = Login) + Moved Mail frame to correct project (From Console to COM Server) - The mail is empty (actual darwinet Message not yet created)
+47958ef 2013-05-30 Darwinet COM XE - Intermediate check-in + Client change of value now calls Mail Sink and Self sink on server side - Actual Mailing not implemented - Call to self not implemented
+801d4df 2013-05-30 Darwinet COM XE - Intermediate check-in + Quick fix to let client call Darwinet COM objects on the server side. - Server side creation of objects (getters) not implemented (marshaling server side interface pointers does not yet work) - Binding Server side COM objects to Darwinet Engine not yet implemented (dummy access used)
+9019d01 2013-05-15 Darwinet COM XE - Renamed MIVs to SEPSI (Shared Evolving Privately Stored Information)
+bc2bac6 2013-05-15 DatwinetCOM XE, Renamed MIV to MIVs. + COM Server objects, Interfaces and impl-files changed MIV to MIVs + MIVConsoleXE, adapted to changed COM Interface (MIV now named MIVs)
+2c305f9 2013-05-11 DarwinetCOMXE - Added Server side Proxy bind to inproc. engine and call setValue of Engine MIV.
+54dc650 2013-05-09 Darwinet COM - Client and server now implements the whole chain Engine->Domain->View->MIV->setValue(path,)
+6a3b63b 2013-05-09 MIVConsoleXE - Now Opens/Close Darwinet Engine, Domain, View through COM.
+f6fefb3 2013-05-09 Removed the projects folder (replaced by targets folder)
+3ba5d93 2013-05-09 Added readme.txt to the externals folder
+af410c9 2013-05-09 DarwinetRADLib - fixed #if defined statement for cross platform compilation
+0dd3ef0 2013-05-09 Committed the Projects folder after having moved MIVConsoleCygwin + For some reason subversion reported an error and could not remove it form the source folder.
+536058a 2013-05-09 Committed MOVConsoleCygwin + The code is only moved. No actual work has been done.
+e42bc21 2013-05-09 Committed the Projects folder prior to deleting it
+79c7745 2013-05-09 Committed DarwinetJX folder
+5759e3a 2013-05-09 Created folder "target" and added COM based Darwinet targets developed in RAD Studio XE.
+5caac41 2013-04-10 Added generic MIVConsole program with simpler and easier to use makefile.
+7e3a3ea 2013-04-09 Renamed MIVConsoleCygwin2 to MIVConsoleCygwin
+14c0416 2013-04-09 Renamed MIVConsoleCygwin2 to MIVConsoleCygwin + Previously my local environment prevented me from using the name MIVConsoleCygwin! + But it allows me to rename MIVConsoleCygwin2 to MIVConsoleCygwin. + Well - In the end I get my will through!
+0f3859f 2013-04-09 Added MIVConsoleCygwin2 - (local svn-bug prohibited me from naming it MIVConsoleCygwin!!) + Added Netbeans project files - Failed to add it as MIVConsoleCygwin! Will try to rename it later.
+0e062e6 2013-04-09 Adding InProcDarwinetEngine as a static library module
+6ee4c38 2013-04-09 Added DarwinetRADLib as a static library module
+d1ba0ff 2013-04-09 InProcStaticDarwinetEngine - Temporarily removed
+c6c3a8e 2013-04-09 MIVConsoleCygwin - Temporarily removed
+c0f960a 2013-04-09 MIVConsoleCygwin - Removed all auto-generated makefiles.
+0e7f492 2013-04-09 Initial check in of auth management code. Symmetric encryption of private keys is failing. Need to add logging to this and other utility libraries to make debugging easier in future.
+15ebe25 2013-04-09 Initial check in of auth management code. Symmetric encryption of private keys is failing. Need to add logging to this and other utility libraries to make debugging easier in future.
+169039d 2013-04-08 MIVConsoleCygwin - Fixed externals bug. + Removed the externals folder + Now compiles with activated code in DarwinetRADLib - Does not link (DarwinetRADLib dependent binaries not yet added to build environment)
+e020b14 2013-04-08 DarwinetRADLib - Refactored to be compiled by g++ + Units used by MIVConsoeCygwin now compiles. - Does not link yet! (Need Boost and icu4c binaries for that)
+719284b 2013-04-07 Added Software/externals/icu4c_51_1 (http://source.icu-project.org/repos/icu/icu/tags/release-51-1) + C/C++ source from ICU - International Components for Unicode (http://site.icu-project.org)
+01ef5ce 2013-04-06 Added Software/externals to try and add boost c++ library
+56366e0 2013-04-03 Updated to Doc-To-Help 2012
+50a0828 2013-04-03 Renamed Windows GUI MIV Console to MIVConsoleXE (XE for RAD Studio XE) + We now have three MIV Console Projects (One for each build environment)
+315e518 2013-04-03 Removed temporary file generated by eclipse
+95c2cde 2013-04-03 Fixed Header error (Double "/*" in license comment)
+c66ec8a 2013-04-03 Renamed MIVCosoleVS12 to MIVConsoleVS12 (missing n)
+d592789 2013-04-03 Fixed g++ warning (doubble // on the same line)
+d5667ef 2013-04-03 MIVConsoleCygwin - Intermediate check-in + Compiles and runs in Cygwin/Eclipse + DarwinetRADLib builds with empty conditional code (All code wrapped with Borland condition) + Brought InProcDarwinetEngine code into Console src-tree using subversion Externals (Eclipse puts cross reference path C:\... in makefile making it invalid)
+de28e59 2013-04-03 InProcStaticDarwinetEngine - first intermediate check-in + Added main class
+1d218af 2013-04-03 DarwinetRADLib - Wrapped non Gnu-code in pre-processor condition
+ae06fc8 2013-04-02 Moved common files out of the engine code into utils.
+d77555d 2013-04-02 Move all my stuff into projects/jx. Some of it belongs under common, and some under a top level directory for the core engine which doesn't currently exist, but that can all be sorted later. For now, as requested, I've moved it all down.
+1c94643 2013-04-01 MIVConsoleCygwin interemdiate check-in (runs) + Added classes to indicate Darwinet Engine service layers (Engine->Doman->View->MIV) + Reacts to Commands "SET", "Exit" (and "-help") - Actual In-process model of Darwinet Engine and service interfaces not yet added. - Adding of Business Log Handler from DarwinetRADLib not yet doen (needs refactoring for POSIX compatibility)
+13c711b 2013-04-01 Fixed misspelling of project MIVConsoleVS12. + renamed projects/MIVCosoleVS12 to projects/MIVConsoleVS12 - Still an empty Console.
+19303a4 2013-04-01 Cygwin MIV Console App - intermediate check-in + New projects/MIVConsoleCygwin + Eclipse created make - eclipse workspace files not yet added (unsure what to check in)
+3f4ff40 2013-03-30 Basic Darwinet engine that listens for connections and accepts them, plus test code that passes.
+c6a230d 2013-03-28 Very very basic engine server code and slight restructure of file system.
+8c01de6 2013-03-28 Fixing file structure.
+4b0e177 2013-03-21 Added BERTLV classes for Darwinet Message content processing
+23eea9d 2013-03-19 git-svn-id: https://svn.code.sf.net/p/darwinet/code/trunk@46 57849a7e-02c0-48c8-ab6e-32930a56f0c4
+5fe7439 2013-03-11 git-svn-id: https://svn.code.sf.net/p/darwinet/code/trunk@45 57849a7e-02c0-48c8-ab6e-32930a56f0c4
+8d555f8 2013-02-23 Added MIVCosoleVS12 (Visual Studio 2012 MIV Console project) + Very simple c++ console project with draft code for proposed C code architecture. + No actual work done. More a "pseudo code" project at this stage.
+eb41f34 2013-02-23 Created Software/Common and Software/Projects folder structure. + Moved darwinet_bcb_1 to Software/Projects. + Removed DarwinetFramework (Now in Software/Common/cpp/DarwinetFramework + Updated darwinet_bcb_1 to use added DarwinetRADLib
+4c5a9b0 2013-02-23 Added DarwinetRADLib (c++). Licensed under MPL 2.0 + DarwinetRADLib requires Boost c++ libraries and Embarcadero RAD Studio XE2
+7cf6cd2 2013-02-20 Deployed The Darwinet Open P2P Service Cloud Specification 1.0 Revision 8
+8c9d542 2013-02-09 The Darwinet Open P2P Service Cloud Specification 1.0 revision 8 - intermediate check in. + Adapted according to comments from Jontom Xire + Added Node multiple messaging stacks support + Made some initial notes about Authorization, Authentication and Encryption design
+59407e8 2013-02-05 The Darwinet Open P2P Service Cloud Specification 1.0 revision 7 + Added examples + Updated Clearing and settlement of node state deviations + defined Web server Hosted Darwinet Client (Darwinet Web Application)
+a6288a5 2013-02-05 The Darwinet Open P2P Service Cloud Specification 1.0 revision 7 + Added examples + Updated Clearing and settlement of node state deviations + defined Web server Hosted Darwinet Client (Darwinet Web Application)
+996abc7 2013-02-04 The Darwinet Open P2P Service Cloud Specification 1.0 revision 6 + Added application examples + Added chapters about Virtual driver option and handling of file change conflicts + Added description of P2P node synchronization + Used the terms state clearing and state settlement to describe delta distributions in large domains. + NOTE: Document a mix of Vision, examples and design specification. Information overlap exists.
+5311f41 2013-02-01 The Darwinet Open P2P Service Cloud Specification 1.0 Revision 5 + Added Darwinet application examples and introduction chapter.
+93b3395 2013-01-31 Removed the obsolete Doc folder (Documents moved to Documentation folder
+642f5d7 2013-01-31 Moved all Darwinet documentation to the Documentation folder. + The Doc folder is now obsolete.
+b861dd0 2013-01-31 Darwinet documentation check-in prior to moving them to Documentation folder + Minor spelling error fixes.
+17f23f7 2013-01-31 Moved darwinet_bcb_1 to Software/darwinet_bcb_1 folder
+bab15cd 2013-01-31 Updated prior to moving darwinet_bcb_1 to Software folder
+6c12f84 2013-01-15 Created Framework source folder
+647e276 2012-08-17 Application now has simple framework and separate forms for App, MIV and Messaging. Doc of Referenced based file system vision.
+f171f40 2012-08-14 Moved Darwinet application to build folder (export to new, add new, remove old) + For some reason svn Move (Cut + svn Paste) did not work. Did it the hard way instead.
+46fc810 2012-08-14 Commit to try and fix local Move failed states.
+1284752 2012-08-14 Committing local changes to try and move source to build folder.
+080eda1 2012-08-14 git-svn-id: https://svn.code.sf.net/p/darwinet/code/trunk@25 57849a7e-02c0-48c8-ab6e-32930a56f0c4
+a382fb6 2012-08-14 Cleaned up Darwinet_1 file structure. Removed old Help folder.
+87da33e 2012-08-14 Updated Darwinet_1 application before moving it to build folder.
+ac926b0 2012-08-09 Updated Darwinet project documentation
+65b0f5d 2012-08-08 Removed old unused Source and GUI.
+1e7bef5 2012-08-08 Adapted to RAD Studio XE2
+d4c324f 2012-08-08 Added missing Darwinet Engine source
+6a9772e 2011-09-27 Updated Darwinet specification + Graphics for changes, stacks, etc + More sugestions on architecture, functions etc
+032d765 2011-09-19 Updated about Applications and repository. Graphics added.
+89d7fd6 2011-09-07 Updated The Darwinet Specification 0.1.doc
+0759073 2010-09-30 Updated requirement specification with graphics for basic operations to build and run a darwinet domain.
+01a9ff9 2010-04-26 + Added XML compression requirement defining ISO/IEC 24824-1 (Fast Infoset) to be used.
+191ade2 2010-03-01 Converted to RAD studio 2009 and added darwinet protocol, API and engine units. Not yet implemented. Only structure outlined.
+ea90025 2010-02-15 Updated requirement specification about required reverseable changes. Also added example of XML-implementation of changes.
+dd54343 2010-02-05 Updated vision with open source base darwinet and free market darwinet service providers.
+e306479 2009-09-19 Described the idea of Darwinet service provider, Darwinet user domain, darwinet applications provided by darwinet service provider and darwinet service provider payment service. It is all coming to place :-)!
+0cd10ab 2009-06-14 Added vision, requirement and specification for application and information market place possibility. Also added Tripple A (AAA) description.
+26a42aa 2009-06-14 Updated requirements and specification. Created Darwinet Project Plan document
+7f10067 2009-06-07 Wrote first versions docs for Requirements, specification for both Darwinet and Chronos.
+77b70b5 2009-05-24 Added source and updated docs for generation 1
+7045a5f 2009-05-16 Added Darwinet vision document with scenario descriptions
+ed0bf4f 2009-05-16 Added the doc folder and the subversion usage manual.
+2a9d8dd 2009-05-16 Created the main lain of development

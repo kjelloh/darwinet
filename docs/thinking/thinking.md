@@ -2101,3 +2101,19 @@ This will bring in all the commit history from the master branch of each repo (w
 You're all set! 👍
 ```
 
+After having checked in the uncommitted changes to this md-file I also succeeded to add the 'common' clone.
+
+```sh
+(venv) kjell-olovhogdahl@MacBook-Pro ~/Documents/GitHub/darwinet % git subtree add --prefix=2009-05-16_2014-12-02/common ../svn-darwinet-common master
+git fetch ../svn-darwinet-common master
+remote: Enumerating objects: 5, done.
+remote: Counting objects: 100% (5/5), done.
+remote: Compressing objects: 100% (4/4), done.
+remote: Total 5 (delta 0), reused 0 (delta 0), pack-reused 0 (from 0)
+Unpacking objects: 100% (5/5), 1.21 KiB | 1.21 MiB/s, done.
+From ../svn-darwinet-common
+ * branch            master     -> FETCH_HEAD
+Added dir '2009-05-16_2014-12-02/common'
+(venv) kjell-olovhogdahl@MacBook-Pro ~/Documents/GitHub/darwinet % 
+```
+
