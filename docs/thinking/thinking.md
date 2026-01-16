@@ -2051,3 +2051,53 @@ Checked out HEAD:
 ```
 
 So now the nextr step is to check the cloned git repos history to see we have a reasonable history preserved from the svn repos. And then 'merge' (import, aggregate, or what term?) these two git repo clones into appropriate folder structure in existing darwinet git repo.
+
+After chatting wih chatGPT I did:
+
+```sh
+(venv) kjell-olovhogdahl@MacBook-Pro ~/Documents/GitHub/darwinet % git subtree add --prefix=2009-05-16_2014-12-02/code ../svn-darwinet-code master 
+git fetch ../svn-darwinet-code master
+remote: Enumerating objects: 2191, done.
+remote: Counting objects: 100% (2191/2191), done.
+remote: Compressing objects: 100% (2019/2019), done.
+remote: Total 2191 (delta 1244), reused 0 (delta 0), pack-reused 0 (from 0)
+Receiving objects: 100% (2191/2191), 20.13 MiB | 27.45 MiB/s, done.
+Resolving deltas: 100% (1244/1244), done.
+From ../svn-darwinet-code
+ * branch            master     -> FETCH_HEAD
+Added dir '2009-05-16_2014-12-02/code'
+(venv) kjell-olovhogdahl@MacBook-Pro ~/Documents/GitHub/darwinet % 
+```
+
+I confirmed that all git repos have the single branch 'master' to attend to.
+
+```sh
+(venv) kjell-olovhogdahl@MacBook-Pro ~/Documents/GitHub/darwinet % git branch -a
+* master
+  remotes/origin/HEAD -> origin/master
+  remotes/origin/master
+(venv) kjell-olovhogdahl@MacBook-Pro ~/Documents/GitHub/darwinet % cd ../svn-darwinet-code 
+(venv) kjell-olovhogdahl@MacBook-Pro ~/Documents/GitHub/svn-darwinet-code % git branch -a          
+* master
+  remotes/origin/trunk
+(venv) kjell-olovhogdahl@MacBook-Pro ~/Documents/GitHub/svn-darwinet-code % cd ../svn-darwinet-common 
+(venv) kjell-olovhogdahl@MacBook-Pro ~/Documents/GitHub/svn-darwinet-common % git branch -a            
+* master
+  remotes/git-svn
+(venv) kjell-olovhogdahl@MacBook-Pro ~/Documents/GitHub/svn-darwinet-common %
+```
+
+And chatGPT agreed:
+
+```text
+Yes, I agree! Each of your three repos has only a single local branch called master.
+The remote tracking branches you see (remotes/origin/trunk and remotes/git-svn) are just references to the remote SVN repos you converted from - they're not separate branches with different content.
+So your original plan is correct:
+bashcd ~/Documents/GitHub/darwinet
+
+git subtree add --prefix=2009-05-16_2014-12-02/code ../svn-darwinet-code master
+git subtree add --prefix=2009-05-16_2014-12-02/common ../svn-darwinet-common master
+This will bring in all the commit history from the master branch of each repo (which is all the history they have) into your darwinet repo as subdirectories.
+You're all set! 👍
+```
+
