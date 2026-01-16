@@ -1,0 +1,36 @@
+//---------------------------------------------------------------------------
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include "MainFormUnit.h"
+#include "BusinessLogFormUnit.h"
+#include "BusinessLogUnit.h"
+#include "InProcDarwinetEngineFramework.h"
+//---------------------------------------------------------------------------
+#pragma package(smart_init)
+//#pragma link "DarwinetRADLibXE.bpi"
+#pragma resource "*.dfm"
+TMainForm *MainForm;
+//---------------------------------------------------------------------------
+__fastcall TMainForm::TMainForm(TComponent* Owner)
+	: TForm(Owner)
+{
+	// Dock the Business Log form to our main window
+	TBusinessLogForm::instance()->ManualDock(this,NULL,alClient);
+	TBusinessLogForm::instance()->Align = alClient;
+	TBusinessLogForm::instance()->Visible = true;
+	LOG_BUSINESS(_UTF8sz("Application Started!"));
+
+	ProcessDarwinetIncomingMessagesTimer->Enabled = true; // Enable implemented
+//	ProcessDarwinetIncomingMessagesTimer->Enabled = false; // Disable until implemented
+}
+//---------------------------------------------------------------------------
+void __fastcall TMainForm::ProcessDarwinetIncomingMessagesTimerTimer(TObject *Sender)
+
+{
+	// Call Darwinet Engine to process any incoming messages
+	darwinet::processIncomingMessages();
+}
+//---------------------------------------------------------------------------
+

@@ -1,0 +1,10 @@
+History of changes (Latest change on top)
+Date   Id  Ver 	    Change
+-----------------------------------------
+130729 KoH 1.0w     Now receives integer delta in mail as BERTLV
+                    + Parses BERTLV into internal instance
+                    + Calls c_SEPSIImpl::actOnDelta with correct instance
+                    - Actual SEPSI change not yet implemented.
+
+130729 KoH 1.0w     Created this History of Changes file.
+

@@ -1,0 +1,61 @@
+// ************************************************************************ //
+// WARNING
+// -------
+// The types declared in this file were generated from data read from a
+// Type Library. If this type library is explicitly or indirectly (via
+// another type library referring to this type library) re-imported, or the
+// 'Refresh' command of the Type Library Editor activated while editing the
+// Type Library, the contents of this file will be regenerated and all
+// manual modifications will be lost.
+// ************************************************************************ //
+
+// $Rev: 46046 $
+// File generated on 2013-08-02 14:46:15 from Type Library described below.
+
+// ************************************************************************  //
+// Type Lib: C:\subversion\darwinet\trunk\Software\targets\DarwinetCOMServerXE\build\COM\DarwinetCOMServer (1)
+// LIBID: {C10A9DE6-1B79-4C29-8CD8-B621544D80F2}
+// LCID: 0
+// Helpfile:
+// HelpString:
+// DepndLst:
+//   (1) v2.0 stdole, (C:\Windows\SysWOW64\stdole2.tlb)
+// SYS_KIND: SYS_WIN32
+// ************************************************************************ //
+
+#include <vcl.h>
+#pragma hdrstop
+
+#include "DarwinetCOMServer_TLB.h"
+
+#if !defined(__PRAGMA_PACKAGE_SMART_INIT)
+#define      __PRAGMA_PACKAGE_SMART_INIT
+#pragma package(smart_init)
+#endif
+
+namespace Darwinetcomserver_tlb
+{
+
+
+// *********************************************************************//
+// GUIDS declared in the TypeLibrary
+// *********************************************************************//
+const GUID LIBID_DarwinetCOMServer = {0xC10A9DE6, 0x1B79, 0x4C29,{ 0x8C, 0xD8, 0xB6,0x21, 0x54, 0x4D,0x80, 0xF2} };
+const GUID IID_IDarwinetEngine = {0x46E64180, 0x5D7F, 0x4DA7,{ 0xBB, 0x2A, 0xEA,0x62, 0x66, 0xE5,0x6E, 0x25} };
+const GUID DIID_IDarwinetEngineEvents = {0xA58D7352, 0x6FE6, 0x4D38,{ 0xB3, 0xA1, 0x77,0xF2, 0xB5, 0x20,0xAD, 0x2E} };
+const GUID CLSID_DarwinetEngine = {0xE76CCCFC, 0x165A, 0x41B8,{ 0xAD, 0x5A, 0x48,0x40, 0xDD, 0x88,0x5B, 0xAB} };
+const GUID IID_IDarwinetDomain = {0x80F91A0A, 0x11F2, 0x4711,{ 0xA5, 0xED, 0x59,0x34, 0x53, 0x87,0x13, 0x3B} };
+const GUID DIID_IDarwinetDomainEvents = {0x2F2CF59F, 0x3D77, 0x4538,{ 0xAC, 0x4E, 0x33,0xBB, 0x0B, 0xEC,0x9D, 0xDD} };
+const GUID CLSID_DarwinetDomain = {0xF3405497, 0xA18E, 0x4CB7,{ 0xB1, 0x85, 0x34,0x53, 0x21, 0xC9,0xB6, 0x32} };
+const GUID IID_IDarwinetDomainView = {0x72253533, 0xB3BB, 0x4AAD,{ 0x97, 0xF6, 0x86,0x07, 0x08, 0x78,0x00, 0x20} };
+const GUID DIID_IDarwinetDomainViewEvents = {0xE204DB64, 0xCEAF, 0x4E98,{ 0xBC, 0x76, 0xA4,0x5B, 0xA1, 0x6A,0x24, 0xA6} };
+const GUID CLSID_DarwinetDomainView = {0x5287128B, 0xB3E4, 0x4EDF,{ 0xA0, 0x17, 0xE6,0x72, 0x47, 0xAE,0x89, 0xD5} };
+const GUID IID_IDarwinetSEPSIValue = {0xFD2706A7, 0x2C6E, 0x40EC,{ 0xBD, 0x74, 0x99,0xE4, 0x91, 0xB8,0xD9, 0x12} };
+const GUID DIID_IDarwinetSEPSIValueEvents = {0xC7A01058, 0xADFF, 0x428A,{ 0xAA, 0x23, 0x5F,0x2C, 0x12, 0x17,0x6B, 0xC4} };
+const GUID CLSID_DarwinetSEPSIValue = {0x7CAEF367, 0xC09F, 0x42A9,{ 0x91, 0xEC, 0xE7,0x47, 0x82, 0x66,0x94, 0x60} };
+const GUID IID_IDarwinetSEPSI = {0xD5019007, 0xC26E, 0x42BE,{ 0x96, 0x01, 0x50,0x0C, 0xEF, 0xD1,0xC8, 0x29} };
+const GUID DIID_IDarwinetSEPSIEvents = {0x232B48D1, 0x1251, 0x4155,{ 0xAF, 0x05, 0x33,0xF6, 0x10, 0x12,0x95, 0x9E} };
+const GUID CLSID_DarwinetSEPSI = {0xF1935855, 0x391D, 0x4C4C,{ 0x8E, 0x2A, 0x64,0x75, 0x86, 0xF9,0xDF, 0x8C} };
+
+};     // namespace Darwinetcomserver_tlb
+
